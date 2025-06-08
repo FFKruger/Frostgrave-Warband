@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Selecionar Magias - Frostgrave Warband Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background: #eaf2f8; margin: 0; }
+        main { max-width: 900px; margin: 2em auto; background: #fff; border-radius: 8px; padding: 2em; box-shadow: 0 2px 12px #bbb6;}
+        h1 { text-align: center; }
+        .spell-card { border: 1px solid #bbb; background: #f6f9fa; margin-bottom: 1em; border-radius: 7px; padding: 1em;}
+        .flex-row { display: flex; gap: 1.5em; }
+        .spell-desc { color: #444; font-size: 0.96em; margin: 0.3em 0; }
+        .learn-btn { background: #2980b9; color: #fff; font-weight: bold; border: none; border-radius: 4px; padding: 0.4em 1em; cursor: pointer;}
+        .learn-btn[disabled] { background: #aaa; color: #eee; cursor: not-allowed; }
+        select, input { border-radius: 4px; padding: .4em; border: 1px solid #bbb; }
+        label { font-weight: bold; margin-right: .7em; }
+        .selected-list { background: #f2f6fa; border-radius: 6px; padding: 1em; margin-bottom: 2em;}
+        .remove-btn { background: #c0392b; color: #fff; border: none; border-radius: 4px; padding: 0.2em 0.7em; margin-left: 1em;}
+    </style>
+</head>
+<body>
+<main>
+    <h1>Selecionar Magias a Aprender</h1>
+    <div style="margin-bottom:2em;">
+        <label>Filtrar por escola:
+            <select id="filter-school">
+                <option value="">Todas</option>
+                <option>Chronomancer</option><option>Elementalist</option>
+                <option>Enchanter</option><option>Illusionist</option>
+                <option>Necromancer</option><option>Sigilist</option>
+                <option>Soothsayer</option><option>Summoner</option>
+                <option>Thaumaturge</option><option>Witch</option>
+            </select>
+        </label>
+        <label>Buscar:
+            <input id="filter-name" type="text" placeholder="Nome ou trecho da magia">
+        </label>
+    </div>
+    <section class="selected-list" id="selected-spells-section">
+        <h2>Magias Selecionadas</h2>
+        <ul id="selected-spells"></ul>
+    </section>
+    <section>
+        <h2>Todas Magias Disponíveis</h2>
+        <div id="spell-list"></div>
+    </section>
+</main>
+<script>
+    // Exemplo de lista de magias (substitua pelos dados do seu localStorage se desejar)
+    let magias = JSON.parse(localStorage.getItem('magias') || '[]');
+    // Se não houver magias, coloque exemplos para visualização
+    if(magias.length === 0) {
+        magias = [
+            {nome:"Bone Dart", escola:"Necromancer", custo:8, desc:"Um dardo ósseo mágico é disparado contra o inimigo."},
+            {nome:"Elemental Bolt", escola:"Elementalist", custo:10, desc:"Projétil elemental poderoso."},
+            {nome:"Teleport", escola:"Chronomancer", custo:12, desc:"Teleporta o mago para outro local."}
+        ];
+    }
+
+    let aprendidas = JSON.parse(localStorage.getItem('magias_aprendidas') || '[]');
+
+    function renderSpells() {
+        const school = document.getElementById('filter-school').value;
+        const name = document.getElementById('filter-name').value.toLowerCase();
+        let html = "";
+        magias.forEach((magia, idx) => {
+            if((!school || magia.escola===school) &&
+                (!name || magia.nome.toLowerCase().includes(name) || (magia.desc||"").toLowerCase().includes(name))
+            ) {
+                const isLearned = aprendidas.find(m=>m.nome===magia.nome);
+                html += `<div class="spell-card">
+                    <strong>${magia.nome}</strong> <span class="small">[${magia.escola}]</span>
+                    <div class="spell-desc">${magia.desc||""}</div>
+                    <div><b>Custo base:</b> ${magia.custo||"-"}</div>
+                    <button class="learn-btn" onclick="learnSpell(${idx})" ${isLearned?'disabled':''}>
+                        ${isLearned?'Aprendida':'Aprender'}
+                    </button>
+                </div>`;
+            }
+        });
+        document.getElementById('spell-list').innerHTML = html;
+    }
+    function renderLearned() {
+        let html = "";
+        aprendidas.forEach((magia, idx) => {
+            html += `<li>${magia.nome} 
+                <button class="remove-btn" onclick="unlearnSpell(${idx})">Remover</button>
+            </li>`;
+        });
+        document.getElementById('selected-spells').innerHTML = html || "<li>Nenhuma magia selecionada.</li>";
+    }
+    function learnSpell(idx) {
+        const magia = magias[idx];
+        if(!aprendidas.find(m=>m.nome===magia.nome)) {
+            aprendidas.push(magia);
+            localStorage.setItem('magias_aprendidas', JSON.stringify(aprendidas));
+            renderSpells(); renderLearned();
+        }
+    }
+    function unlearnSpell(idx) {
+        aprendidas.splice(idx,1);
+        localStorage.setItem('magias_aprendidas', JSON.stringify(aprendidas));
+        renderSpells(); renderLearned();
+    }
+    document.getElementById('filter-school').onchange = renderSpells;
+    document.getElementById('filter-name').oninput = renderSpells;
+    renderSpells(); renderLearned();
+</script>
+</body>
+</html>

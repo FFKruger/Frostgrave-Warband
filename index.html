@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Warband - Frostgrave</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #eaf2f8; margin: 0; padding: 0;}
+        header { background: #2e4053; color: #fff; padding: 1em 0.5em; text-align: center;}
+        main { max-width: 1000px; margin: 2em auto; background: #fff; border-radius: 8px; padding: 2em; box-shadow: 0 2px 12px #bbb6;}
+        h2 { margin-top: 2em;}
+        .card { background: #f6f9fa; border-radius: 8px; padding: 1em; margin-bottom: 1em; box-shadow: 0 1px 4px #bbb2; }
+        label { display: block; margin-bottom: .5em; font-weight: bold;}
+        input, select, button { margin-top: .2em; margin-bottom: 1em; padding: .4em; border-radius: 4px; border: 1px solid #bbb;}
+        button { background: #2980b9; color: #fff; font-weight: bold; border: none; cursor: pointer;}
+        button:hover { background: #1a5276;}
+        ul { list-style: none; padding: 0;}
+        .personagem {margin-bottom: 2em;}
+        .equip-list {margin-left: 1.5em;}
+        .flex-row {display: flex; gap: 2em;}
+        .flex-grow {flex: 1;}
+        .remove-btn {background: #c0392b; margin-left: 1em;}
+        .remove-btn:hover {background: #922b21;}
+        .small {font-size: 0.95em; color: #555;}
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Gestor de Warband - Frostgrave</h1>
+    </header>
+    <main>
+        <section class="card">
+            <h2>Warband</h2>
+            <label>Nome da Warband: <input type="text" id="warband-name"></label>
+            <label>Jogador: <input type="text" id="player-name"></label>
+            <label>Ouro: <input type="number" id="gold" min="0" value="0"></label>
+            <label>XP: <input type="number" id="xp" min="0" value="0"></label>
+        </section>
+        <section class="card flex-row">
+            <div class="flex-grow">
+                <h2>Mago & Aprendiz</h2>
+                <div id="magos-area"></div>
+                <button onclick="addMago()">Adicionar Mago/Aprendiz</button>
+            </div>
+            <div class="flex-grow">
+                <h2>Soldados</h2>
+                <div id="soldados-area"></div>
+                <button onclick="addSoldado()">Adicionar Soldado</button>
+            </div>
+        </section>
+        <section class="card flex-row">
+            <div class="flex-grow">
+                <h2>Todos Itens Disponíveis</h2>
+                <form id="item-form">
+                    <label>Nome: <input type="text" id="item-name"></label>
+                    <label>Descrição: <input type="text" id="item-desc"></label>
+                    <label>Qtd: <input type="number" id="item-qty" min="1" value="1"></label>
+                    <button type="submit">Adicionar Item</button>
+                </form>
+                <ul id="item-list"></ul>
+            </div>
+            <div class="flex-grow">
+                <h2>Todas Magias Disponíveis</h2>
+                <form id="spell-form">
+                    <label>Nome: <input type="text" id="spell-name"></label>
+                    <label>Escola:
+                        <select id="spell-school">
+                            <option>Chronomancer</option><option>Elementalist</option>
+                            <option>Enchanter</option><option>Illusionist</option>
+                            <option>Necromancer</option><option>Sigilist</option>
+                            <option>Soothsayer</option><option>Summoner</option>
+                            <option>Thaumaturge</option><option>Witch</option>
+                        </select>
+                    </label>
+                    <button type="submit">Adicionar Magia</button>
+                </form>
+                <ul id="spell-list"></ul>
+            </div>
+        </section>
+        <footer class="small" style="text-align:center;">
+            Feito para Frostgrave • Não oficial
+        </footer>
+    </main>
+    <script>
+        // --- Estruturas em memória ---
+        let warband = {name:"", player:"", gold:0, xp:0};
+        let magos = []; // [{nome, tipo, escola, hp, level, itens:[], magias:[]}]
+        let soldados = []; // [{nome, tipo, hp, itens:[], magias:[]}]
+        let itens = []; // [{nome, desc, qtd}]
+        let magias = []; // [{nome, escola}]
+        
+        // --- Persistência ---
+        function salvar() {
+            localStorage.setItem('warband', JSON.stringify(warband));
+            localStorage.setItem('magos', JSON.stringify(magos));
+            localStorage.setItem('soldados', JSON.stringify(soldados));
+            localStorage.setItem('itens', JSON.stringify(itens));
+            localStorage.setItem('magias', JSON.stringify(magias));
+        }
+        function carregar() {
+            warband = JSON.parse(localStorage.getItem('warband')||'{"name":"","player":"","gold":0,"xp":0}');
+            magos = JSON.parse(localStorage.getItem('magos')||'[]');
+            soldados = JSON.parse(localStorage.getItem('soldados')||'[]');
+            itens = JSON.parse(localStorage.getItem('itens')||'[]');
+            magias = JSON.parse(localStorage.getItem('magias')||'[]');
+        }
+
+        // --- Renderização ---
+        function renderWarband() {
+            document.getElementById('warband-name').value = warband.name;
+            document.getElementById('player-name').value = warband.player;
+            document.getElementById('gold').value = warband.gold;
+            document.getElementById('xp').value = warband.xp;
+        }
+        function renderMagos() {
+            let html = "";
+            magos.forEach((mago, idx) => {
+                html += `
+                <div class="personagem card">
+                    <label>Nome: <input value="${mago.nome}" onchange="editMago(${idx},'nome',this.value)"></label>
+                    <label>Tipo: <select onchange="editMago(${idx},'tipo',this.value)">
+                        <option${mago.tipo=='Mago'?' selected':''}>Mago</option>
+                        <option${mago.tipo=='Aprendiz'?' selected':''}>Aprendiz</option>
+                    </select></label>
+                    <label>Escola: <select onchange="editMago(${idx},'escola',this.value)">
+                        <option${mago.escola=='Chronomancer'?' selected':''}>Chronomancer</option>
+                        <option${mago.escola=='Elementalist'?' selected':''}>Elementalist</option>
+                        <option${mago.escola=='Enchanter'?' selected':''}>Enchanter</option>
+                        <option${mago.escola=='Illusionist'?' selected':''}>Illusionist</option>
+                        <option${mago.escola=='Necromancer'?' selected':''}>Necromancer</option>
+                        <option${mago.escola=='Sigilist'?' selected':''}>Sigilist</option>
+                        <option${mago.escola=='Soothsayer'?' selected':''}>Soothsayer</option>
+                        <option${mago.escola=='Summoner'?' selected':''}>Summoner</option>
+                        <option${mago.escola=='Thaumaturge'?' selected':''}>Thaumaturge</option>
+                        <option${mago.escola=='Witch'?' selected':''}>Witch</option>
+                    </select></label>
+                    <label>HP: <input type="number" min="1" value="${mago.hp}" onchange="editMago(${idx},'hp',this.value)"></label>
+                    <label>Level: <input type="number" min="1" value="${mago.level}" onchange="editMago(${idx},'level',this.value)"></label>
+                    <div>
+                        <strong>Itens Equipados:</strong>
+                        <ul class="equip-list" id="mago-itens-${idx}">
+                            ${mago.itens.map((item,i)=>`<li>${item} <button class="remove-btn" onclick="removerItemMago(${idx},${i})">Remover</button></li>`).join('')}
+                        </ul>
+                        <select id="add-item-mago-${idx}">
+                            ${itens.map(item=>`<option>${item.nome}</option>`).join('')}
+                        </select>
+                        <button onclick="equiparItemMago(${idx})">Equipar Item</button>
+                    </div>
+                    <div>
+                        <strong>Magias Equipadas:</strong>
+                        <ul class="equip-list" id="mago-magias-${idx}">
+                            ${mago.magias.map((magia,i)=>`<li>${magia} <button class="remove-btn" onclick="removerMagiaMago(${idx},${i})">Remover</button></li>`).join('')}
+                        </ul>
+                        <select id="add-magia-mago-${idx}">
+                            ${magias
+                                .filter(m=>m.escola==mago.escola || mago.tipo=="Aprendiz") // Aprendiz pode equipar as mesmas magias do mago
+                                .map(m=>`<option>${m.nome}</option>`).join('')}
+                        </select>
+                        <button onclick="equiparMagiaMago(${idx})">Equipar Magia</button>
+                    </div>
+                    <button class="remove-btn" onclick="removerMago(${idx})">Remover</button>
+                </div>`;
+            });
+            document.getElementById('magos-area').innerHTML = html;
+        }
+        function renderSoldados() {
+            let html = "";
+            soldados.forEach((sold, idx) => {
+                html += `
+                <div class="personagem card">
+                    <label>Nome: <input value="${sold.nome}" onchange="editSoldado(${idx},'nome',this.value)"></label>
+                    <label>Tipo: <input value="${sold.tipo}" onchange="editSoldado(${idx},'tipo',this.value)"></label>
+                    <label>HP: <input type="number" min="1" value="${sold.hp}" onchange="editSoldado(${idx},'hp',this.value)"></label>
+                    <div>
+                        <strong>Itens Equipados:</strong>
+                        <ul class="equip-list" id="sold-itens-${idx}">
+                            ${sold.itens.map((item,i)=>`<li>${item} <button class="remove-btn" onclick="removerItemSoldado(${idx},${i})">Remover</button></li>`).join('')}
+                        </ul>
+                        <select id="add-item-sold-${idx}">
+                            ${itens.map(item=>`<option>${item.nome}</option>`).join('')}
+                        </select>
+                        <button onclick="equiparItemSoldado(${idx})">Equipar Item</button>
+                    </div>
+                    <div>
+                        <strong>Magias Equipadas:</strong>
+                        <ul class="equip-list" id="sold-magias-${idx}">
+                            ${sold.magias.map((magia,i)=>`<li>${magia} <button class="remove-btn" onclick="removerMagiaSoldado(${idx},${i})">Remover</button></li>`).join('')}
+                        </ul>
+                        <select id="add-magia-sold-${idx}">
+                            ${magias.map(m=>`<option>${m.nome}</option>`).join('')}
+                        </select>
+                        <button onclick="equiparMagiaSoldado(${idx})">Equipar Magia</button>
+                    </div>
+                    <button class="remove-btn" onclick="removerSoldado(${idx})">Remover</button>
+                </div>`;
+            });
+            document.getElementById('soldados-area').innerHTML = html;
+        }
+        function renderItens() {
+            let html = "";
+            itens.forEach((item,idx) => {
+                html += `<li>${item.nome} (${item.desc}) x${item.qtd} <button class="remove-btn" onclick="removerItem(${idx})">Remover</button></li>`;
+            });
+            document.getElementById('item-list').innerHTML = html;
+        }
+        function renderMagias() {
+            let html = "";
+            magias.forEach((magia,idx) => {
+                html += `<li>${magia.nome} [${magia.escola}] <button class="remove-btn" onclick="removerMagia(${idx})">Remover</button></li>`;
+            });
+            document.getElementById('spell-list').innerHTML = html;
+        }
+        function renderTudo() {
+            renderWarband(); renderMagos(); renderSoldados(); renderItens(); renderMagias();
+        }
+
+        // --- Manipuladores Warband ---
+        document.getElementById('warband-name').oninput = e=>{warband.name = e.target.value; salvar();};
+        document.getElementById('player-name').oninput = e=>{warband.player = e.target.value; salvar();};
+        document.getElementById('gold').oninput = e=>{warband.gold = parseInt(e.target.value)||0; salvar();};
+        document.getElementById('xp').oninput = e=>{warband.xp = parseInt(e.target.value)||0; salvar();};
+
+        // --- Manipuladores Magos/Aprendiz ---
+        function addMago() {
+            magos.push({nome:"", tipo:"Mago", escola:"Chronomancer", hp:14, level:1, itens:[], magias:[]});
+            salvar(); renderMagos();
+        }
+        function removerMago(idx) { magos.splice(idx,1); salvar(); renderMagos(); }
+        function editMago(idx, campo, valor) {
+            if(campo=='hp'||campo=='level') magos[idx][campo]=parseInt(valor)||1;
+            else magos[idx][campo]=valor;
+            salvar(); renderMagos();
+        }
+        function equiparItemMago(idx) {
+            const select = document.getElementById(`add-item-mago-${idx}`);
+            if (select.value) magos[idx].itens.push(select.value);
+            salvar(); renderMagos();
+        }
+        function removerItemMago(idx,i) { magos[idx].itens.splice(i,1); salvar(); renderMagos(); }
+        function equiparMagiaMago(idx) {
+            const select = document.getElementById(`add-magia-mago-${idx}`);
+            if (select.value) magos[idx].magias.push(select.value);
+            salvar(); renderMagos();
+        }
+        function removerMagiaMago(idx,i) { magos[idx].magias.splice(i,1); salvar(); renderMagos(); }
+
+        // --- Manipuladores Soldados ---
+        function addSoldado() {
+            soldados.push({nome:"", tipo:"Thug", hp:10, itens:[], magias:[]});
+            salvar(); renderSoldados();
+        }
+        function removerSoldado(idx) { soldados.splice(idx,1); salvar(); renderSoldados(); }
+        function editSoldado(idx, campo, valor) {
+            if(campo=='hp') soldados[idx][campo]=parseInt(valor)||1;
+            else soldados[idx][campo]=valor;
+            salvar(); renderSoldados();
+        }
+        function equiparItemSoldado(idx) {
+            const select = document.getElementById(`add-item-sold-${idx}`);
+            if (select.value) soldados[idx].itens.push(select.value);
+            salvar(); renderSoldados();
+        }
+        function removerItemSoldado(idx,i) { soldados[idx].itens.splice(i,1); salvar(); renderSoldados(); }
+        function equiparMagiaSoldado(idx) {
+            const select = document.getElementById(`add-magia-sold-${idx}`);
+            if (select.value) soldados[idx].magias.push(select.value);
+            salvar(); renderSoldados();
+        }
+        function removerMagiaSoldado(idx,i) { soldados[idx].magias.splice(i,1); salvar(); renderSoldados(); }
+
+        // --- Manipuladores Itens/Magias Gerais ---
+        document.getElementById('item-form').onsubmit = e=>{
+            e.preventDefault();
+            let nome = document.getElementById('item-name').value.trim();
+            let desc = document.getElementById('item-desc').value.trim();
+            let qtd = parseInt(document.getElementById('item-qty').value)||1;
+            if(nome) itens.push({nome, desc, qtd});
+            salvar(); renderItens(); renderMagos(); renderSoldados();
+            e.target.reset();
+        }
+        function removerItem(idx) { itens.splice(idx,1); salvar(); renderItens(); renderMagos(); renderSoldados();}
+        document.getElementById('spell-form').onsubmit = e=>{
+            e.preventDefault();
+            let nome = document.getElementById('spell-name').value.trim();
+            let escola = document.getElementById('spell-school').value;
+            if(nome) magias.push({nome, escola});
+            salvar(); renderMagias(); renderMagos(); renderSoldados();
+            e.target.reset();
+        }
+        function removerMagia(idx) { magias.splice(idx,1); salvar(); renderMagias(); renderMagos(); renderSoldados(); }
+
+        // --- Inicialização ---
+        carregar();
+        renderTudo();
+    </script>
+</body>
+</html>
