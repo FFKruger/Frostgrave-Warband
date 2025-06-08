@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Frostgrave Warband Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
+        main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+        h1 { text-align: center; margin-bottom: 0.7em; }
+        h2 { color: #2e4053; }
+        nav { text-align: center; margin-bottom: 1.5em; }
+        nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer;}
+        nav button.active, nav button:hover { background: #3498db; color: #fff;}
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 2em; margin-bottom: 2em; }
+        .person-card { background: #fafdff; border-radius: 10px; box-shadow: 0 1px 8px #bbb3; padding: 1.3em 1.1em 1em 1.1em; min-width: 350px; flex: 1 1 390px; position: relative; margin-bottom: 1.3em;}
+        .person-header { font-size: 1.16em; margin-bottom: .7em;}
+        .tipo-mago { color: #1a5276; font-weight: bold; }
+        .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
+        .tipo-soldado { color: #16a085; font-weight: bold; }
+        .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
+        .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
+        .stat-value { width: 2.2em; text-align: center; }
+        .hp-box { display: flex; align-items: center; gap: 0.2em;}
+        .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+        .hp-btn:active { background: #2471a3; }
+        .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+        .name-value { width: 7em; }
+        .label { font-weight: 500; color: #444; }
+        .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
+        .remove-btn:active { background: #922b21; }
+        .magia-add-btn, .item-add-btn { background: #16a085; color: #fff; border: none; border-radius: 3px; padding: 0.13em 0.7em; margin-left: 0.5em; cursor: pointer; font-size: 0.97em;}
+        .magia-add-btn:active, .item-add-btn:active { background: #14806d;}
+        .magias-list, .itens-list { margin: 0.4em 0 0 1.2em; font-size: 0.97em; }
+        .magia-tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dotted #aaa;
+        }
+        .magia-tooltip .tooltiptext {
+            visibility: hidden;
+            width: 320px;
+            background-color: #222;
+            color: #fff;
+            text-align: left;
+            border-radius: 9px;
+            padding: 0.8em 1em;
+            position: absolute;
+            z-index: 10;
+            bottom: 115%;
+            left: 50%;
+            margin-left: -155px;
+            opacity: 0;
+            transition: opacity 0.22s;
+            font-size: 1em;
+            box-shadow: 0 3px 18px #0008;
+        }
+        .magia-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .actions-row { margin-top: 1.2em; }
+        .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
+        @media (max-width: 1100px) { .flex-wrap { flex-direction: column; } .person-card { min-width: unset; width: 100%; } }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Frostgrave Warband Manager</h1>
+    <nav>
+        <button class="active" onclick="showTab('dashboard')">Dashboard</button>
+        <button onclick="showTab('magias')">Magias</button>
+        <button onclick="showTab('itens')">Itens</button>
+        <button onclick="showTab('notas')">Notas</button>
+    </nav>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="tab-content active">
+        <h2>Magos & Aprendiz</h2>
+        <ul class="flex-wrap" id="mago-aprendiz-lista"></ul>
+        <h2>Soldados</h2>
+        <ul class="flex-wrap" id="soldado-lista"></ul>
+        <section class="add-section">
+            <h2>Adicionar Personagem</h2>
+            <form class="add-form" id="add-personagem-form">
+                <label>
+                    Tipo:
+                    <select id="tipo-personagem">
+                        <option value="Mago">Mago</option>
+                        <option value="Aprendiz">Aprendiz</option>
+                        <option value="Soldado">Soldado</option>
+                    </select>
+                </label>
+                <label id="escola-label">
+                    Escola:
+                    <select id="escola-personagem">
+                        <option>Chronomancer</option><option>Elementalist</option>
+                        <option>Enchanter</option><option>Illusionist</option>
+                        <option>Necromancer</option><option>Sigilist</option>
+                        <option>Soothsayer</option><option>Summoner</option>
+                        <option>Thaumaturge</option><option>Witch</option>
+                    </select>
+                </label>
+                <label>
+                    Nome:
+                    <input id="nome-personagem" type="text" required maxlength="40">
+                </label>
+                <label>
+                    HP:
+                    <input id="hp-personagem" type="number" min="1" max="30" value="10">
+                </label>
+                <label id="nivel-label">
+                    Nível:
+                    <input id="nivel-personagem" type="number" min="0" max="20" value="1">
+                </label>
+                <label>
+                    Move:
+                    <input id="move-personagem" type="number" min="1" max="8" value="6">
+                </label>
+                <label>
+                    Fight:
+                    <input id="fight-personagem" type="number" value="0">
+                </label>
+                <label>
+                    Shoot:
+                    <input id="shoot-personagem" type="number" value="0">
+                </label>
+                <label>
+                    Armor:
+                    <input id="armor-personagem" type="number" min="6" max="16" value="10">
+                </label>
+                <label>
+                    Will:
+                    <input id="will-personagem" type="number" value="0">
+                </label>
+                <button type="submit">Adicionar</button>
+            </form>
+        </section>
+    </section>
+    <!-- MAGIAS -->
+    <section id="magias" class="tab-content">
+        <h2>Banco de Magias</h2>
+        <form class="add-form" id="add-magia-form">
+            <label>
+                Magia:
+                <input id="nova-magia-nome" type="text" maxlength="32" placeholder="Nome da Magia">
+            </label>
+            <label>
+                Escola:
+                <select id="nova-magia-escola">
+                    <option>Chronomancer</option><option>Elementalist</option>
+                    <option>Enchanter</option><option>Illusionist</option>
+                    <option>Necromancer</option><option>Sigilist</option>
+                    <option>Soothsayer</option><option>Summoner</option>
+                    <option>Thaumaturge</option><option>Witch</option>
+                </select>
+            </label>
+            <label>
+                Custo Base:
+                <input id="nova-magia-custo" type="number" min="1" max="20" value="8">
+            </label>
+            <label>
+                Descrição:
+                <input id="nova-magia-desc" type="text" maxlength="120" placeholder="Descrição da magia">
+            </label>
+            <button type="submit">Adicionar Magia</button>
+        </form>
+        <ul id="banco-magias-lista" class="magias-list"></ul>
+    </section>
+    <!-- ITENS -->
+    <section id="itens" class="tab-content">
+        <h2>Banco de Itens</h2>
+        <form class="add-form" id="add-item-form">
+            <label>
+                Item:
+                <input id="novo-item-nome" type="text" maxlength="32" placeholder="Nome do Item">
+            </label>
+            <label>
+                Descrição:
+                <input id="novo-item-desc" type="text" maxlength="120" placeholder="Descrição do item">
+            </label>
+            <button type="submit">Adicionar Item</button>
+        </form>
+        <ul id="banco-itens-lista" class="itens-list"></ul>
+    </section>
+    <!-- NOTAS -->
+    <section id="notas" class="tab-content">
+        <h2>Anotações da Warband</h2>
+        <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
+    </section>
+</main>
+<script>
+const ESCOLAS = ["Chronomancer","Elementalist","Enchanter","Illusionist","Necromancer","Sigilist","Soothsayer","Summoner","Thaumaturge","Witch"];
+const ALINHADAS = {
+  "Elementalist": ["Chronomancer","Enchanter"],
+  "Necromancer": ["Summoner","Witch"],
+};
+const OPOSTAS = {
+  "Elementalist": ["Necromancer"],
+  "Necromancer": ["Thaumaturge"],
+};
+function custoMagia(magia, escolaJogador) {
+    if (!escolaJogador) return magia.custo_base;
+    if (magia.escola === escolaJogador) return magia.custo_base;
+    if (ALINHADAS[escolaJogador]?.includes(magia.escola)) return magia.custo_base + 2;
+    if (OPOSTAS[escolaJogador]?.includes(magia.escola)) return magia.custo_base + 6;
+    return magia.custo_base + 4;
+}
+function alinDesc(magia, escola) {
+    if (!escola || magia.escola === escola) return "Principal";
+    if (ALINHADAS[escola]?.includes(magia.escola)) return "Alinhada";
+    if (OPOSTAS[escola]?.includes(magia.escola)) return "Oposta";
+    return "Neutra";
+}
+function salvarLS() {
+    localStorage.setItem('warband_personagens', JSON.stringify(personagens));
+    localStorage.setItem('warband_banco_magias', JSON.stringify(bancoMagias));
+    localStorage.setItem('warband_banco_itens', JSON.stringify(bancoItens));
+    localStorage.setItem('warband_notas', notas.value);
+}
+function carregarLS() {
+    personagens = JSON.parse(localStorage.getItem('warband_personagens')||'[]');
+    bancoMagias = JSON.parse(localStorage.getItem('warband_banco_magias')||'[]');
+    bancoItens = JSON.parse(localStorage.getItem('warband_banco_itens')||'[]');
+    notas.value = localStorage.getItem('warband_notas')||'';
+}
+let personagens = [];
+let bancoMagias = [
+    {nome: "Elemental Bolt", escola: "Elementalist", custo_base: 10, descricao: "Projétil elemental poderoso: causa dano à distância."},
+    {nome: "Teleport", escola: "Chronomancer", custo_base: 12, descricao: "Teleporta o mago para qualquer local visível."},
+    {nome: "Bone Dart", escola: "Necromancer", custo_base: 8, descricao: "Dispara um dardo ósseo mágico de dano razoável."}
+];
+let bancoItens = [
+    {nome: "Staff of Power", descricao: "Aumenta seu poder mágico em +1 ao lançar magias."},
+    {nome: "Potion of Invisibility", descricao: "Faz o usuário ficar invisível até atacar."},
+    {nome: "Magic Sword", descricao: "Espada encantada que concede +1 em combate."}
+];
+const notas = document.getElementById('notas-box');
+carregarLS();
+function showTab(tab) {
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
+    document.querySelector(`nav button[onclick*="${tab}"]`).classList.add('active');
+    document.getElementById(tab).classList.add('active');
+    if(tab==='magias') renderBancoMagias();
+    if(tab==='itens') renderBancoItens();
+}
+window.showTab = showTab;
+function renderPersonagens() {
+    const magoAprendizLista = document.getElementById('mago-aprendiz-lista');
+    const soldadoLista = document.getElementById('soldado-lista');
+    magoAprendizLista.innerHTML = '';
+    soldadoLista.innerHTML = '';
+    personagens.forEach((pers, idx) => {
+        if (pers.tipo === 'Mago' || pers.tipo === 'Aprendiz') {
+            magoAprendizLista.appendChild(personagemCard(pers, idx));
+        } else {
+            soldadoLista.appendChild(personagemCard(pers, idx));
+        }
+    });
+}
+function personagemCard(pers, idx) {
+    const li = document.createElement('li');
+    li.className = "person-card";
+    let magiasHtml = pers.magias?.length ? pers.magias.map((m,i)=>(
+        `<li>
+            <span class="magia-tooltip">
+                ${m.nome}
+                <span class="tooltiptext">
+                    <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span><br>
+                    <b>Descrição:</b> ${m.descricao || 'Sem descrição.'}<br>
+                    <b>Custo p/ este personagem:</b> ${typeof m.custo_base !== 'undefined' && pers.escola ? custoMagia(m, pers.escola) : '?'} 
+                    <span class="small">(${alinDesc(m, pers.escola)})</span><br>
+                    <b>Custo base:</b> ${m.custo_base || '-'}
+                </span>
+                ${typeof m.custo_base !== 'undefined' && pers.escola ? `<span class="small">(${custoMagia(m, pers.escola)})</span>` : ""}
+            </span>
+            <button class="remove-btn" title="Remover magia" onclick="removerMagia(${idx},${i})">×</button>
+        </li>`
+    )).join("") : "<li>-</li>";
+    let magiasAddHtml = bancoMagias.map((m,mi)=>
+        `<button class="magia-add-btn" title="Equipar ${m.nome}" onclick="adicionarMagia(${idx},${mi})">+${m.nome}</button>`
+    ).join(" ");
+    let itensHtml = pers.itens?.length ? pers.itens.map((i,j)=>`<li>
+        <span title="${i.descricao||""}">${i.nome}</span>
+        <button class="remove-btn" title="Remover item" onclick="removerItem(${idx},${j})">×</button>
+    </li>`).join("") : "<li>-</li>";
+    let itensAddHtml = bancoItens.map((i,ii)=>
+        `<button class="item-add-btn" title="Equipar ${i.nome}" onclick="adicionarItem(${idx},${ii})">+${i.nome}</button>`
+    ).join(" ");
+    li.innerHTML = `
+        <div class="person-header">
+            <span class="${pers.tipo==='Mago' ? 'tipo-mago' : pers.tipo==='Aprendiz' ? 'tipo-aprendiz' : 'tipo-soldado'}">${pers.tipo}</span>
+            <input class="name-value" value="${pers.nome}" onchange="editarNome(${idx},this.value)" />
+            ${pers.escola ? `<span style="color:#aaa; margin-left:10px">[${pers.escola}]</span>` : ""}
+            <button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">×</button>
+        </div>
+        <div class="stats-line">
+            <span class="stat-label">HP:</span>
+            <span class="hp-box">
+                <button class="hp-btn" onclick="alterarHP(${idx},-1)">-</button>
+                <input class="hp-value" type="number" min="0" value="${pers.hp}" onchange="setHP(${idx},this.value)">
+                <button class="hp-btn" onclick="alterarHP(${idx},1)">+</button>
+            </span>
+            <span class="stat-label">Move:</span> <span class="stat-value">${pers.stats.move}</span>
+            <span class="stat-label">Fight:</span> <span class="stat-value">${pers.stats.fight}</span>
+            <span class="stat-label">Shoot:</span> <span class="stat-value">${pers.stats.shoot}</span>
+            <span class="stat-label">Armor:</span> <span class="stat-value">${pers.stats.armor}</span>
+            <span class="stat-label">Will:</span> <span class="stat-value">${pers.stats.will}</span>
+            ${pers.nivel !== undefined ? `<span class="stat-label">Nível:</span> <span class="stat-value">${pers.nivel}</span>` : ""}
+        </div>
+        <div>
+            <span class="label">Magias:</span>
+            <ul class="magias-list">${magiasHtml}</ul>
+            <div class="actions-row">${magiasAddHtml}</div>
+        </div>
+        <div>
+            <span class="label">Itens:</span>
+            <ul class="itens-list">${itensHtml}</ul>
+            <div class="actions-row">${itensAddHtml}</div>
+        </div>
+    `;
+    return li;
+}
+window.adicionarMagia = function(idx, magiaIdx) {
+    const m = {...bancoMagias[magiaIdx]};
+    personagens[idx].magias = personagens[idx].magias || [];
+    if (!personagens[idx].magias.find(mm => mm.nome === m.nome)) {
+        personagens[idx].magias.push(m);
+        salvarLS(); renderPersonagens();
+    }
+}
+window.removerMagia = function(idx, magiaIdx) {
+    personagens[idx].magias.splice(magiaIdx,1);
+    salvarLS(); renderPersonagens();
+}
+window.adicionarItem = function(idx, itemIdx) {
+    const i = {...bancoItens[itemIdx]};
+    personagens[idx].itens = personagens[idx].itens || [];
+    if (!personagens[idx].itens.find(ii => ii.nome === i.nome)) {
+        personagens[idx].itens.push(i);
+        salvarLS(); renderPersonagens();
+    }
+}
+window.removerItem = function(idx, itemIdx) {
+    personagens[idx].itens.splice(itemIdx,1);
+    salvarLS(); renderPersonagens();
+}
+window.editarNome = function(idx, value) {
+    personagens[idx].nome = value.trim();
+    salvarLS();
+}
+window.alterarHP = function(idx, delta) {
+    personagens[idx].hp = Math.max(0, personagens[idx].hp + delta);
+    salvarLS(); renderPersonagens();
+}
+window.setHP = function(idx, value) {
+    personagens[idx].hp = Math.max(0, parseInt(value) || 0);
+    salvarLS();
+}
+document.getElementById('add-personagem-form').onsubmit = function(e) {
+    e.preventDefault();
+    const tipo = document.getElementById('tipo-personagem').value;
+    const escola = (tipo!=='Soldado') ? document.getElementById('escola-personagem').value : undefined;
+    const nome = document.getElementById('nome-personagem').value.trim();
+    const hp = parseInt(document.getElementById('hp-personagem').value,10) || 10;
+    const nivel = tipo === 'Mago' ? parseInt(document.getElementById('nivel-personagem').value,10) || 1 : (tipo === 'Aprendiz' ? 0 : undefined);
+    const stats = {
+        move: parseInt(document.getElementById('move-personagem').value,10)||6,
+        fight: parseInt(document.getElementById('fight-personagem').value,10)||0,
+        shoot: parseInt(document.getElementById('shoot-personagem').value,10)||0,
+        armor: parseInt(document.getElementById('armor-personagem').value,10)||10,
+        will: parseInt(document.getElementById('will-personagem').value,10)||0
+    };
+    personagens.push({
+        tipo, nome, escola, hp, nivel, stats,
+        magias:[],
+        itens:[]
+    });
+    salvarLS();
+    renderPersonagens();
+    this.reset();
+    document.getElementById('tipo-personagem').dispatchEvent(new Event('change'));
+}
+window.removerPersonagem = function(idx) {
+    if(confirm("Remover personagem?")) {
+        personagens.splice(idx,1);
+        salvarLS(); renderPersonagens();
+    }
+}
+document.getElementById('tipo-personagem').onchange = function() {
+    const tipo = this.value;
+    document.getElementById('escola-label').style.display = tipo === 'Soldado' ? 'none' : '';
+    document.getElementById('nivel-label').style.display = tipo === 'Soldado' ? 'none' : '';
+}
+document.getElementById('tipo-personagem').dispatchEvent(new Event('change'));
+function renderBancoMagias() {
+    const ul = document.getElementById('banco-magias-lista');
+    ul.innerHTML = bancoMagias.length ? bancoMagias.map((m, idx)=>`
+        <li>
+            <span class="magia-tooltip">
+                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
+                <span class="tooltiptext">
+                    <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span><br>
+                    <b>Descrição:</b> ${m.descricao || "-"}<br>
+                    <b>Custo base:</b> ${m.custo_base}
+                </span>
+            </span>
+            <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover magia">×</button>
+        </li>
+    `).join("") : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
+}
+window.removerBancoMagia = function(idx) {
+    bancoMagias.splice(idx,1); salvarLS(); renderBancoMagias();
+}
+document.getElementById('add-magia-form').onsubmit = function(e) {
+    e.preventDefault();
+    const nome = document.getElementById('nova-magia-nome').value.trim();
+    const escola = document.getElementById('nova-magia-escola').value;
+    const custo_base = parseInt(document.getElementById('nova-magia-custo').value,10) || 8;
+    const descricao = document.getElementById('nova-magia-desc').value.trim();
+    if(nome && escola) {
+        if(!bancoMagias.find(m=>m.nome===nome)) {
+            bancoMagias.push({nome, escola, custo_base, descricao});
+            salvarLS();
+        }
+        this.reset();
+        renderBancoMagias();
+    }
+}
+function renderBancoItens() {
+    const ul = document.getElementById('banco-itens-lista');
+    ul.innerHTML = bancoItens.length ? bancoItens.map((i, idx)=>`
+        <li>
+            <span title="${i.descricao||'-'}"><b>${i.nome}</b></span>
+            <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover item">×</button>
+        </li>
+    `).join("") : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
+}
+window.removerBancoItem = function(idx) {
+    bancoItens.splice(idx,1); salvarLS(); renderBancoItens();
+}
+document.getElementById('add-item-form').onsubmit = function(e) {
+    e.preventDefault();
+    const nome = document.getElementById('novo-item-nome').value.trim();
+    const descricao = document.getElementById('novo-item-desc').value.trim();
+    if(nome) {
+        if(!bancoItens.find(i=>i.nome===nome)) {
+            bancoItens.push({nome, descricao});
+            salvarLS();
+        }
+        this.reset();
+        renderBancoItens();
+    }
+}
+notas.oninput = function() { salvarLS(); }
+renderPersonagens();
+renderBancoMagias();
+renderBancoItens();
+</script>
+</body>
+</html>
