@@ -42,10 +42,45 @@
     .vertical-list { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 1em; }
     .warband-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5em; border-bottom: 1px solid var(--border); margin-bottom: 0.7em; }
     .warband-header h2 { margin: 0; color: var(--text-title); letter-spacing: 0.5px; font-size: 1.1em; }
-    .gold-xp-box { display: flex; gap: 0.7em; align-items: center; }
-    .gold-xp-label { font-weight: 500; color: var(--text-main); font-size: 0.95em; }
-    .gold-xp-input { width: 4em; font-size:0.95em; padding: 0.1em 0.3em; border-radius: 4px; border: 1px solid var(--border); text-align: right;}
-    .gold-btn, .xp-btn { margin-left: 0.1em; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 0.9em; width: 1.3em; height: 1.3em; cursor: pointer;}
+    .gold-xp-box {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 1.2em;
+      margin-bottom: 0;
+    }
+    .gold-xp-label {
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+      font-weight: 500;
+      color: var(--text-main);
+      font-size: 0.95em;
+    }
+    .gold-xp-input {
+      width: 4em;
+      font-size: 0.95em;
+      padding: 0.1em 0.3em;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      text-align: right;
+      margin: 0 0.2em;
+    }
+    .gold-btn, .xp-btn {
+      margin-left: 0.1em;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9em;
+      width: 1.3em;
+      height: 1.3em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
     .gold-btn:active, .xp-btn:active { background: var(--primary-dark); }
     .section-title { font-size: 0.98em; margin-top: 0.7em; margin-bottom: 0.2em; font-weight: 500; }
     .character-group { display: flex; flex-direction: column; gap: 0.4em; margin-bottom: 1em; }
@@ -288,6 +323,7 @@ function enableTabs() {
       if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
       if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
       if (tab === 'dashboard') { renderPersonagens(); renderAddSoldadoForm(); }
+      rebindFormEvents();
     }
   });
 }
@@ -297,16 +333,18 @@ function alteraGold(delta) {
   if (input) input.value = Math.max(0, parseInt(input.value) + delta);
 }
 function setGold(val) {
-  let input = document.getElementById("gold-input");
+  let input = document.getElementById("gold-input-dashboard");
   if (input) input.value = Math.max(0, parseInt(val) || 0);
+  syncGoldXPInputs();
 }
 function alteraXP(delta) {
   let input = document.getElementById("xp-input");
   if (input) input.value = Math.max(0, parseInt(input.value) + delta);
 }
 function setXP(val) {
-  let input = document.getElementById("xp-input");
+  let input = document.getElementById("xp-input-dashboard");
   if (input) input.value = Math.max(0, parseInt(val) || 0);
+  syncGoldXPInputs();
 }
 
 function adicionarMago() {
@@ -428,11 +466,18 @@ function renderBancoMagias() {
   let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
   tiposOrd.forEach((tipo, idx) => {
     ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:${idx === 0 ? '0.7em' : '1.7em'};margin-bottom:0.3em;letter-spacing:0.5px;">${tipo}</li>`;
-    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(m => {
+    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach((m, i) => {
       let desc = m.escola ? `Escola: ${m.escola}` : '';
-      ul.innerHTML += `<li title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}"><b>${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}</li>`;
+      ul.innerHTML += `<li title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}"><b>${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''} <button onclick="removerBancoMagia('${m.nome.replace(/'/g, '\'')}', '${m.escola.replace(/'/g, '\'')}')" style="margin-left:1em;font-size:0.95em;background:var(--danger);color:#fff;border:none;border-radius:4px;padding:0.1em 0.5em;cursor:pointer;">Remover</button></li>`;
     });
   });
+}
+function removerBancoMagia(nome, escola) {
+  if (!confirm('Remover esta magia do banco?')) return;
+  bancoMagias = bancoMagias.filter(m => m.nome !== nome || m.escola !== escola);
+  renderBancoMagias();
+  renderMagiaDropdown();
+  renderAprenderMagiaForm();
 }
 
 // Adicionar quantidade para cada item no bancoItens
@@ -458,11 +503,18 @@ function renderBancoItens() {
   let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
   tiposOrd.forEach((tipo, idx) => {
     ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:${idx === 0 ? '0.7em' : '1.7em'};margin-bottom:0.3em;letter-spacing:0.5px;">${tipo}</li>`;
-    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(item => {
+    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach((item, i) => {
       let desc = item.descricao ? item.descricao : '';
-      ul.innerHTML += `<li title="${desc.replace(/'/g, '&apos;')}"><b>${item.nome}</b> <span style="color:#888">[${item.grupo}]</span> <span style="color:#229954; margin-left:1em;">${desc}</span>${item.qtd > 1 ? ` <span style='color:#888'>(x${item.qtd})</span>` : ''}</li>`;
+      ul.innerHTML += `<li title="${desc.replace(/'/g, '&apos;')}"><b>${item.nome}</b> <span style="color:#888">[${item.grupo}]</span> <span style="color:#229954; margin-left:1em;">${desc}</span>${item.qtd > 1 ? ` <span style='color:#888'>(x${item.qtd})</span>` : ''} <button onclick="removerBancoItem('${item.nome.replace(/'/g, '\'')}', '${item.grupo.replace(/'/g, '\'')}')" style="margin-left:1em;font-size:0.95em;background:var(--danger);color:#fff;border:none;border-radius:4px;padding:0.1em 0.5em;cursor:pointer;">Remover</button></li>`;
     });
   });
+}
+function removerBancoItem(nome, grupo) {
+  if (!confirm('Remover este item do banco?')) return;
+  bancoItens = bancoItens.filter(item => item.nome !== nome || item.grupo !== grupo);
+  renderBancoItens();
+  renderItemDropdown();
+  renderPersonagens();
 }
 
 function renderMagiaDropdown() {
@@ -795,31 +847,73 @@ function renderAddSoldadoForm() {
   };
 }
 
-document.getElementById('add-magia-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('magia-dropdown').value;
-  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
-  const comp = document.getElementById('magia-comp').value.trim();
-  if (!nome) return;
-  bancoMagias.push({
-    nome, escola, descricao: comp
-  });
-  renderBancoMagias();
-  renderMagiaDropdown();
-  renderAprenderMagiaForm();
-  this.reset();
-};
-document.getElementById('add-item-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('item-dropdown').value;
-  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
-  const efeito = document.getElementById('item-efeito').value.trim();
-  if (!nome) return;
-  addItemToBanco(nome, item?.grupo || 'Personalizado', efeito || item?.descricao || '');
-  renderBancoItens();
-  renderItemDropdown();
-  this.reset();
-};
+function rebindFormEvents() {
+  // Adicionar Magia
+  const addMagiaForm = document.getElementById('add-magia-form');
+  if (addMagiaForm) {
+    addMagiaForm.onsubmit = function(e) {
+      e.preventDefault();
+      const nome = document.getElementById('magia-dropdown').value;
+      const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
+      if (!nome) return;
+      bancoMagias.push({ nome, escola });
+      renderBancoMagias();
+      renderMagiaDropdown();
+      renderAprenderMagiaForm();
+      this.reset();
+    };
+  }
+  // Adicionar Soldado
+  const addSoldadoForm = document.getElementById('add-soldado-form');
+  if (addSoldadoForm) {
+    addSoldadoForm.onsubmit = function(e) {
+      e.preventDefault();
+      const sel = document.getElementById('soldado-tipo');
+      const nome = document.getElementById('soldado-nome').value.trim();
+      const alertDiv = document.getElementById('soldado-limit-alert');
+      alertDiv.textContent = '';
+      const tipo = sel.value;
+      let soldadosOrig = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
+        ? conteudo_frostgrave_json.soldados.slice()
+        : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+      const soldado = soldadosOrig.find(s => s.tipo === tipo);
+      if (!soldado) return;
+      // Limites
+      const soldadosAtuais = warband.filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+      if (soldadosAtuais.length >= 8) {
+        alertDiv.textContent = 'Limite de 8 soldados atingido!';
+        return;
+      }
+      const especiaisLista = ["Knight","Templar","Barbarian","Treasure Hunter","Tracker","Ranger","Man-at-Arms","Apothecary"];
+      const especiaisAtuais = soldadosAtuais.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
+      const isEspecial = (soldado.custo > 50 || especiaisLista.includes(soldado.tipo));
+      if (isEspecial && especiaisAtuais.length >= 4) {
+        alertDiv.textContent = 'Limite de 4 soldados elite atingido!';
+        return;
+      }
+      // GOLD: checar gold suficiente
+      let goldInput = document.getElementById('gold-input');
+      let goldAtual = parseInt(goldInput.value) || 0;
+      if (goldAtual < soldado.custo) {
+        alertDiv.textContent = 'Ouro insuficiente para contratar este soldado!';
+        return;
+      }
+      goldInput.value = goldAtual - soldado.custo;
+      const novo = {
+        tipo: soldado.tipo,
+        nome: nome || soldado.tipo,
+        stats: {...soldado.stats},
+        currentHp: Number(soldado.stats.hp),
+        status: "normal",
+        personItens: []
+      };
+      warband.push(novo);
+      renderPersonagens();
+      addSoldadoForm.reset();
+      sel.onchange();
+    };
+  }
+}
 
 function renderAll() {
   renderBestiario();
@@ -833,6 +927,7 @@ function renderAll() {
   renderGoldXPBoxes('dashboard');
   renderGoldXPBoxes('magias');
   renderGoldXPBoxes('itens');
+  rebindFormEvents();
 }
 
 window.onload = loadJSON;
@@ -1064,15 +1159,17 @@ function renderEditStatsBtn() {
 function renderGoldXPBoxes(targetId) {
   const box = document.getElementById(`gold-xp-box-${targetId}`);
   if (!box) return;
+  const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
+  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
   box.innerHTML = `
     <span class="gold-xp-label">Gold:
       <button class="gold-btn" onclick="alteraGold(-10)">-</button>
-      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${document.getElementById('gold-input')?.value || 500}" onchange="setGold(this.value)">
+      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
       <button class="gold-btn" onclick="alteraGold(10)">+</button>
     </span>
     <span class="gold-xp-label">XP:
       <button class="xp-btn" onclick="alteraXP(-10)">-</button>
-      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${document.getElementById('xp-input')?.value || 0}" onchange="setXP(this.value)">
+      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
       <button class="xp-btn" onclick="alteraXP(10)">+</button>
     </span>
   `;
@@ -1081,11 +1178,7 @@ function renderGoldXPBoxes(targetId) {
     inp.onchange = function() {
       setGold(document.getElementById(`gold-input-${targetId}`).value);
       setXP(document.getElementById(`xp-input-${targetId}`).value);
-      // Atualizar todos os inputs
-      document.querySelectorAll('.gold-xp-input').forEach(el => {
-        if (el.id.startsWith('gold-input')) el.value = document.getElementById('gold-input').value;
-        if (el.id.startsWith('xp-input')) el.value = document.getElementById('xp-input').value;
-      });
+      syncGoldXPInputs();
     };
   });
 }
@@ -1153,6 +1246,54 @@ function setTheme(theme) {
 document.getElementById('theme-select').onchange = function() {
   setTheme(this.value);
 };
+
+// 1. Sincronizar gold/xp entre abas
+function syncGoldXPInputs() {
+  const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
+  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
+  document.querySelectorAll('.gold-xp-input').forEach(el => {
+    if (el.id.startsWith('gold-input')) el.value = goldVal;
+    if (el.id.startsWith('xp-input')) el.value = xpVal;
+  });
+}
+// Atualizar setGold e setXP para sincronizar
+function setGold(val) {
+  let input = document.getElementById("gold-input-dashboard");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
+  syncGoldXPInputs();
+}
+function setXP(val) {
+  let input = document.getElementById("xp-input-dashboard");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
+  syncGoldXPInputs();
+}
+// Atualizar renderGoldXPBoxes para usar os valores sincronizados
+function renderGoldXPBoxes(targetId) {
+  const box = document.getElementById(`gold-xp-box-${targetId}`);
+  if (!box) return;
+  const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
+  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
+  box.innerHTML = `
+    <span class="gold-xp-label">Gold:
+      <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
+      <button class="gold-btn" onclick="alteraGold(10)">+</button>
+    </span>
+    <span class="gold-xp-label">XP:
+      <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
+      <button class="xp-btn" onclick="alteraXP(10)">+</button>
+    </span>
+  `;
+  // Sincronizar valores ao alterar
+  box.querySelectorAll('input').forEach(inp => {
+    inp.onchange = function() {
+      setGold(document.getElementById(`gold-input-${targetId}`).value);
+      setXP(document.getElementById(`xp-input-${targetId}`).value);
+      syncGoldXPInputs();
+    };
+  });
+}
 </script>
 </body>
 </html>
