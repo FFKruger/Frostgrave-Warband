@@ -510,7 +510,8 @@ function addPersonItem(idx) {
   if (!sel) return;
   const itemNome = sel.value;
   if (!itemNome) return;
-  const item = (conteudo_frostgrave_json.itens || []).find(it => it.nome === itemNome);
+  const item = (bancoItens || []).find(it => it.nome === itemNome);
+  if (!item) return;
   if (!warband[idx].personItens) warband[idx].personItens = [];
   warband[idx].personItens.push({ nome: itemNome, grupo: item?.grupo || '', descricao: item?.descricao || '' });
   renderPersonagens();
@@ -541,8 +542,8 @@ function renderPersonagemCard(p, idx, isMago) {
   let statusVal = p.status || "normal";
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
 
-  // Itens do personagem
-  let itemOpts = (conteudo_frostgrave_json.itens || []).map(item =>
+  // Itens do personagem: apenas os selecionados na aba Itens
+  let itemOpts = (bancoItens || []).map(item =>
     `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
   ).join('');
   let personItensList = (p.personItens || []).map((item, i) =>
@@ -552,6 +553,15 @@ function renderPersonagemCard(p, idx, isMago) {
       <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button>
     </li>`
   ).join('');
+
+  // Controle de HP dentro da caixa do personagem
+  let hpControl = `
+    <div class="hp-control" style="margin-left:0.5em;">
+      <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
+      <input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)">
+      <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
+      <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
+    </div>`;
 
   return `<div class="person-card">
     <div class="person-header">
@@ -585,12 +595,7 @@ function renderPersonagemCard(p, idx, isMago) {
       ${statField('will', 'Will')}
       ${statField('hp', 'HP')}
       <span class="stat-label" style="margin-left:1.5em;">HP atual:</span>
-      <span class="hp-control">
-        <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
-        <input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)">
-        <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
-        <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
-      </span>
+      ${hpControl}
     </div>
     <div class="person-itens">
       <b>Itens:</b>
