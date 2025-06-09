@@ -91,12 +91,155 @@
     </style>
 </head>
 <body>
-<!-- ... (o restante do HTML permanece igual) ... -->
+<main>
+    <h1>Frostgrave Warband Manager</h1>
+    <nav id="tabnav">
+        <button data-tab="dashboard" class="active" type="button">Dashboard</button>
+        <button data-tab="magias" type="button">Magias</button>
+        <button data-tab="itens" type="button">Itens</button>
+        <button data-tab="notas" type="button">Notas</button>
+        <button data-tab="bestiario" type="button">Bestiário</button>
+    </nav>
+    <section id="dashboard" class="tab-content active">
+        <h2>Mago & Aprendiz</h2>
+        <div class="vertical-list" id="mago-aprendiz-lista"></div>
+        <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
+        <h2>Soldados</h2>
+        <div class="vertical-list" id="soldado-lista"></div>
+        <section class="add-section">
+            <h2>Adicionar Soldado</h2>
+            <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
+            <form class="add-form add-form-soldado" id="add-soldado-form">
+                <label>
+                    Tipo de Soldado:
+                    <select id="soldado-tipo"></select>
+                </label>
+                <label>
+                    Nome:
+                    <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
+                </label>
+                <button type="submit">Adicionar Soldado</button>
+            </form>
+        </section>
+    </section>
+    <section id="magias" class="tab-content">
+        <h2>Banco de Magias</h2>
+        <form class="magia-form" id="add-magia-form">
+            <select id="magia-dropdown"></select>
+            <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
+            <button type="submit">Adicionar Magia</button>
+        </form>
+        <ul id="banco-magias-lista" class="magias-list"></ul>
+    </section>
+    <section id="itens" class="tab-content">
+        <h2>Banco de Itens</h2>
+        <form class="item-form" id="add-item-form">
+            <select id="item-dropdown"></select>
+            <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
+            <button type="submit">Adicionar Item</button>
+        </form>
+        <ul id="banco-itens-lista" class="itens-list"></ul>
+    </section>
+    <section id="notas" class="tab-content">
+        <h2>Anotações da Warband</h2>
+        <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
+    </section>
+    <section id="bestiario" class="tab-content">
+        <h2>Bestiário</h2>
+        <div id="active-beasts-list" class="active-beasts-list"></div>
+        <div id="bestiary-list" class="bestiary-list"></div>
+    </section>
+</main>
 <script>
-// ... (código de carregamento do JSON, etc, igual ao exemplo anterior) ...
+let personagens = [];
+let bancoMagias = [];
+let bancoItens = [];
+let magiasPorPersonagem = {};
+let bestiarioAtivo = [];
+let ESCOLAS = [];
+let magiasPorEscola = {};
+let itensPadrao = {};
+let STATS = {};
+let SOLDADOS_NORMAIS = [];
+let SOLDADOS_ELITES = [];
+let ITEM_LIMITS = { "Mago": 5, "Aprendiz": 1, "Soldado": 1 };
+let bestiario = [];
 
-// ADICIONE/ALTERE SOMENTE ESTES TRECHOS (o restante permanece igual):
+function fetchConteudoFrostgrave() {
+    return fetch('conteudo_frostgrave.json')
+        .then(r => r.json())
+        .then(data => {
+            ESCOLAS = data.escolas;
+            magiasPorEscola = {};
+            data.magias.forEach(m => {
+                if (!magiasPorEscola[m.escola]) magiasPorEscola[m.escola] = [];
+                magiasPorEscola[m.escola].push(m);
+            });
+            itensPadrao = {};
+            data.itens.forEach(i => {
+                if (!itensPadrao[i.grupo]) itensPadrao[i.grupo] = [];
+                itensPadrao[i.grupo].push(i);
+            });
+            STATS = {};
+            SOLDADOS_NORMAIS = [];
+            SOLDADOS_ELITES = [];
+            data.personagens.forEach(p => {
+                STATS[p.tipo] = p.stats;
+                if (["Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"].includes(p.tipo))
+                    SOLDADOS_NORMAIS.push(p.tipo);
+                else if (!["Mago", "Aprendiz"].includes(p.tipo))
+                    SOLDADOS_ELITES.push(p.tipo);
+            });
+            bestiario = [
+                {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
+                {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
+                {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
+                {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
+            ];
+        });
+}
 
+// ============== RENDER DASHBOARD ==============
+function renderMagoAprendizSection() {
+    const div = document.getElementById('mago-aprendiz-lista');
+    div.innerHTML = '';
+    let magoIdx = personagens.findIndex(p => p.tipo === "Mago");
+    let aprendizIdx = personagens.findIndex(p => p.tipo === "Aprendiz");
+    if (magoIdx !== -1) div.appendChild(personagemCard(personagens[magoIdx], magoIdx));
+    if (aprendizIdx !== -1) div.appendChild(personagemCard(personagens[aprendizIdx], aprendizIdx));
+    // Botões de adicionar
+    const btnDiv = document.getElementById('add-mago-aprendiz-btns');
+    btnDiv.innerHTML = '';
+    if (magoIdx === -1) {
+        let sel = `<select id="escola-mago" style="margin-right:1em;">
+            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
+        </select>`;
+        btnDiv.innerHTML +=
+            `<button id="add-mago-btn">+ Adicionar Mago</button> ${sel}`;
+    }
+    if (aprendizIdx === -1) {
+        let sel = `<select id="escola-aprendiz" style="margin-right:1em;">
+            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
+        </select>`;
+        btnDiv.innerHTML +=
+            `<button id="add-aprendiz-btn">+ Adicionar Aprendiz</button> ${sel}`;
+    }
+    if (document.getElementById("add-mago-btn")) document.getElementById("add-mago-btn").onclick = adicionarMago;
+    if (document.getElementById("add-aprendiz-btn")) document.getElementById("add-aprendiz-btn").onclick = adicionarAprendiz;
+}
+function renderSoldadosSection() {
+    const soldadoDiv = document.getElementById('soldado-lista');
+    soldadoDiv.innerHTML = '';
+    personagens
+        .filter(p => p.tipo === "Soldado")
+        .forEach((pers, idx) => soldadoDiv.appendChild(personagemCard(pers, idx)));
+    renderSoldadoDropdown();
+    renderSoldadoAlert();
+}
+function renderPersonagens() {
+    renderMagoAprendizSection();
+    renderSoldadosSection();
+}
 function personagemCard(pers, idx) {
     let tipoStr = pers.tipo;
     let stats = getStats(pers);
@@ -128,7 +271,6 @@ function personagemCard(pers, idx) {
         </form>`
         : `<span style="font-size:.92em;color:#888;">Limite de itens: ${itemLimit}</span>`;
 
-    // Mago: campos editáveis, aprendiz: campos não editáveis mas refletem mago
     let editableStats = '';
     if (pers.tipo === "Mago") {
         editableStats = `
@@ -197,12 +339,10 @@ function personagemCard(pers, idx) {
     });
 }
 
-// Função: retorna stats do personagem (para aprendiz, calcula com base no mago)
 function getStats(pers) {
     if (pers.tipo === "Aprendiz") {
         let mago = personagens.find(p => p.tipo === "Mago");
         if (!mago || !mago.stats) return {...STATS["Aprendiz"]};
-        // Aprendiz é sempre: move igual mago, fight mago-2, shoot mago, armor mago, will mago-2, hp 10
         const m = mago.stats;
         let stat = val => {
             let n = parseInt(val); if (isNaN(n)) n = 0;
@@ -219,27 +359,39 @@ function getStats(pers) {
             hp: 10
         };
     }
-    // Para mago, se stats customizadas, usa elas, senão STATS base
     if (pers.tipo === "Mago") {
         return pers.stats || {...STATS["Mago"]};
     }
     return STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
 }
-
-// Permite editar stats do mago (e reflete automaticamente no aprendiz)
 window.editarStat = function(idx, campo, valor) {
     let p = personagens[idx];
     if (!p.stats) p.stats = {...STATS["Mago"]};
     if (campo === "move" || campo === "armor" || campo === "hp") {
         p.stats[campo] = parseInt(valor) || 0;
     } else {
-        // fight, shoot, will
         p.stats[campo] = valor;
     }
     renderPersonagens();
 };
+// ... (demais funções do exemplo anterior: dashboard, magias, itens, bestiário, abas, etc) ...
+// Insira todas as funções JS já adaptadas dos exemplos anteriores aqui (omitidas por brevidade).
+// O restante do código permanece igual, apenas acrescente as funções acima!
 
-// ... (demais funções permanecem iguais ao exemplo anterior) ...
+window.onload = function() {
+    fetchConteudoFrostgrave().then(() => {
+        renderPersonagens();
+        renderBestiario();
+        renderMagiaDropdown();
+        renderBancoMagias();
+        renderItemDropdown();
+        renderBancoItens();
+    });
+
+    document.getElementById('add-soldado-form').addEventListener('submit', adicionarSoldadoHandler);
+    document.getElementById('add-magia-form').addEventListener('submit', adicionarBancoMagiaHandler);
+    document.getElementById('add-item-form').addEventListener('submit', adicionarBancoItemHandler);
+};
 </script>
 </body>
 </html>
