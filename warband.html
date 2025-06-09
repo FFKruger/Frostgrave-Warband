@@ -5,17 +5,61 @@
     <title>Frostgrave Warband Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* ...[restante do CSS igual ao anterior]... */
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
+        main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+        h1 { text-align: center; margin-bottom: 0.7em; }
+        h2 { color: #2e4053; }
+        nav { text-align: center; margin-bottom: 1.5em; }
+        nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer;}
+        nav button.active, nav button:hover { background: #3498db; color: #fff;}
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 2em; margin-bottom: 2em; }
+        .person-card { background: #fafdff; border-radius: 10px; box-shadow: 0 1px 8px #bbb3; padding: 1.3em 1.1em 1em 1.1em; min-width: 350px; flex: 1 1 390px; position: relative; margin-bottom: 1.3em;}
+        .person-header { font-size: 1.16em; margin-bottom: .7em;}
+        .tipo-mago { color: #1a5276; font-weight: bold; }
+        .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
+        .tipo-soldado { color: #16a085; font-weight: bold; }
+        .soldado-elite { color: #c0392b; }
+        .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
+        .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
+        .stat-value { width: 2.2em; text-align: center; }
+        .hp-box { display: flex; align-items: center; gap: 0.2em;}
+        .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+        .hp-btn:active { background: #2471a3; }
+        .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+        .name-value { width: 7em; }
+        .label { font-weight: 500; color: #444; }
+        .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
+        .remove-btn:active { background: #922b21; }
+        .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
+        .add-form select { min-width: 160px; }
+        .personagem-destacado { border: 2px solid #3498db !important; background: #e8f4fb !important; }
+        .add-mago-aprendiz-btns { margin-bottom: 2em; }
+        .add-mago-aprendiz-btns button { margin-right: 1em; background: #3498db; color: #fff; font-weight: bold; border: none; border-radius: 7px; padding: 0.6em 1.4em; font-size: 1em; cursor: pointer;}
+        .add-mago-aprendiz-btns button:last-child { margin-right: 0;}
+        .add-mago-aprendiz-btns button:active { background: #2471a3; }
+        .add-form-soldado { margin-bottom: 2em;}
+        .badge-limit { display:inline-block; background: #d35400; color:#fff; font-size:0.9em; border-radius:5px; padding: 0 .4em; margin-left:.5em; }
+        .badge-el { background: #c0392b; }
+        .badge-norm { background: #3498db;}
+        .soldado-limit-alert {color:#c0392b;font-weight:bold; margin-bottom:1em;}
+        .magias-list, .itens-list { margin: 0.4em 0 0 1.2em; font-size: 0.97em; }
+        .magia-form, .item-form { margin-bottom: 1.2em; }
+        .magia-form input, .item-form input, .magia-form select, .item-form select { margin-right: 1em; }
+        .edit-btn { background: #f7ca18; color: #222; border: none; border-radius: 3px; padding: 0.13em 0.7em; font-size: 0.97em; cursor: pointer;}
+        .edit-btn:active { background: #e67e22;}
+        @media (max-width: 1100px) { .flex-wrap { flex-direction: column; } .person-card { min-width: unset; width: 100%; } }
     </style>
 </head>
 <body>
 <main>
     <h1>Frostgrave Warband Manager</h1>
     <nav>
-        <button class="active" onclick="showTab('dashboard')">Dashboard</button>
-        <button onclick="showTab('magias')">Magias</button>
-        <button onclick="showTab('itens')">Itens</button>
-        <button onclick="showTab('notas')">Notas</button>
+        <button data-tab="dashboard" class="active">Dashboard</button>
+        <button data-tab="magias">Magias</button>
+        <button data-tab="itens">Itens</button>
+        <button data-tab="notas">Notas</button>
     </nav>
     <!-- DASHBOARD -->
     <section id="dashboard" class="tab-content active">
@@ -30,7 +74,7 @@
         <section class="add-section">
             <h2>Adicionar Soldado</h2>
             <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-            <form class="add-form add-form-soldado" id="add-soldado-form">
+            <form class="add-form add-form-soldado" id="add-soldado-form" onsubmit="adicionarSoldado(event)">
                 <label>
                     Tipo de Soldado:
                     <select id="soldado-tipo"></select>
@@ -44,83 +88,220 @@
         </section>
     </section>
     <!-- MAGIAS -->
-    <!-- ...[restante do HTML igual ao anterior]... -->
+    <section id="magias" class="tab-content">
+        <h2>Banco de Magias</h2>
+        <form class="magia-form" onsubmit="adicionarBancoMagia(event)">
+            <input id="magia-nome" type="text" required placeholder="Nome">
+            <input id="magia-escola" type="text" required placeholder="Escola">
+            <input id="magia-custo" type="number" min="1" required placeholder="Custo">
+            <input id="magia-desc" type="text" required placeholder="Descrição rápida">
+            <input id="magia-comp" type="text" placeholder="Descrição completa">
+            <button type="submit">Adicionar Magia</button>
+        </form>
+        <ul id="banco-magias-lista" class="magias-list"></ul>
+    </section>
+    <!-- ITENS -->
+    <section id="itens" class="tab-content">
+        <h2>Banco de Itens</h2>
+        <form class="item-form" onsubmit="adicionarBancoItem(event)">
+            <input id="item-nome" type="text" required placeholder="Nome">
+            <input id="item-desc" type="text" required placeholder="Descrição rápida">
+            <input id="item-efeito" type="text" placeholder="Efeito">
+            <button type="submit">Adicionar Item</button>
+        </form>
+        <ul id="banco-itens-lista" class="itens-list"></ul>
+    </section>
+    <!-- NOTAS -->
+    <section id="notas" class="tab-content">
+        <h2>Anotações da Warband</h2>
+        <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
+    </section>
 </main>
 <script>
-// --- Magias e Itens [igual ao anterior] ---
+// ------------------- Dados Iniciais -------------------------
+let personagens = [];
+let bancoMagias = [
+    {nome: "Absorb Knowledge", escola: "Sigilist", custo_base: 8, descricao: "Permite ao mago ganhar XP extra lendo grimórios.", completo: "O mago pode gastar uma ação para ler um grimório não usado, ganhando 50 XP. O grimório é removido após o uso."},
+    {nome: "Bone Dart", escola: "Necromancer", custo_base: 8, descricao: "Projétil mágico de osso que causa dano.", completo: "Alcance 24\". Causa dano igual a um ataque de força +5."},
+];
+let bancoItens = [
+    {nome: "Magic Sword", descricao: "Espada encantada (+1 Fight)", efeito: "O portador recebe +1 no atributo Fight enquanto empunhar."},
+    {nome: "Potion of Healing", descricao: "Recupera até 5 HP ao ser consumida.", efeito: "Recupere até 5 pontos de vida ao usar esta poção."}
+];
 
-// LISTA CORRETA DE SOLDADOS FROSTGRAVE 2ª EDIÇÃO
+// Soldados Frostgrave 2ª edição
 const SOLDADOS_NORMAIS = [
-    "Thief",
-    "Thug",
-    "War Dog",
-    "Infantryman",
-    "Man-at-Arms" // Corrigido: Man-at-Arms é normal!
+    "Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"
 ];
 const SOLDADOS_ELITES = [
-    "Archer",
-    "Barbarian",
-    "Crossbowman",
-    "Knight",
-    "Marksman",
-    "Ranger",
-    "Templar",
-    "Tracker",
-    "Treasure Hunter",
-    "Apothecary",
-    "Crowmaster",
-    "Pack Mule",
-    "Trap Expert",
-    "Witch Doctor"
+    "Archer", "Barbarian", "Crossbowman", "Knight", "Marksman", "Ranger", "Templar", "Tracker", "Treasure Hunter", "Apothecary", "Crowmaster", "Pack Mule", "Trap Expert", "Witch Doctor"
 ];
-const SOLDADOS_PADRAO = {
-  "Archer":          { move:6, fight:0, shoot:+2, armor:11, will:0, hp:10 },
-  "Barbarian":       { move:6, fight:+4, shoot:0, armor:10, will:0, hp:12 },
-  "Crossbowman":     { move:6, fight:0, shoot:+2, armor:11, will:0, hp:10 },
-  "Infantryman":     { move:6, fight:+2, shoot:0, armor:12, will:0, hp:12 },
-  "Knight":          { move:6, fight:+3, shoot:0, armor:14, will:0, hp:12 },
-  "Man-at-Arms":     { move:6, fight:+3, shoot:0, armor:13, will:0, hp:12 },
-  "Marksman":        { move:6, fight:0, shoot:+3, armor:11, will:0, hp:10 },
-  "Ranger":          { move:7, fight:+2, shoot:+2, armor:11, will:0, hp:12 },
-  "Templar":         { move:6, fight:+4, shoot:0, armor:12, will:0, hp:12 },
-  "Thief":           { move:7, fight:+1, shoot:0, armor:10, will:0, hp:10 },
-  "Tracker":         { move:7, fight:+1, shoot:+2, armor:11, will:0, hp:10 },
-  "Treasure Hunter": { move:7, fight:+3, shoot:0, armor:12, will:0, hp:12 },
-  "Thug":            { move:6, fight:+2, shoot:0, armor:10, will:0, hp:10 },
-  "War Dog":         { move:8, fight:+1, shoot:0, armor:10, will:0, hp:8 },
-  "Apothecary":      { move:6, fight:0, shoot:0, armor:10, will:0, hp:10 },
-  "Crowmaster":      { move:6, fight:0, shoot:0, armor:10, will:0, hp:10 },
-  "Pack Mule":       { move:6, fight:0, shoot:0, armor:10, will:0, hp:10 },
-  "Trap Expert":     { move:7, fight:0, shoot:0, armor:10, will:0, hp:10 },
-  "Witch Doctor":    { move:6, fight:0, shoot:0, armor:10, will:0, hp:10 }
-};
-const SOLDADOS_NORMAIS_SET = new Set(SOLDADOS_NORMAIS);
-const SOLDADOS_ELITES_SET = new Set(SOLDADOS_ELITES);
 
-// ...[restante das funções do código igual ao anterior]...
+// ------------------- Renderização ---------------------------
+function renderPersonagens() {
+    const magoAprendizLista = document.getElementById('mago-aprendiz-lista');
+    const soldadoLista = document.getElementById('soldado-lista');
+    magoAprendizLista.innerHTML = '';
+    soldadoLista.innerHTML = '';
+    personagens.forEach((pers, idx) => {
+        const card = document.createElement('li');
+        card.className = 'person-card';
+        let tipoStr = pers.tipo;
+        if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
+        else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
+        else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
+        else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado}</span>`;
 
-// Preenche dropdown de soldados padrão com separação e bloqueio por limite
+        card.innerHTML = `
+            <div class="person-header">
+                ${tipoStr} ${pers.nome ? ' - ' + pers.nome : ''}
+                <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
+            </div>
+            HP: <span>${pers.hp}</span>
+        `;
+        if (pers.tipo === "Mago" || pers.tipo === "Aprendiz") magoAprendizLista.appendChild(card);
+        else soldadoLista.appendChild(card);
+    });
+    renderSoldadoDropdown();
+    renderSoldadoAlert();
+}
+function removerPersonagem(idx) {
+    personagens.splice(idx, 1);
+    renderPersonagens();
+}
+
+// ------------------- Formulários Dashboard ------------------
+function adicionarMago() {
+    if (personagens.find(p => p.tipo === "Mago")) return alert("Só pode haver um mago!");
+    personagens.push({tipo: "Mago", nome: "Mago", hp: 14});
+    renderPersonagens();
+}
+function adicionarAprendiz() {
+    if (personagens.find(p => p.tipo === "Aprendiz")) return alert("Só pode haver um aprendiz!");
+    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", hp: 10});
+    renderPersonagens();
+}
+function adicionarSoldado(e) {
+    e.preventDefault();
+    let tipoSoldado = document.getElementById('soldado-tipo').value;
+    let nome = document.getElementById('soldado-nome').value;
+    // Limite por tipo
+    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
+    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
+    if (SOLDADOS_NORMAIS.includes(tipoSoldado) && norm >= 4)
+        return alert("Máximo de 4 soldados normais!");
+    if (SOLDADOS_ELITES.includes(tipoSoldado) && elite >= 4)
+        return alert("Máximo de 4 soldados elite!");
+    if (norm+elite >= 8)
+        return alert("Máximo de 8 soldados!");
+    personagens.push({tipo: "Soldado", tipoSoldado, nome, hp: 10});
+    renderPersonagens();
+    e.target.reset();
+}
 function renderSoldadoDropdown() {
     let soldadoSel = document.getElementById('soldado-tipo');
-    let {norm, elite} = contarSoldados();
-    let normDisabled = norm>=4;
-    let eliteDisabled = elite>=4;
-    let html = "";
-    html += `<optgroup label="Normais">`;
-    for(const k of SOLDADOS_NORMAIS) {
-        html += `<option value="${k}"${normDisabled?" disabled":""}>${k}</option>`;
-    }
-    html += `</optgroup>`;
-    html += `<optgroup label="Elites">`;
-    for(const k of SOLDADOS_ELITES) {
-        html += `<option value="${k}"${eliteDisabled?" disabled":""}>${k}</option>`;
-    }
-    html += `</optgroup>`;
-    soldadoSel.innerHTML = html;
+    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
+    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
+    soldadoSel.innerHTML = `<optgroup label="Normais">` +
+        SOLDADOS_NORMAIS.map(k => `<option value="${k}"${norm>=4?' disabled':''}>${k}</option>`).join('') +
+        `</optgroup><optgroup label="Elites">` +
+        SOLDADOS_ELITES.map(k => `<option value="${k}"${elite>=4?' disabled':''}>${k}</option>`).join('') +
+        `</optgroup>`;
 }
-renderSoldadoDropdown();
+function renderSoldadoAlert() {
+    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
+    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
+    let total = norm+elite;
+    let alertDiv = document.getElementById('soldado-limit-alert');
+    let msg = "";
+    if (total >= 8) msg = "Limite total de 8 soldados atingido!";
+    else if (norm >= 4) msg = "Limite de 4 soldados normais atingido.";
+    else if (elite >= 4) msg = "Limite de 4 soldados elite atingido.";
+    alertDiv.textContent = msg;
+}
 
-// ...[restante do JS igual ao anterior]...
+// ------------------- Magias e Itens editáveis -----------------
+function renderBancoMagias() {
+    const ul = document.getElementById('banco-magias-lista');
+    ul.innerHTML = bancoMagias.length
+        ? bancoMagias.map((m, idx) =>
+            `<li>
+                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
+                <br>
+                <i>${m.descricao}</i>
+                <br>
+                <small>${m.completo||""}</small>
+                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
+}
+function adicionarBancoMagia(e) {
+    e.preventDefault();
+    const nome = document.getElementById('magia-nome').value.trim();
+    const escola = document.getElementById('magia-escola').value.trim();
+    const custo_base = +document.getElementById('magia-custo').value;
+    const descricao = document.getElementById('magia-desc').value.trim();
+    const completo = document.getElementById('magia-comp').value.trim();
+    if (!nome || !escola || !descricao) return;
+    bancoMagias.push({nome, escola, custo_base, descricao, completo});
+    renderBancoMagias();
+    e.target.reset();
+}
+function removerBancoMagia(idx) {
+    bancoMagias.splice(idx, 1);
+    renderBancoMagias();
+}
+function renderBancoItens() {
+    const ul = document.getElementById('banco-itens-lista');
+    ul.innerHTML = bancoItens.length
+        ? bancoItens.map((i, idx) =>
+            `<li>
+                <b>${i.nome}</b>
+                <br>
+                <i>${i.descricao||""}</i>
+                <br>
+                <small>${i.efeito||""}</small>
+                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
+}
+function adicionarBancoItem(e) {
+    e.preventDefault();
+    const nome = document.getElementById('item-nome').value.trim();
+    const descricao = document.getElementById('item-desc').value.trim();
+    const efeito = document.getElementById('item-efeito').value.trim();
+    if (!nome || !descricao) return;
+    bancoItens.push({nome, descricao, efeito});
+    renderBancoItens();
+    e.target.reset();
+}
+function removerBancoItem(idx) {
+    bancoItens.splice(idx, 1);
+    renderBancoItens();
+}
+
+// ------------------- Abas -------------------------
+document.querySelectorAll('nav button').forEach((btn) => {
+    btn.onclick = function() {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
+        const tab = btn.getAttribute('data-tab');
+        document.getElementById(tab).classList.add('active');
+        if (tab === 'magias') renderBancoMagias();
+        if (tab === 'itens') renderBancoItens();
+        if (tab === 'dashboard') renderPersonagens();
+    }
+});
+
+// ---------- Inicialização ---------------
+window.onload = function() {
+    renderPersonagens();
+    renderBancoMagias();
+    renderBancoItens();
+};
 </script>
 </body>
 </html>
