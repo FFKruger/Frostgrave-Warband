@@ -69,7 +69,7 @@
     .tipo-soldado { color: var(--accent); font-weight: bold; font-size: 0.95em; }
     .soldado-elite { color: var(--danger); }
     .stats-line { font-size: 0.97em; display: flex; align-items: center; gap: 0.7em; margin-bottom: .4em; padding: 0.3em 0; background: var(--panel-bg); border-radius: 5px; }
-    .stat-label { font-weight: 500; margin-right: 0.1em; color: var(--text-main);}
+    .stat-label { font-weight: 500; margin-right: 0.1em; color: var(--text-main); display: inline-flex; align-items: center; min-width: 110px; max-width: 120px; }
     .stat-value, .stat-input { width: 1.5em; text-align: center; }
     .stat-input { border: 1px solid var(--border); border-radius: 3px; font-size: 0.95em; padding: 0.05em 0.1em;}
     .stat-edit-arrows { display:inline-flex; flex-direction:column; font-size:0.95em; vertical-align:middle; margin-left:0.05em; opacity:0; transition:opacity 0.2s;}
@@ -196,6 +196,18 @@
   <section id="magias" class="tab-content">
     <div class="tab-panel-box">
       <h2 class="tab-panel-title">Banco de Magias</h2>
+      <div class="gold-xp-box">
+        <span class="gold-xp-label">Gold:
+          <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+          <input id="gold-input-magias" class="gold-xp-input" type="number" min="0" value="${document.getElementById('gold-input')?.value || 500}" onchange="setGold(this.value)">
+          <button class="gold-btn" onclick="alteraGold(10)">+</button>
+        </span>
+        <span class="gold-xp-label">XP:
+          <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+          <input id="xp-input-magias" class="gold-xp-input" type="number" min="0" value="${document.getElementById('xp-input')?.value || 0}" onchange="setXP(this.value)">
+          <button class="xp-btn" onclick="alteraXP(10)">+</button>
+        </span>
+      </div>
       <form class="magia-form" id="add-magia-form" autocomplete="off">
         <select id="magia-dropdown"></select>
         <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
@@ -208,6 +220,18 @@
   <section id="itens" class="tab-content">
     <div class="tab-panel-box">
       <h2 class="tab-panel-title">Banco de Itens</h2>
+      <div class="gold-xp-box">
+        <span class="gold-xp-label">Gold:
+          <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+          <input id="gold-input-itens" class="gold-xp-input" type="number" min="0" value="${document.getElementById('gold-input')?.value || 500}" onchange="setGold(this.value)">
+          <button class="gold-btn" onclick="alteraGold(10)">+</button>
+        </span>
+        <span class="gold-xp-label">XP:
+          <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+          <input id="xp-input-itens" class="gold-xp-input" type="number" min="0" value="${document.getElementById('xp-input')?.value || 0}" onchange="setXP(this.value)">
+          <button class="xp-btn" onclick="alteraXP(10)">+</button>
+        </span>
+      </div>
       <form class="item-form" id="add-item-form" autocomplete="off">
         <select id="item-dropdown"></select>
         <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
@@ -242,6 +266,7 @@ const statusOptions = [
   { value: "missing", label: "Desaparecido", css: "status-missing" },
   { value: "dead", label: "Morto", css: "status-dead" }
 ];
+let statsEditEnabled = false;
 
 // HP control: store current HP in a property separate from stats.hp (max HP)
 function getCurrentHP(p) {
@@ -566,6 +591,7 @@ function renderPersonagens() {
     }
   }
   renderAddMagoAprendizBtns();
+  renderEditStatsBtn();
 }
 
 function editPersonagemNome(idx) {
@@ -593,6 +619,20 @@ function addPersonItem(idx) {
   if (!sel) return;
   const itemNome = sel.value;
   if (!itemNome) return;
+  // Limitar soldados a 1 item
+  if (warband[idx].tipo !== 'Mago' && warband[idx].tipo !== 'Aprendiz') {
+    if ((warband[idx].personItens || []).length >= 1) {
+      alert('Soldados só podem ter 1 item!');
+      return;
+    }
+  }
+  // Limitar item a apenas 1 personagem
+  for (let i = 0; i < warband.length; i++) {
+    if (i !== idx && (warband[i].personItens || []).some(it => it.nome === itemNome)) {
+      alert('Este item já está atribuído a outro personagem!');
+      return;
+    }
+  }
   const item = (bancoItens || []).find(it => it.nome === itemNome);
   if (!item) return;
   if (!warband[idx].personItens) warband[idx].personItens = [];
@@ -609,7 +649,7 @@ function renderStatWithArrows(idx, stat, label, isEditable) {
   let minusBtn = `<button class="stat-arrow-btn" onclick="mudaStat(${idx},'${stat}',-1)" title="-">▼</button>`;
   return `<span class="stat-label stat-hover" style="position:relative;">
     ${label}: <span class="stat-value">${valor}</span>
-    ${isEditable ? `<span class="stat-edit-arrows">${plusBtn}${minusBtn}</span>` : ""}
+    ${(isEditable && statsEditEnabled) ? `<span class="stat-edit-arrows">${plusBtn}${minusBtn}</span>` : ""}
   </span>`;
 }
 function mudaStat(idx, stat, delta) {
@@ -645,10 +685,16 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   let escolaHtml = p.escola ? `<span style='margin-left:1em;font-size:0.98em;color:#21618c;font-weight:bold;'>[${p.escola}]</span>` : '';
   // ITENS: apenas os do bancoItens, agrupados por grupo, com tooltip
   let agrupadosItens = {};
+  // Filtrar itens já atribuídos a outros personagens
+  let itensAtribuidos = new Set();
+  warband.forEach((pers, i) => {
+    if (i !== idx && pers.personItens) pers.personItens.forEach(it => itensAtribuidos.add(it.nome));
+  });
   (bancoItens || []).forEach(item => {
     let grupo = item.grupo || 'Outros';
     if (!agrupadosItens[grupo]) agrupadosItens[grupo] = [];
-    agrupadosItens[grupo].push(item);
+    // Só incluir se não estiver atribuído a outro personagem
+    if (!itensAtribuidos.has(item.nome)) agrupadosItens[grupo].push(item);
   });
   let itemOpts = Object.keys(agrupadosItens).sort().map(grupo =>
     `<optgroup label="${grupo}">
@@ -665,7 +711,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     return `<li title='${desc ? desc.replace(/'/g, '&apos;') : ''}'><b>${item.nome}</b> <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span> <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button></li>`;
   }).join('');
   // HP control ao lado do nome, alinhado à direita
-  let hpControl = `<div class="hp-control" style="margin-left:auto; display:inline-flex; float:right;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
+  let hpControl = `<div class="hp-control" style="margin-left:auto; display:inline-flex; float:right;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)" style="width:3.5em; font-size:1.08em;"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
   // Magias do personagem (apenas para mago/aprendiz)
   let magiasPersonagem = p.personMagias || [];
   let magiasList = magiasPersonagem.map((magia, i) => {
@@ -794,6 +840,8 @@ function renderAll() {
   renderMagiaDropdown();
   renderItemDropdown();
   renderAprenderMagiaForm();
+  renderGoldXPBoxes('magias');
+  renderGoldXPBoxes('itens');
 }
 
 window.onload = loadJSON;
@@ -907,10 +955,13 @@ function getDificuldadeMagia(escolaMago, escolaMagia) {
 function renderAprenderMagiaForm() {
   const formDiv = document.getElementById('aprender-magia-form-div');
   if (!formDiv) return;
-  // Listar mago/aprendiz
-  let magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
-  let magoOpts = magos.map((p,i) => `<option value="${i}">${p.nome || p.tipo} (${p.tipo})</option>`).join('');
-  // Magias do banco, agrupadas por escola, e filtrar as já aprendidas
+  // Magias do banco, agrupadas por escola, e filtrar as já aprendidas pelo mago/aprendiz
+  let mago = warband.find(p => p.tipo === 'Mago');
+  let aprendiz = warband.find(p => p.tipo === 'Aprendiz');
+  let magiasAprendidas = [];
+  if (mago && mago.personMagias) magiasAprendidas = magiasAprendidas.concat(mago.personMagias);
+  if (aprendiz && aprendiz.personMagias) magiasAprendidas = magiasAprendidas.concat(aprendiz.personMagias);
+  magiasAprendidas = [...new Set(magiasAprendidas)];
   let allMagias = (bancoMagias || []).slice();
   let agrupadas = {};
   allMagias.forEach(m => {
@@ -919,35 +970,27 @@ function renderAprenderMagiaForm() {
     agrupadas[escola].push(m);
   });
   let escolasOrd = Object.keys(agrupadas).sort();
-  let idxSel = 0;
-  let selectedMago = magos[idxSel];
-  // Atualiza opções de magia ao trocar personagem
-  function getMagiaOpts(idx) {
-    let magiasAprendidas = (magos[idx]?.personMagias || []);
+  // Função para mostrar descrição da magia selecionada
+  function getMagiaDescricao(nome) {
+    let magia = (bancoMagias || []).find(m => m.nome === nome);
+    return magia && magia.descricao ? magia.descricao : '';
+  }
+  // Opções de magias não aprendidas
+  function getMagiaOpts() {
     return escolasOrd.map(escola =>
       `<optgroup label="${escola}">
         ${agrupadas[escola].sort((a,b)=>a.nome.localeCompare(b.nome)).filter(m => !magiasAprendidas.includes(m.nome)).map(m => `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}</option>`).join('')}
       </optgroup>`
     ).join('');
   }
-  // Função para mostrar descrição da magia selecionada
-  function getMagiaDescricao(nome) {
-    let magia = (bancoMagias || []).find(m => m.nome === nome);
-    return magia && magia.descricao ? magia.descricao : '';
-  }
   formDiv.innerHTML = `
     <div style="margin-bottom:0.7em;text-align:center;">
       <span style="font-size:1.08em;font-weight:600;color:var(--primary);">Aprender Magia</span>
     </div>
     <form class="aprender-magia-form" id="aprender-magia-form" autocomplete="off" style="margin-bottom:0.7em;display:flex;gap:0.7em;align-items:center;justify-content:center;flex-wrap:wrap;">
-      <label style="font-size:1em;font-weight:500;color:var(--text-title);">Personagem:
-        <select id="personagem-aprender-magia" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;">
-          ${magoOpts}
-        </select>
-      </label>
       <label style="font-size:1em;font-weight:500;color:var(--text-title);">Magia:
-        <select id="magia-aprender-dropdown" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;min-width:160px;">
-          ${getMagiaOpts(0)}
+        <select id="magia-aprender-dropdown" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;min-width:200px;">
+          ${getMagiaOpts()}
         </select>
       </label>
       <button id="aprender-magia-btn" type="submit" style="font-size:1.08em;padding:0.3em 1.2em;border-radius:7px;background:var(--primary);color:#fff;border:none;font-weight:600;transition:background 0.2s;">Aprender Magia</button>
@@ -955,7 +998,6 @@ function renderAprenderMagiaForm() {
     <div id="aprender-magia-desc" style="min-height:2em;font-size:0.98em;color:var(--text-main);text-align:center;margin-bottom:0.3em;"></div>
     <div id="aprender-magia-alert" style="color:#c0392b;font-size:0.95em;text-align:center;"></div>`;
   const form = document.getElementById('aprender-magia-form');
-  const magoSel = document.getElementById('personagem-aprender-magia');
   const magiaSel = document.getElementById('magia-aprender-dropdown');
   const descDiv = document.getElementById('aprender-magia-desc');
   // Atualizar descrição ao trocar magia
@@ -963,24 +1005,15 @@ function renderAprenderMagiaForm() {
     const nome = magiaSel.value;
     descDiv.textContent = nome ? getMagiaDescricao(nome) : '';
   }
-  magoSel.onchange = function() {
-    magiaSel.innerHTML = getMagiaOpts(magoSel.value);
-    updateDesc();
-  };
   magiaSel.onchange = updateDesc;
   updateDesc();
   if (form) {
     form.onsubmit = function(e) {
       e.preventDefault();
-      const idx = parseInt(document.getElementById('personagem-aprender-magia').value);
       const magiaNome = document.getElementById('magia-aprender-dropdown').value;
       const alertDiv = document.getElementById('aprender-magia-alert');
       alertDiv.textContent = '';
-      if (!warband[idx] || !magiaNome) return;
-      if (!warband[idx].escola) {
-        alertDiv.textContent = 'Defina a escola do personagem primeiro!';
-        return;
-      }
+      if (!magiaNome) return;
       let xpInput = document.getElementById('xp-input');
       let xpAtual = parseInt(xpInput.value) || 0;
       if (xpAtual < 100) {
@@ -999,6 +1032,71 @@ function renderAprenderMagiaForm() {
       renderAprenderMagiaForm();
     };
   }
+}
+
+function renderEditStatsBtn() {
+  const header = document.querySelector('.warband-header');
+  if (!header) return;
+  let btn = document.getElementById('edit-stats-btn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'edit-stats-btn';
+    btn.style.marginLeft = '1em';
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#fff';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '6px';
+    btn.style.fontSize = '0.98em';
+    btn.style.padding = '0.3em 1em';
+    btn.style.cursor = 'pointer';
+    header.appendChild(btn);
+  }
+  btn.textContent = statsEditEnabled ? 'Desativar Edição de Características' : 'Ativar Edição de Características';
+  btn.onclick = function() {
+    statsEditEnabled = !statsEditEnabled;
+    renderPersonagens();
+    renderEditStatsBtn();
+  };
+}
+
+function renderGoldXPBoxes(targetId) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  let box = document.getElementById(`gold-xp-box-${targetId}`);
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'gold-xp-box';
+    box.id = `gold-xp-box-${targetId}`;
+    box.style.display = 'flex';
+    box.style.justifyContent = 'flex-end';
+    box.style.gap = '0.7em';
+    box.style.marginBottom = '1em';
+    target.insertBefore(box, target.firstChild);
+  }
+  box.innerHTML = `
+    <span class="gold-xp-label">Gold:
+      <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${document.getElementById('gold-input')?.value || 500}" onchange="setGold(this.value)">
+      <button class="gold-btn" onclick="alteraGold(10)">+</button>
+    </span>
+    <span class="gold-xp-label">XP:
+      <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${document.getElementById('xp-input')?.value || 0}" onchange="setXP(this.value)">
+      <button class="xp-btn" onclick="alteraXP(10)">+</button>
+    </span>
+  `;
+  // Sincronizar valores ao alterar
+  box.querySelectorAll('input').forEach(inp => {
+    inp.onchange = function() {
+      setGold(document.getElementById(`gold-input-${targetId}`).value);
+      setXP(document.getElementById(`xp-input-${targetId}`).value);
+      // Atualizar todos os inputs
+      document.querySelectorAll('.gold-xp-input').forEach(el => {
+        if (el.id.startsWith('gold-input')) el.value = document.getElementById('gold-input').value;
+        if (el.id.startsWith('xp-input')) el.value = document.getElementById('xp-input').value;
+      });
+    };
+  });
 }
 
 const themes = {
