@@ -405,23 +405,21 @@ function adicionarAprendiz() {
     return;
   }
   let idx = warband.findIndex(p => p.tipo === 'Mago');
-  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
+  const aprendizModelo = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
   let escola = warbandEscola || warband.find(p => p.tipo === 'Mago')?.escola;
   if (!escola) {
     alert('Adicione um mago primeiro!');
     return;
   }
-  // Descontar 200 gold
-  let goldInput = document.getElementById('gold-input-dashboard');
-  let goldAtual = parseInt(goldInput.value) || 0;
-  if (goldAtual < 200) {
+  // Descontar 200 gold corretamente e sincronizar
+  let goldVal = parseInt(document.getElementById('gold-input-dashboard').value) || 0;
+  if (goldVal < 200) {
     alert('Ouro insuficiente para contratar um Aprendiz! (200g)');
     return;
   }
-  goldInput.value = goldAtual - 200;
-  syncGoldXPInputs();
-  if (aprendiz) {
-    let novo = { ...aprendiz, nome: aprendiz.tipo, escola, personMagias: warbandMagias.slice() };
+  setGold(goldVal - 200); // Usa setGold para garantir sincronização
+  if (aprendizModelo) {
+    let novo = { ...aprendizModelo, nome: aprendizModelo.tipo, escola, personMagias: warbandMagias.slice(), stats: { ...aprendizModelo.stats }, currentHp: Number(aprendizModelo.stats.hp) };
     if (idx === -1) warband.unshift(novo);
     else warband.splice(idx + 1, 0, novo);
   }
@@ -1266,11 +1264,10 @@ function renderEditStatsBtn() {
 function renderGoldXPBoxes(targetId) {
   const box = document.getElementById(`gold-xp-box-${targetId}`);
   if (!box) return;
-  // Se for a primeira renderização, defina XP como 600 se não houver valor
-  let xpInputDashboard = document.getElementById('xp-input-dashboard');
-  let xpVal = xpInputDashboard?.value;
-  if (!xpVal || isNaN(xpVal)) xpVal = 600;
-  let goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
+  const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
+  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
+  // Calcular nível
+  const nivel = Math.max(1, Math.floor(xpVal/100) + 1);
   box.innerHTML = `
     <span class="gold-xp-label">Gold:
       <button class="gold-btn" onclick="alteraGold(-10)">-</button>
@@ -1282,6 +1279,7 @@ function renderGoldXPBoxes(targetId) {
       <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
       <button class="xp-btn" onclick="alteraXP(10)">+</button>
     </span>
+    <span class="gold-xp-label" style="margin-left:1.2em;">Nível: <b>${nivel}</b></span>
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
@@ -1395,6 +1393,7 @@ function renderGoldXPBoxes(targetId) {
       <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
       <button class="xp-btn" onclick="alteraXP(10)">+</button>
     </span>
+    <span class="gold-xp-label" style="margin-left:1.2em;">Nível: <b>${Math.max(1, Math.floor(xpVal/100) + 1)}</b></span>
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
@@ -1421,9 +1420,12 @@ function promoverAprendiz(idx) {
   let aprendiz = warband[idx];
   if (!aprendiz || aprendiz.tipo !== 'Aprendiz') return;
   // Promover: vira mago, mantém magias, escola, XP, etc
+  // Desvincular stats: usar stats atuais do aprendiz como base fixa
   aprendiz.tipo = 'Mago';
-  // Atualizar nome se for padrão
   if (aprendiz.nome === 'Aprendiz') aprendiz.nome = 'Mago';
+  // Tornar stats independentes (cópia dos atuais)
+  aprendiz.stats = { ...aprendiz.stats };
+  // Não mais afetado por vincularAprendizStats
   renderPersonagens();
 }
 </script>
