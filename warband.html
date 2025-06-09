@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
-        main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+        main { max-width: 700px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
         h1 { text-align: center; margin-bottom: 0.7em; }
         h2 { color: #2e4053; }
         nav { text-align: center; margin-bottom: 1.5em; }
@@ -14,8 +14,17 @@
         nav button.active, nav button:hover { background: #3498db; color: #fff;}
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .flex-wrap { display: flex; flex-wrap: wrap; gap: 2em; margin-bottom: 2em; }
-        .person-card { background: #fafdff; border-radius: 10px; box-shadow: 0 1px 8px #bbb3; padding: 1.3em 1.1em 1em 1.1em; min-width: 350px; flex: 1 1 390px; position: relative; margin-bottom: 1.3em;}
+        .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
+        .person-card, .active-beast-card {
+            background: #fafdff;
+            border-radius: 10px;
+            box-shadow: 0 1px 8px #bbb3;
+            padding: 1.3em 1.1em 1em 1.1em;
+            width: 100%;
+            position: relative;
+            margin-bottom: 0;
+        }
+        .active-beast-card { border: 2px solid #c0392b; background: #fff6f6; }
         .person-header { font-size: 1.16em; margin-bottom: .7em;}
         .tipo-mago { color: #1a5276; font-weight: bold; }
         .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
@@ -28,8 +37,6 @@
         .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
         .hp-btn:active { background: #2471a3; }
         .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
-        .name-value { width: 7em; }
-        .label { font-weight: 500; color: #444; }
         .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
         .remove-btn:active { background: #922b21; }
         .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
@@ -48,30 +55,64 @@
         .person-magias { margin-top: 0.5em; padding-left: 1.1em; color: #1a5276; font-size: 0.98em; }
         .magia-form, .item-form { margin-bottom: 1.2em; }
         .magia-form select, .item-form select { min-width: 200px; margin-right: 1em;}
-        .edit-btn { background: #f7ca18; color: #222; border: none; border-radius: 3px; padding: 0.13em 0.7em; font-size: 0.97em; cursor: pointer;}
-        .edit-btn:active { background: #e67e22;}
-        @media (max-width: 1100px) { .flex-wrap { flex-direction: column; } .person-card { min-width: unset; width: 100%; } }
+        .beast-card, .active-beast-card { margin-bottom: 1.2em;}
+        .beast-header { font-size: 1.13em; font-weight: bold; margin-bottom: .5em; }
+        .beast-type { color: #c0392b; font-weight: bold; }
+        .beast-desc { color: #222; font-size: 0.98em; font-style: italic; margin-bottom: .7em;}
+        .select-beast-btn { position: absolute; top: 10px; right: 10px; background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer;}
+        .select-beast-btn.selected { background: #229954; }
+        .beast-tooltip { position: relative; cursor: help; border-bottom: 1px dotted #aaa; }
+        .beast-tooltip .tooltiptext {
+            visibility: hidden;
+            width: 265px;
+            background-color: #222;
+            color: #fff;
+            text-align: left;
+            border-radius: 9px;
+            padding: 0.7em 1em;
+            position: absolute;
+            z-index: 10;
+            top: 145%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.22s;
+            font-size: 1em;
+            box-shadow: 0 3px 18px #0008;
+        }
+        .beast-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .bestiary-list { margin-top: 1.2em; }
+        .bestiary-group { margin-bottom: 2.5em; }
+        .bestiary-group h3 { color: #c0392b; margin-bottom: 0.7em; }
+        .active-beasts-list { display: flex; flex-direction: column; gap: 1.2em; margin-bottom: 2em; }
+        @media (max-width: 700px) {
+            main { padding: 0.5em 0.3em; }
+        }
     </style>
 </head>
 <body>
 <main>
     <h1>Frostgrave Warband Manager</h1>
-    <nav>
-        <button data-tab="dashboard" class="active">Dashboard</button>
-        <button data-tab="magias">Magias</button>
-        <button data-tab="itens">Itens</button>
-        <button data-tab="notas">Notas</button>
+    <nav id="tabnav">
+        <button data-tab="dashboard" class="active" type="button">Dashboard</button>
+        <button data-tab="magias" type="button">Magias</button>
+        <button data-tab="itens" type="button">Itens</button>
+        <button data-tab="notas" type="button">Notas</button>
+        <button data-tab="bestiario" type="button">Bestiário</button>
     </nav>
-    <!-- DASHBOARD -->
     <section id="dashboard" class="tab-content active">
-        <h2>Magos & Aprendiz</h2>
-        <ul class="flex-wrap" id="mago-aprendiz-lista"></ul>
+        <h2>Magos</h2>
+        <div class="vertical-list" id="mago-lista"></div>
         <div class="add-mago-aprendiz-btns">
             <button onclick="adicionarMago()">+ Adicionar Mago</button>
+        </div>
+        <h2>Aprendizes</h2>
+        <div class="vertical-list" id="aprendiz-lista"></div>
+        <div class="add-mago-aprendiz-btns">
             <button onclick="adicionarAprendiz()">+ Adicionar Aprendiz</button>
         </div>
         <h2>Soldados</h2>
-        <ul class="flex-wrap" id="soldado-lista"></ul>
+        <div class="vertical-list" id="soldado-lista"></div>
         <section class="add-section">
             <h2>Adicionar Soldado</h2>
             <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
@@ -88,7 +129,6 @@
             </form>
         </section>
     </section>
-    <!-- MAGIAS -->
     <section id="magias" class="tab-content">
         <h2>Banco de Magias</h2>
         <form class="magia-form" onsubmit="adicionarBancoMagia(event)">
@@ -98,7 +138,6 @@
         </form>
         <ul id="banco-magias-lista" class="magias-list"></ul>
     </section>
-    <!-- ITENS -->
     <section id="itens" class="tab-content">
         <h2>Banco de Itens</h2>
         <form class="item-form" onsubmit="adicionarBancoItem(event)">
@@ -108,145 +147,24 @@
         </form>
         <ul id="banco-itens-lista" class="itens-list"></ul>
     </section>
-    <!-- NOTAS -->
     <section id="notas" class="tab-content">
         <h2>Anotações da Warband</h2>
         <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
     </section>
+    <section id="bestiario" class="tab-content">
+        <h2>Bestiário</h2>
+        <div id="active-beasts-list" class="active-beasts-list"></div>
+        <div id="bestiary-list" class="bestiary-list"></div>
+    </section>
 </main>
 <script>
-// ------------------- Dados Iniciais -------------------------
+// --- Exemplo reduzido dos dados, ajuste conforme o seu projeto completo ---
 let personagens = [];
 let bancoMagias = [];
 let bancoItens = [];
-// Atribuição de magias aos personagens (por ID de personagem)
-let magiasPorPersonagem = {}; // { idxPersonagem: [ {nome, escola, custo_base, descricao, completo} ] }
+let magiasPorPersonagem = {};
+let bestiarioAtivo = [];
 
-// Frostgrave 2ª edição - Magias por escola
-const magiasPorEscola = {
-    Chronomancer: [
-        {nome:"Crumble", custo:8, descricao:"Destrói construções.", escola:"Chronomancer"},
-        {nome:"Decay", custo:8, descricao:"Enfraquece armaduras.", escola:"Chronomancer"},
-        {nome:"Fleet Feet", custo:8, descricao:"Aumenta movimento.", escola:"Chronomancer"},
-        {nome:"Slow", custo:8, descricao:"Diminui movimento.", escola:"Chronomancer"},
-        {nome:"Time Control", custo:12, descricao:"Duas ativações seguidas.", escola:"Chronomancer"},
-        {nome:"Time Walk", custo:10, descricao:"Permite agir duas vezes.", escola:"Chronomancer"},
-        {nome:"Petrify", custo:14, descricao:"Petrifica alvo.", escola:"Chronomancer"},
-        {nome:"Reveal Secret", custo:8, descricao:"Revela segredo.", escola:"Chronomancer"}
-    ],
-    Elementalist: [
-        {nome:"Call Storm", custo:10, descricao:"Dificulta ataques à distância.", escola:"Elementalist"},
-        {nome:"Elemental Bolt", custo:10, descricao:"Dano mágico à distância.", escola:"Elementalist"},
-        {nome:"Elemental Hammer", custo:8, descricao:"Arma mágica temporária.", escola:"Elementalist"},
-        {nome:"Elemental Shield", custo:8, descricao:"Reduz dano recebido.", escola:"Elementalist"},
-        {nome:"Grenade", custo:10, descricao:"Explosão à distância.", escola:"Elementalist"},
-        {nome:"Scatter Shot", custo:10, descricao:"Projéteis mágicos múltiplos.", escola:"Elementalist"},
-        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Elementalist"},
-        {nome:"Leap", custo:8, descricao:"Move rapidamente um aliado.", escola:"Elementalist"}
-    ],
-    Enchanter: [
-        {nome:"Animate Construct", custo:8, descricao:"Cria construto.", escola:"Enchanter"},
-        {nome:"Control Construct", custo:8, descricao:"Controla construto.", escola:"Enchanter"},
-        {nome:"Enchant Weapon", custo:8, descricao:"Arma mágica temporária.", escola:"Enchanter"},
-        {nome:"Grenade", custo:12, descricao:"Explosão à distância.", escola:"Enchanter"},
-        {nome:"Strength", custo:8, descricao:"Aumenta força.", escola:"Enchanter"},
-        {nome:"Telekinesis", custo:8, descricao:"Move objetos à distância.", escola:"Enchanter"},
-        {nome:"Transmute Rock", custo:12, descricao:"Transforma pedra em lama.", escola:"Enchanter"},
-        {nome:"Will Power", custo:8, descricao:"Aumenta vontade.", escola:"Enchanter"}
-    ],
-    Illusionist: [
-        {nome:"Blur", custo:8, descricao:"Dificulta ser atingido.", escola:"Illusionist"},
-        {nome:"Color Spray", custo:8, descricao:"Atordoa inimigos.", escola:"Illusionist"},
-        {nome:"Dispel", custo:10, descricao:"Dissipa magia.", escola:"Illusionist"},
-        {nome:"Fool's Gold", custo:8, descricao:"Cria tesouro falso.", escola:"Illusionist"},
-        {nome:"Glow", custo:8, descricao:"Faz alvo brilhar.", escola:"Illusionist"},
-        {nome:"Invisibility", custo:10, descricao:"Fica invisível.", escola:"Illusionist"},
-        {nome:"Mirage", custo:12, descricao:"Cria ilusão de terreno.", escola:"Illusionist"},
-        {nome:"Transpose", custo:10, descricao:"Troca posições.", escola:"Illusionist"}
-    ],
-    Necromancer: [
-        {nome:"Bone Dart", custo:8, descricao:"Projétil mágico de osso.", escola:"Necromancer"},
-        {nome:"Control Undead", custo:12, descricao:"Controla morto-vivo.", escola:"Necromancer"},
-        {nome:"Raise Zombie", custo:8, descricao:"Cria zumbi.", escola:"Necromancer"},
-        {nome:"Reveal Death", custo:8, descricao:"Revela cadáveres.", escola:"Necromancer"},
-        {nome:"Strike Dead", custo:14, descricao:"Mata instantaneamente.", escola:"Necromancer"},
-        {nome:"Steal Health", custo:10, descricao:"Rouba vida do alvo.", escola:"Necromancer"},
-        {nome:"Poison Dart", custo:8, descricao:"Projétil envenenado.", escola:"Necromancer"},
-        {nome:"Summon Demon", custo:12, descricao:"Invoca demônio.", escola:"Necromancer"}
-    ],
-    Sigilist: [
-        {nome:"Absorb Knowledge", custo:8, descricao:"Ganha XP extra.", escola:"Sigilist"},
-        {nome:"Create Grimoire", custo:10, descricao:"Cria grimório.", escola:"Sigilist"},
-        {nome:"Draining Word", custo:10, descricao:"Dificulta magia específica.", escola:"Sigilist"},
-        {nome:"Explosive Rune", custo:8, descricao:"Armadilha mágica.", escola:"Sigilist"},
-        {nome:"Power Word", custo:8, descricao:"Facilita magia específica.", escola:"Sigilist"},
-        {nome:"Push", custo:8, descricao:"Empurra alvo.", escola:"Sigilist"},
-        {nome:"Write Scroll", custo:8, descricao:"Cria pergaminho.", escola:"Sigilist"},
-        {nome:"Ward", custo:8, descricao:"Protege contra magias.", escola:"Sigilist"}
-    ],
-    Soothsayer: [
-        {nome:"Awareness", custo:8, descricao:"Aumenta percepção.", escola:"Soothsayer"},
-        {nome:"Combat Awareness", custo:8, descricao:"Aumenta combate.", escola:"Soothsayer"},
-        {nome:"Fate", custo:8, descricao:"Melhora rolagem.", escola:"Soothsayer"},
-        {nome:"Mind Control", custo:12, descricao:"Controla mente do alvo.", escola:"Soothsayer"},
-        {nome:"Reveal Secret", custo:8, descricao:"Revela segredo.", escola:"Soothsayer"},
-        {nome:"Telekinesis", custo:8, descricao:"Move objetos à distância.", escola:"Soothsayer"},
-        {nome:"True Sight", custo:8, descricao:"Vê através de ilusões.", escola:"Soothsayer"},
-        {nome:"View Future", custo:8, descricao:"Prevê eventos.", escola:"Soothsayer"}
-    ],
-    Summoner: [
-        {nome:"Bind Demon", custo:10, descricao:"Controla demônio invocado.", escola:"Summoner"},
-        {nome:"Create Demon", custo:12, descricao:"Cria demônio.", escola:"Summoner"},
-        {nome:"Familiar", custo:8, descricao:"Ganha familiar.", escola:"Summoner"},
-        {nome:"Imp", custo:8, descricao:"Invoca imp.", escola:"Summoner"},
-        {nome:"Plane Walk", custo:12, descricao:"Move entre planos.", escola:"Summoner"},
-        {nome:"Plague of Insects", custo:10, descricao:"Invoca enxame.", escola:"Summoner"},
-        {nome:"Summon Demon", custo:12, descricao:"Invoca demônio.", escola:"Summoner"},
-        {nome:"Will Power", custo:8, descricao:"Aumenta vontade.", escola:"Summoner"}
-    ],
-    Thaumaturge: [
-        {nome:"Blinding Light", custo:8, descricao:"Cega alvo.", escola:"Thaumaturge"},
-        {nome:"Circle of Protection", custo:8, descricao:"Protege contra mortos-vivos.", escola:"Thaumaturge"},
-        {nome:"Heal", custo:8, descricao:"Cura aliado.", escola:"Thaumaturge"},
-        {nome:"Miraculous Cure", custo:12, descricao:"Cura doença/ferida.", escola:"Thaumaturge"},
-        {nome:"Shield", custo:8, descricao:"Aumenta armadura.", escola:"Thaumaturge"},
-        {nome:"Slow", custo:8, descricao:"Diminui movimento.", escola:"Thaumaturge"},
-        {nome:"Spell Eater", custo:10, descricao:"Anula magia.", escola:"Thaumaturge"},
-        {nome:"Wrath of God", custo:14, descricao:"Dano em área.", escola:"Thaumaturge"}
-    ],
-    Witch: [
-        {nome:"Animal Companion", custo:8, descricao:"Ganha animal aliado.", escola:"Witch"},
-        {nome:"Brew Potion", custo:8, descricao:"Cria poção.", escola:"Witch"},
-        {nome:"Control Animal", custo:10, descricao:"Controla animal.", escola:"Witch"},
-        {nome:"Curse", custo:8, descricao:"Penaliza alvo.", escola:"Witch"},
-        {nome:"Poison Dart", custo:8, descricao:"Projétil envenenado.", escola:"Witch"},
-        {nome:"Spell Eater", custo:10, descricao:"Anula magia.", escola:"Witch"},
-        {nome:"Summon Animal", custo:10, descricao:"Invoca animal.", escola:"Witch"},
-        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Witch"}
-    ]
-};
-// Frostgrave 2ª edição - Itens padrão
-const itensPadrao = {
-    "Armas mágicas": [
-        {nome:"Espada Mágica", descricao:"Espada +1 Fight."},
-        {nome:"Arco Mágico", descricao:"Arco +1 Shoot."},
-        {nome:"Adaga Mágica", descricao:"Adaga +1 Fight."}
-    ],
-    "Poções": [
-        {nome:"Poção de Cura", descricao:"Recupera até 5 HP."},
-        {nome:"Poção de Invisibilidade", descricao:"Fica invisível por um turno."},
-        {nome:"Poção de Força", descricao:"+2 Fight até o fim do jogo."}
-    ],
-    "Pergaminhos": [
-        {nome:"Pergaminho de Elemental Bolt", descricao:"Usa Elemental Bolt uma vez."},
-        {nome:"Pergaminho de Heal", descricao:"Usa Heal uma vez."}
-    ],
-    "Tesouros diversos": [
-        {nome:"Amuleto de Proteção", descricao:"+2 Will contra magias."},
-        {nome:"Anel de Poder", descricao:"+5 XP ao final do jogo."}
-    ]
-};
-// Estatísticas padrão dos personagens
 const STATS = {
     "Mago":      { move:6, fight:"+2", shoot:"+0", armor:10, will:"+4", hp:14 },
     "Aprendiz":  { move:6, fight:"+1", shoot:"+0", armor:10, will:"+2", hp:10 },
@@ -270,177 +188,88 @@ const STATS = {
     "Trap Expert":     { move:7, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
     "Witch Doctor":    { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 }
 };
-// Soldados Frostgrave 2ª edição
-const SOLDADOS_NORMAIS = [
-    "Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"
-];
-const SOLDADOS_ELITES = [
-    "Archer", "Barbarian", "Crossbowman", "Knight", "Marksman", "Ranger", "Templar", "Tracker", "Treasure Hunter", "Apothecary", "Crowmaster", "Pack Mule", "Trap Expert", "Witch Doctor"
-];
+const SOLDADOS_NORMAIS = ["Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"];
+const SOLDADOS_ELITES = ["Archer", "Barbarian", "Crossbowman", "Knight", "Marksman", "Ranger", "Templar", "Tracker", "Treasure Hunter", "Apothecary", "Crowmaster", "Pack Mule", "Trap Expert", "Witch Doctor"];
 
-// ------------------- Renderização de dropdowns ------------------------
-function renderMagiaDropdown() {
-    const sel = document.getElementById('magia-dropdown');
-    let html = '';
-    Object.keys(magiasPorEscola).forEach(escola => {
-        html += `<optgroup label="${escola}">`;
-        magiasPorEscola[escola].forEach(m =>
-            html += `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo}) - ${m.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
-function renderItemDropdown() {
-    const sel = document.getElementById('item-dropdown');
-    let html = '';
-    Object.keys(itensPadrao).forEach(grupo => {
-        html += `<optgroup label="${grupo}">`;
-        itensPadrao[grupo].forEach(i =>
-            html += `<option value="${grupo}|${i.nome}">${i.nome} - ${i.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
+// --- Renderização dos personagens um abaixo do outro ---
 
-// ------------------- Banco Magias/Itens -------------------------
-function renderBancoMagias() {
-    const ul = document.getElementById('banco-magias-lista');
-    ul.innerHTML = bancoMagias.length
-        ? bancoMagias.map((m, idx) =>
-            `<li>
-                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
-                <br>
-                <i>${m.descricao||""}</i>
-                <br>
-                <small>${m.completo||""}</small>
-                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
-                <button class="edit-btn" onclick="atribuirMagiaPersonagem(${idx})" title="Atribuir">→</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
-}
-function adicionarBancoMagia(e) {
-    e.preventDefault();
-    const val = document.getElementById('magia-dropdown').value;
-    const completo = document.getElementById('magia-comp').value.trim();
-    const [escola, nome] = val.split('|');
-    const magiaBase = magiasPorEscola[escola].find(m => m.nome === nome);
-    if (!magiaBase) return;
-    bancoMagias.push({
-        nome: magiaBase.nome,
-        escola: magiaBase.escola,
-        custo_base: magiaBase.custo,
-        descricao: magiaBase.descricao,
-        completo
-    });
-    renderBancoMagias();
-    e.target.reset();
-}
-function removerBancoMagia(idx) {
-    bancoMagias.splice(idx, 1);
-    renderBancoMagias();
-}
-function atribuirMagiaPersonagem(idxMagia) {
-    // Abre prompt para escolher personagem mago/aprendiz
-    let magos = personagens
-        .map((p,i)=>({p,i}))
-        .filter(x=>x.p.tipo==="Mago"||x.p.tipo==="Aprendiz");
-    if (magos.length === 0) return alert("Adicione Mago ou Aprendiz primeiro!");
-    let escolha = prompt(
-        "Digite o número do personagem para atribuir a magia:\n" +
-        magos.map((x,j)=>`${j+1} - ${x.p.tipo} ${x.p.nome||""}`).join("\n")
-    );
-    let idxEscolhido = parseInt(escolha)-1;
-    if (isNaN(idxEscolhido) || !magos[idxEscolhido]) return;
-    let idxPersonagem = magos[idxEscolhido].i;
-    if (!magiasPorPersonagem[idxPersonagem]) magiasPorPersonagem[idxPersonagem]=[];
-    magiasPorPersonagem[idxPersonagem].push(bancoMagias[idxMagia]);
-    bancoMagias.splice(idxMagia,1);
-    renderBancoMagias();
-    renderPersonagens();
-}
-
-// ---------- Banco de Itens ----------
-function renderBancoItens() {
-    const ul = document.getElementById('banco-itens-lista');
-    ul.innerHTML = bancoItens.length
-        ? bancoItens.map((i, idx) =>
-            `<li>
-                <b>${i.nome}</b>
-                <br>
-                <i>${i.descricao||""}</i>
-                <br>
-                <small>${i.efeito||""}</small>
-                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
-}
-function adicionarBancoItem(e) {
-    e.preventDefault();
-    const val = document.getElementById('item-dropdown').value;
-    const efeito = document.getElementById('item-efeito').value.trim();
-    const [grupo, nome] = val.split('|');
-    let item = null;
-    for(const g in itensPadrao) {
-        if(g === grupo) {
-            item = itensPadrao[g].find(i => i.nome === nome);
-            break;
-        }
-    }
-    if (!item) return;
-    bancoItens.push({
-        nome: item.nome,
-        descricao: item.descricao,
-        efeito
-    });
-    renderBancoItens();
-    e.target.reset();
-}
-function removerBancoItem(idx) {
-    bancoItens.splice(idx, 1);
-    renderBancoItens();
-}
-
-// ------------------- Dashboard e soldados ----------------------
 function renderPersonagens() {
-    const magoAprendizLista = document.getElementById('mago-aprendiz-lista');
-    const soldadoLista = document.getElementById('soldado-lista');
-    magoAprendizLista.innerHTML = '';
-    soldadoLista.innerHTML = '';
-    personagens.forEach((pers, idx) => {
-        const card = document.createElement('li');
-        card.className = 'person-card';
-        let tipoStr = pers.tipo;
-        let stats = STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
-        if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
-        else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
-        else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
-        else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado}</span>`;
+    // Magos
+    const magoDiv = document.getElementById('mago-lista');
+    magoDiv.innerHTML = '';
+    personagens
+        .filter(p => p.tipo === "Mago")
+        .forEach((pers, idx) => magoDiv.appendChild(personagemCard(pers, idx)));
 
-        card.innerHTML = `
-            <div class="person-header">
-                ${tipoStr} ${pers.nome ? ' - ' + pers.nome : ''}
-                <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
-            </div>
-            <div class="stats-line">
-                <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
-                <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
-                <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
-                <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
-                <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
-                <span class="stat-label">HP:</span><span class="stat-value">${stats.hp}</span>
-            </div>
-            ${renderPersonagemMagias(idx)}
-        `;
-        if (pers.tipo === "Mago" || pers.tipo === "Aprendiz") magoAprendizLista.appendChild(card);
-        else soldadoLista.appendChild(card);
-    });
+    // Aprendizes
+    const aprendizDiv = document.getElementById('aprendiz-lista');
+    aprendizDiv.innerHTML = '';
+    personagens
+        .filter(p => p.tipo === "Aprendiz")
+        .forEach((pers, idx) => aprendizDiv.appendChild(personagemCard(pers, idx)));
+
+    // Soldados
+    const soldadoDiv = document.getElementById('soldado-lista');
+    soldadoDiv.innerHTML = '';
+    personagens
+        .filter(p => p.tipo === "Soldado")
+        .forEach((pers, idx) => soldadoDiv.appendChild(personagemCard(pers, idx)));
+
     renderSoldadoDropdown();
     renderSoldadoAlert();
 }
+
+function personagemCard(pers, idx) {
+    let tipoStr = pers.tipo;
+    let stats = STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
+    let name = pers.nome || pers.tipoSoldado || "";
+    if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
+    else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
+    else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
+    else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado||pers.tipo}</span>`;
+
+    let card = document.createElement('div');
+    card.className = 'person-card';
+    let hpAtual = typeof pers.hpAtual === 'number' ? pers.hpAtual : stats.hp;
+    card.innerHTML = `
+        <div class="person-header">
+            ${tipoStr} ${name ? ' - ' + name : ''}
+            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
+        </div>
+        <div class="stats-line">
+            <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
+            <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
+            <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
+            <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
+            <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
+            <span class="stat-label">HP:</span>
+            <span class="hp-box">
+                <button class="hp-btn" onclick="alteraHP(${idx},-1)">-</button>
+                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
+                <button class="hp-btn" onclick="alteraHP(${idx},1)">+</button>
+            </span>
+        </div>
+        ${renderPersonagemMagias(idx)}
+    `;
+    return card;
+}
+
+function alteraHP(idx, delta) {
+    let p = personagens[idx];
+    let stats = STATS[p.tipo] || STATS[p.tipoSoldado] || {hp:10};
+    if(typeof p.hpAtual !== "number") p.hpAtual = stats.hp;
+    p.hpAtual = Math.max(0, Math.min(99, p.hpAtual + delta));
+    renderPersonagens();
+}
+function setHP(e, idx) {
+    let v = parseInt(e.target.value);
+    let p = personagens[idx];
+    let stats = STATS[p.tipo] || STATS[p.tipoSoldado] || {hp:10};
+    v = isNaN(v) ? stats.hp : Math.max(0, Math.min(99, v));
+    p.hpAtual = v;
+    renderPersonagens();
+}
+
 function renderPersonagemMagias(idxPers) {
     if (!magiasPorPersonagem[idxPers] || magiasPorPersonagem[idxPers].length === 0) return '';
     return `<div class="person-magias"><b>Magias:</b><ul>` +
@@ -456,9 +285,7 @@ function removerMagiaPersonagem(idxPers, idxMagia) {
 }
 function removerPersonagem(idx) {
     personagens.splice(idx, 1);
-    // Remove magias associadas
     delete magiasPorPersonagem[idx];
-    // Realoca índices das magias
     let novoMagias = {};
     personagens.forEach((_,i) => {
         if (magiasPorPersonagem[i]) novoMagias[i] = magiasPorPersonagem[i];
@@ -468,12 +295,14 @@ function removerPersonagem(idx) {
 }
 function adicionarMago() {
     if (personagens.find(p => p.tipo === "Mago")) return alert("Só pode haver um mago!");
-    personagens.push({tipo: "Mago", nome: "Mago"});
+    let idx = personagens.length;
+    personagens.push({tipo: "Mago", nome: "Mago", hpAtual: STATS["Mago"].hp});
     renderPersonagens();
 }
 function adicionarAprendiz() {
     if (personagens.find(p => p.tipo === "Aprendiz")) return alert("Só pode haver um aprendiz!");
-    personagens.push({tipo: "Aprendiz", nome: "Aprendiz"});
+    let idx = personagens.length;
+    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", hpAtual: STATS["Aprendiz"].hp});
     renderPersonagens();
 }
 function adicionarSoldado(e) {
@@ -488,7 +317,7 @@ function adicionarSoldado(e) {
         return alert("Máximo de 4 soldados elite!");
     if (norm+elite >= 8)
         return alert("Máximo de 8 soldados!");
-    personagens.push({tipo: "Soldado", tipoSoldado, nome});
+    personagens.push({tipo: "Soldado", tipoSoldado, nome, hpAtual: STATS[tipoSoldado]?.hp||10});
     renderPersonagens();
     e.target.reset();
 }
@@ -514,27 +343,148 @@ function renderSoldadoAlert() {
     alertDiv.textContent = msg;
 }
 
-// ------------------- Abas -------------------------
-document.querySelectorAll('nav button').forEach((btn) => {
-    btn.onclick = function() {
+//--- Bestiário agrupado, selecionável e editável ---
+const bestiario = [
+    {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
+    {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
+    {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
+    {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}},
+    {nome:"Snow Troll", tipo:"Troll", desc:"Troll das neves, regenera.", explicacao:"Regenera HP a cada turno.", stats:{move:6, fight:"+4", shoot:"-", armor:14, will:"+3", hp:18}},
+    {nome:"Demon (Minor)", tipo:"Demônio", desc:"Demoníaco menor.", explicacao:"Imune a medo e veneno. Pode aparecer em magias.", stats:{move:6, fight:"+2", shoot:"-", armor:12, will:"+2", hp:12}}
+    // ... adicione mais criaturas conforme necessário ...
+];
+
+function agrupaBestiarioPorTipo(lista) {
+    const grupos = {};
+    lista.forEach(c => {
+        if(!grupos[c.tipo]) grupos[c.tipo] = [];
+        grupos[c.tipo].push(c);
+    });
+    return grupos;
+}
+
+function renderActiveBeasts() {
+    const div = document.getElementById('active-beasts-list');
+    if (!bestiarioAtivo.length) {
+        div.innerHTML = '';
+        return;
+    }
+    div.innerHTML = bestiarioAtivo.map((b, idx) => `
+        <div class="active-beast-card">
+            <div class="beast-header">
+                ${b.nome}
+                <span class="beast-type">[${b.tipo}]</span>
+                <button class="remove-btn" onclick="removerBeastAtivo(${idx})" title="Remover da mesa">✖</button>
+            </div>
+            <div class="beast-desc beast-tooltip">
+                ${b.desc}
+                <span class="tooltiptext">${b.explicacao||""}</span>
+            </div>
+            <div class="stats-line">
+                <span class="stat-label">Mov:</span><span class="stat-value">${b.stats.move}</span>
+                <span class="stat-label">Fight:</span><span class="stat-value">${b.stats.fight}</span>
+                <span class="stat-label">Shoot:</span><span class="stat-value">${b.stats.shoot}</span>
+                <span class="stat-label">Armor:</span><span class="stat-value">${b.stats.armor}</span>
+                <span class="stat-label">Will:</span><span class="stat-value">${b.stats.will}</span>
+                <span class="stat-label">HP:</span>
+                <span class="hp-box">
+                    <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},-1)">-</button>
+                    <input class="hp-value" type="number" min="0" max="99" value="${b.hpAtual}" style="width:2.5em;text-align:center;" onchange="setHPBeastAtivo(event,${idx})">
+                    <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},1)">+</button>
+                </span>
+            </div>
+        </div>
+    `).join("");
+}
+
+function removerBeastAtivo(idx) {
+    bestiarioAtivo.splice(idx,1);
+    renderActiveBeasts();
+}
+function alteraHPBeastAtivo(event, idx, delta) {
+    event.stopPropagation();
+    bestiarioAtivo[idx].hpAtual = Math.max(0, Math.min(99, bestiarioAtivo[idx].hpAtual + delta));
+    renderActiveBeasts();
+}
+function setHPBeastAtivo(event, idx) {
+    let v = parseInt(event.target.value);
+    v = isNaN(v) ? bestiarioAtivo[idx].stats.hp : Math.max(0, Math.min(99, v));
+    bestiarioAtivo[idx].hpAtual = v;
+    renderActiveBeasts();
+}
+function renderBestiario() {
+    renderActiveBeasts();
+    const div = document.getElementById('bestiary-list');
+    const grupos = agrupaBestiarioPorTipo(bestiario);
+    div.innerHTML = Object.keys(grupos).sort().map(tipo => `
+        <div class="bestiary-group">
+            <h3>${tipo}</h3>
+            <div style="display:flex;flex-direction:column;gap:1.2em;">
+                ${grupos[tipo].map((b, idx) =>
+                    `<div class="beast-card">
+                        <div class="beast-header">
+                            <span class="beast-tooltip">${b.nome}
+                                <span class="tooltiptext">${b.explicacao||""}</span>
+                            </span>
+                            <span class="beast-type">[${b.tipo}]</span>
+                            <button class="select-beast-btn${isBeastAtivo(b)?' selected':''}" onclick="toggleBeastAtivo('${b.nome.replace(/'/g,"\\'")}','${b.tipo.replace(/'/g,"\\'")}')">
+                                ${isBeastAtivo(b) ? "✓ na mesa" : "+"}
+                            </button>
+                        </div>
+                        <div class="beast-desc">${b.desc||""}</div>
+                        <div class="stats-line">
+                            <span class="stat-label">Mov:</span><span class="stat-value">${b.stats.move}</span>
+                            <span class="stat-label">Fight:</span><span class="stat-value">${b.stats.fight}</span>
+                            <span class="stat-label">Shoot:</span><span class="stat-value">${b.stats.shoot}</span>
+                            <span class="stat-label">Armor:</span><span class="stat-value">${b.stats.armor}</span>
+                            <span class="stat-label">Will:</span><span class="stat-value">${b.stats.will}</span>
+                            <span class="stat-label">HP:</span><span class="stat-value">${b.stats.hp}</span>
+                        </div>
+                    </div>`
+                ).join("")}
+            </div>
+        </div>
+    `).join("");
+}
+function isBeastAtivo(b) {
+    return bestiarioAtivo.find(a => a.nome === b.nome && a.tipo === b.tipo);
+}
+function toggleBeastAtivo(nome, tipo) {
+    const idx = bestiarioAtivo.findIndex(b=>b.nome===nome && b.tipo===tipo);
+    if(idx >= 0) {
+        bestiarioAtivo.splice(idx,1);
+    } else {
+        const base = bestiario.find(b=>b.nome===nome && b.tipo===tipo);
+        if(base) bestiarioAtivo.unshift({...base, hpAtual: base.stats.hp});
+    }
+    renderBestiario();
+}
+
+// --- Abas: tornadas clicáveis ---
+document.getElementById('tabnav').addEventListener('click', function(e) {
+    if(e.target.tagName === "BUTTON") {
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        e.target.classList.add('active');
+        let tab = e.target.getAttribute('data-tab');
         document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
-        const tab = btn.getAttribute('data-tab');
         document.getElementById(tab).classList.add('active');
-        if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
-        if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
-        if (tab === 'dashboard') renderPersonagens();
+        if(tab === 'dashboard') renderPersonagens();
+        if(tab === 'bestiario') renderBestiario();
+        // Adicione chamadas para magias/itens se necessário
+        if (tab === 'magias') { renderMagiaDropdown && renderMagiaDropdown(); renderBancoMagias && renderBancoMagias(); }
+        if (tab === 'itens') { renderItemDropdown && renderItemDropdown(); renderBancoItens && renderBancoItens(); }
     }
 });
 
-// ---------- Inicialização ---------------
+// --- Inicialização ---
 window.onload = function() {
     renderPersonagens();
-    renderMagiaDropdown();
-    renderItemDropdown();
-    renderBancoMagias();
-    renderBancoItens();
+    renderBestiario();
+    // Adicione inicialização de magias/itens se necessário
+    if (typeof renderMagiaDropdown === "function") renderMagiaDropdown();
+    if (typeof renderBancoMagias === "function") renderBancoMagias();
+    if (typeof renderItemDropdown === "function") renderItemDropdown();
+    if (typeof renderBancoItens === "function") renderBancoItens();
 };
 </script>
 </body>
