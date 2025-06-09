@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
-        main { max-width: 700px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+        main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
         h1 { text-align: center; margin-bottom: 0.7em; }
         h2 { color: #2e4053; }
         nav { text-align: center; margin-bottom: 1.5em; }
@@ -15,7 +15,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
-        .person-card, .active-beast-card {
+        .person-card {
             background: #fafdff;
             border-radius: 10px;
             box-shadow: 0 1px 8px #bbb3;
@@ -24,7 +24,6 @@
             position: relative;
             margin-bottom: 0;
         }
-        .active-beast-card { border: 2px solid #c0392b; background: #fff6f6; }
         .person-header { font-size: 1.16em; margin-bottom: .7em;}
         .tipo-mago { color: #1a5276; font-weight: bold; }
         .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
@@ -41,7 +40,6 @@
         .remove-btn:active { background: #922b21; }
         .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
         .add-form select { min-width: 160px; }
-        .personagem-destacado { border: 2px solid #3498db !important; background: #e8f4fb !important; }
         .add-mago-aprendiz-btns { margin-bottom: 2em; }
         .add-mago-aprendiz-btns button { margin-right: 1em; background: #3498db; color: #fff; font-weight: bold; border: none; border-radius: 7px; padding: 0.6em 1.4em; font-size: 1em; cursor: pointer;}
         .add-mago-aprendiz-btns button:last-child { margin-right: 0;}
@@ -55,6 +53,7 @@
         .person-magias { margin-top: 0.5em; padding-left: 1.1em; color: #1a5276; font-size: 0.98em; }
         .magia-form, .item-form { margin-bottom: 1.2em; }
         .magia-form select, .item-form select { min-width: 200px; margin-right: 1em;}
+        /* Bestiário */
         .beast-card, .active-beast-card { margin-bottom: 1.2em;}
         .beast-header { font-size: 1.13em; font-weight: bold; margin-bottom: .5em; }
         .beast-type { color: #c0392b; font-weight: bold; }
@@ -101,22 +100,15 @@
         <button data-tab="bestiario" type="button">Bestiário</button>
     </nav>
     <section id="dashboard" class="tab-content active">
-        <h2>Magos</h2>
-        <div class="vertical-list" id="mago-lista"></div>
-        <div class="add-mago-aprendiz-btns">
-            <button onclick="adicionarMago()">+ Adicionar Mago</button>
-        </div>
-        <h2>Aprendizes</h2>
-        <div class="vertical-list" id="aprendiz-lista"></div>
-        <div class="add-mago-aprendiz-btns">
-            <button onclick="adicionarAprendiz()">+ Adicionar Aprendiz</button>
-        </div>
+        <h2>Mago & Aprendiz</h2>
+        <div class="vertical-list" id="mago-aprendiz-lista"></div>
+        <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
         <h2>Soldados</h2>
         <div class="vertical-list" id="soldado-lista"></div>
         <section class="add-section">
             <h2>Adicionar Soldado</h2>
             <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-            <form class="add-form add-form-soldado" id="add-soldado-form" onsubmit="adicionarSoldado(event)">
+            <form class="add-form add-form-soldado" id="add-soldado-form">
                 <label>
                     Tipo de Soldado:
                     <select id="soldado-tipo"></select>
@@ -131,7 +123,7 @@
     </section>
     <section id="magias" class="tab-content">
         <h2>Banco de Magias</h2>
-        <form class="magia-form" onsubmit="adicionarBancoMagia(event)">
+        <form class="magia-form" id="add-magia-form">
             <select id="magia-dropdown"></select>
             <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
             <button type="submit">Adicionar Magia</button>
@@ -140,7 +132,7 @@
     </section>
     <section id="itens" class="tab-content">
         <h2>Banco de Itens</h2>
-        <form class="item-form" onsubmit="adicionarBancoItem(event)">
+        <form class="item-form" id="add-item-form">
             <select id="item-dropdown"></select>
             <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
             <button type="submit">Adicionar Item</button>
@@ -158,67 +150,95 @@
     </section>
 </main>
 <script>
-// --- Exemplo reduzido dos dados, ajuste conforme o seu projeto completo ---
+// ============ DADOS INICIAIS ============
 let personagens = [];
 let bancoMagias = [];
 let bancoItens = [];
 let magiasPorPersonagem = {};
 let bestiarioAtivo = [];
 
+const ESCOLAS = [
+    "Chronomancer", "Elementalist", "Enchanter", "Illusionist", "Necromancer", "Sigilist",
+    "Soothsayer", "Summoner", "Thaumaturge", "Witch"
+];
+const magiasPorEscola = {
+    Elementalist: [
+        {nome:"Elemental Bolt", custo:10, descricao:"Dano mágico à distância.", escola:"Elementalist"},
+        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Elementalist"},
+    ],
+    Necromancer: [
+        {nome:"Bone Dart", custo:8, descricao:"Projétil mágico de osso.", escola:"Necromancer"},
+        {nome:"Raise Zombie", custo:8, descricao:"Cria zumbi.", escola:"Necromancer"},
+    ],
+    Thaumaturge: [
+        {nome:"Heal", custo:8, descricao:"Cura um aliado.", escola:"Thaumaturge"},
+        {nome:"Blinding Light", custo:8, descricao:"Cega alvo.", escola:"Thaumaturge"},
+    ]
+};
+const itensPadrao = {
+    "Armas mágicas": [
+        {nome:"Espada Mágica", descricao:"Espada +1 Fight."},
+        {nome:"Adaga Mágica", descricao:"Adaga +1 Fight."}
+    ],
+    "Poções": [
+        {nome:"Poção de Cura", descricao:"Recupera até 5 HP."}
+    ],
+    "Tesouros diversos": [
+        {nome:"Amuleto de Proteção", descricao:"+2 Will contra magias."}
+    ]
+};
 const STATS = {
     "Mago":      { move:6, fight:"+2", shoot:"+0", armor:10, will:"+4", hp:14 },
     "Aprendiz":  { move:6, fight:"+1", shoot:"+0", armor:10, will:"+2", hp:10 },
     "Thief":           { move:7, fight:"+1", shoot:"0", armor:10, will:"0", hp:10 },
-    "Thug":            { move:6, fight:"+2", shoot:"0", armor:10, will:"0", hp:10 },
-    "War Dog":         { move:8, fight:"+1", shoot:"0", armor:10, will:"0", hp:8 },
-    "Infantryman":     { move:6, fight:"+2", shoot:"0", armor:12, will:"0", hp:12 },
-    "Man-at-Arms":     { move:6, fight:"+3", shoot:"0", armor:13, will:"0", hp:12 },
-    "Archer":          { move:6, fight:"0", shoot:"+2", armor:11, will:"0", hp:10 },
-    "Barbarian":       { move:6, fight:"+4", shoot:"0", armor:10, will:"0", hp:12 },
-    "Crossbowman":     { move:6, fight:"0", shoot:"+2", armor:11, will:"0", hp:10 },
-    "Knight":          { move:6, fight:"+3", shoot:"0", armor:14, will:"0", hp:12 },
-    "Marksman":        { move:6, fight:"0", shoot:"+3", armor:11, will:"0", hp:10 },
-    "Ranger":          { move:7, fight:"+2", shoot:"+2", armor:11, will:"0", hp:12 },
-    "Templar":         { move:6, fight:"+4", shoot:"0", armor:12, will:"0", hp:12 },
-    "Tracker":         { move:7, fight:"+1", shoot:"+2", armor:11, will:"0", hp:10 },
-    "Treasure Hunter": { move:7, fight:"+3", shoot:"0", armor:12, will:"0", hp:12 },
-    "Apothecary":      { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
-    "Crowmaster":      { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
-    "Pack Mule":       { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
-    "Trap Expert":     { move:7, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
-    "Witch Doctor":    { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 }
+    "Thug":            { move:6, fight:"+2", shoot:"0", armor:10, will:"0", hp:10 }
 };
-const SOLDADOS_NORMAIS = ["Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"];
-const SOLDADOS_ELITES = ["Archer", "Barbarian", "Crossbowman", "Knight", "Marksman", "Ranger", "Templar", "Tracker", "Treasure Hunter", "Apothecary", "Crowmaster", "Pack Mule", "Trap Expert", "Witch Doctor"];
+const SOLDADOS_NORMAIS = ["Thief", "Thug"];
+const SOLDADOS_ELITES = [];
+const ITEM_LIMITS = { "Mago": 5, "Aprendiz": 1, "Soldado": 1 };
 
-// --- Renderização dos personagens um abaixo do outro ---
-
-function renderPersonagens() {
-    // Magos
-    const magoDiv = document.getElementById('mago-lista');
-    magoDiv.innerHTML = '';
-    personagens
-        .filter(p => p.tipo === "Mago")
-        .forEach((pers, idx) => magoDiv.appendChild(personagemCard(pers, idx)));
-
-    // Aprendizes
-    const aprendizDiv = document.getElementById('aprendiz-lista');
-    aprendizDiv.innerHTML = '';
-    personagens
-        .filter(p => p.tipo === "Aprendiz")
-        .forEach((pers, idx) => aprendizDiv.appendChild(personagemCard(pers, idx)));
-
-    // Soldados
+// ============== RENDER DASHBOARD ==============
+function renderMagoAprendizSection() {
+    const div = document.getElementById('mago-aprendiz-lista');
+    div.innerHTML = '';
+    let magoIdx = personagens.findIndex(p => p.tipo === "Mago");
+    let aprendizIdx = personagens.findIndex(p => p.tipo === "Aprendiz");
+    if (magoIdx !== -1) div.appendChild(personagemCard(personagens[magoIdx], magoIdx));
+    if (aprendizIdx !== -1) div.appendChild(personagemCard(personagens[aprendizIdx], aprendizIdx));
+    // Botões de adicionar
+    const btnDiv = document.getElementById('add-mago-aprendiz-btns');
+    btnDiv.innerHTML = '';
+    if (magoIdx === -1) {
+        let sel = `<select id="escola-mago" style="margin-right:1em;">
+            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
+        </select>`;
+        btnDiv.innerHTML +=
+            `<button id="add-mago-btn">+ Adicionar Mago</button> ${sel}`;
+    }
+    if (aprendizIdx === -1) {
+        let sel = `<select id="escola-aprendiz" style="margin-right:1em;">
+            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
+        </select>`;
+        btnDiv.innerHTML +=
+            `<button id="add-aprendiz-btn">+ Adicionar Aprendiz</button> ${sel}`;
+    }
+    // LIGAÇÃO DOS BOTÕES!
+    if (document.getElementById("add-mago-btn")) document.getElementById("add-mago-btn").onclick = adicionarMago;
+    if (document.getElementById("add-aprendiz-btn")) document.getElementById("add-aprendiz-btn").onclick = adicionarAprendiz;
+}
+function renderSoldadosSection() {
     const soldadoDiv = document.getElementById('soldado-lista');
     soldadoDiv.innerHTML = '';
     personagens
         .filter(p => p.tipo === "Soldado")
         .forEach((pers, idx) => soldadoDiv.appendChild(personagemCard(pers, idx)));
-
     renderSoldadoDropdown();
     renderSoldadoAlert();
 }
-
+function renderPersonagens() {
+    renderMagoAprendizSection();
+    renderSoldadosSection();
+}
 function personagemCard(pers, idx) {
     let tipoStr = pers.tipo;
     let stats = STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
@@ -228,10 +248,30 @@ function personagemCard(pers, idx) {
     else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
     else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado||pers.tipo}</span>`;
 
-    let card = document.createElement('div');
-    card.className = 'person-card';
     let hpAtual = typeof pers.hpAtual === 'number' ? pers.hpAtual : stats.hp;
-    card.innerHTML = `
+    if(!pers.itens) pers.itens = [];
+    let itemLimit = ITEM_LIMITS[pers.tipo] || ITEM_LIMITS["Soldado"];
+    let podeAdicionarItem = pers.itens.length < itemLimit;
+    let opcoesItens = bancoItens.map((i, iidx) =>
+        `<option value="${iidx}">${i.nome}</option>`
+    ).join('');
+    let itensHtml = pers.itens.length
+        ? `<ul class="itens-list" style="margin-top:0.4em;">${
+            pers.itens.map((item, iidx) =>
+                `<li>${item.nome || "Item"}<button class="remove-btn" onclick="removerItemPersonagem(${idx},${iidx})" title="Remover item">✖</button></li>`
+            ).join('')
+        }</ul>`
+        : "<div style='color:#aaa; font-size:.98em;'>Nenhum item</div>";
+    let addItemForm = bancoItens.length && podeAdicionarItem
+        ? `<form onsubmit="adicionarItemPersonagem(event,${idx})" style="margin-top:0.6em;">
+            <select name="item">${opcoesItens}</select>
+            <button type="submit">Adicionar Item</button>
+            <span style="font-size:.92em;color:#888;">(${pers.itens.length}/${itemLimit})</span>
+        </form>`
+        : `<span style="font-size:.92em;color:#888;">Limite de itens: ${itemLimit}</span>`;
+    return Object.assign(document.createElement('div'), {
+        className: 'person-card',
+        innerHTML: `
         <div class="person-header">
             ${tipoStr} ${name ? ' - ' + name : ''}
             <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
@@ -249,11 +289,32 @@ function personagemCard(pers, idx) {
                 <button class="hp-btn" onclick="alteraHP(${idx},1)">+</button>
             </span>
         </div>
+        <div style="margin-top:0.6em;">
+            <b>Itens:</b> ${addItemForm}
+            ${itensHtml}
+        </div>
         ${renderPersonagemMagias(idx)}
-    `;
-    return card;
+        `
+    });
 }
-
+window.adicionarItemPersonagem = function(event, idxPers) {
+    event.preventDefault();
+    let select = event.target.querySelector('select[name="item"]');
+    let idxItem = parseInt(select.value);
+    let item = bancoItens[idxItem];
+    if (!item) return;
+    let pers = personagens[idxPers];
+    if (pers.itens.some(i => i.nome === item.nome)) {
+        alert("Esse personagem já possui esse item!");
+        return;
+    }
+    pers.itens.push({...item});
+    renderPersonagens();
+};
+window.removerItemPersonagem = function(idxPers, idxItem) {
+    personagens[idxPers].itens.splice(idxItem,1);
+    renderPersonagens();
+};
 function alteraHP(idx, delta) {
     let p = personagens[idx];
     let stats = STATS[p.tipo] || STATS[p.tipoSoldado] || {hp:10};
@@ -269,12 +330,12 @@ function setHP(e, idx) {
     p.hpAtual = v;
     renderPersonagens();
 }
-
 function renderPersonagemMagias(idxPers) {
     if (!magiasPorPersonagem[idxPers] || magiasPorPersonagem[idxPers].length === 0) return '';
     return `<div class="person-magias"><b>Magias:</b><ul>` +
         magiasPorPersonagem[idxPers].map((m,i)=>
             `<li>${m.nome} <span style="color:#aaa;">[${m.escola}]</span> 
+            <span style="color:#229954;">Custo: ${m.custoAtribuido||m.custo_base||m.custo}</span>
             <button class="remove-btn" onclick="removerMagiaPersonagem(${idxPers},${i})" title="Remover magia">✖</button>
             </li>`
         ).join('') + `</ul></div>`;
@@ -294,18 +355,16 @@ function removerPersonagem(idx) {
     renderPersonagens();
 }
 function adicionarMago() {
-    if (personagens.find(p => p.tipo === "Mago")) return alert("Só pode haver um mago!");
-    let idx = personagens.length;
-    personagens.push({tipo: "Mago", nome: "Mago", hpAtual: STATS["Mago"].hp});
+    let escola = document.getElementById('escola-mago')?.value || ESCOLAS[0];
+    personagens.push({tipo: "Mago", nome: "Mago", escola, hpAtual: STATS["Mago"].hp});
     renderPersonagens();
 }
 function adicionarAprendiz() {
-    if (personagens.find(p => p.tipo === "Aprendiz")) return alert("Só pode haver um aprendiz!");
-    let idx = personagens.length;
-    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", hpAtual: STATS["Aprendiz"].hp});
+    let escola = document.getElementById('escola-aprendiz')?.value || ESCOLAS[0];
+    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", escola, hpAtual: STATS["Aprendiz"].hp});
     renderPersonagens();
 }
-function adicionarSoldado(e) {
+function adicionarSoldadoHandler(e) {
     e.preventDefault();
     let tipoSoldado = document.getElementById('soldado-tipo').value;
     let nome = document.getElementById('soldado-nome').value;
@@ -343,17 +402,138 @@ function renderSoldadoAlert() {
     alertDiv.textContent = msg;
 }
 
-//--- Bestiário agrupado, selecionável e editável ---
+// =========== MAGIAS E ITENS BANCO ===========
+function renderMagiaDropdown() {
+    const sel = document.getElementById('magia-dropdown');
+    let html = '';
+    Object.keys(magiasPorEscola).forEach(escola => {
+        html += `<optgroup label="${escola}">`;
+        magiasPorEscola[escola].forEach(m =>
+            html += `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo}) - ${m.descricao}</option>`
+        );
+        html += "</optgroup>";
+    });
+    sel.innerHTML = html;
+}
+function renderItemDropdown() {
+    const sel = document.getElementById('item-dropdown');
+    let html = '';
+    Object.keys(itensPadrao).forEach(grupo => {
+        html += `<optgroup label="${grupo}">`;
+        itensPadrao[grupo].forEach(i =>
+            html += `<option value="${grupo}|${i.nome}">${i.nome} - ${i.descricao}</option>`
+        );
+        html += "</optgroup>";
+    });
+    sel.innerHTML = html;
+}
+function renderBancoMagias() {
+    const ul = document.getElementById('banco-magias-lista');
+    ul.innerHTML = bancoMagias.length
+        ? bancoMagias.map((m, idx) =>
+            `<li>
+                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
+                <br>
+                <i>${m.descricao||""}</i>
+                <br>
+                <small>${m.completo||""}</small>
+                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
+                <button class="remove-btn" onclick="atribuirMagiaPersonagem(${idx})" title="Atribuir">→</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
+}
+function adicionarBancoMagiaHandler(e) {
+    e.preventDefault();
+    const val = document.getElementById('magia-dropdown').value;
+    const completo = document.getElementById('magia-comp').value.trim();
+    const [escola, nome] = val.split('|');
+    const magiaBase = magiasPorEscola[escola].find(m => m.nome === nome);
+    if (!magiaBase) return;
+    bancoMagias.push({
+        nome: magiaBase.nome,
+        escola: magiaBase.escola,
+        custo_base: magiaBase.custo,
+        descricao: magiaBase.descricao,
+        completo
+    });
+    renderBancoMagias();
+    e.target.reset();
+}
+function removerBancoMagia(idx) {
+    bancoMagias.splice(idx, 1);
+    renderBancoMagias();
+}
+function atribuirMagiaPersonagem(idxMagia) {
+    let magos = personagens
+        .map((p,i)=>({p,i}))
+        .filter(x=>x.p.tipo==="Mago"||x.p.tipo==="Aprendiz");
+    if (magos.length === 0) return alert("Adicione Mago ou Aprendiz primeiro!");
+    let escolha = prompt(
+        "Digite o número do personagem para atribuir a magia:\n" +
+        magos.map((x,j)=>`${j+1} - ${x.p.tipo} (${x.p.p?.escola||x.p.escola||"?"}) ${x.p.nome||""}`).join("\n")
+    );
+    let idxEscolhido = parseInt(escolha)-1;
+    if (isNaN(idxEscolhido) || !magos[idxEscolhido]) return;
+    let idxPersonagem = magos[idxEscolhido].i;
+    let personagem = personagens[idxPersonagem];
+    let custoFinal = bancoMagias[idxMagia].custo_base;
+    if (bancoMagias[idxMagia].escola === personagem.escola) custoFinal = bancoMagias[idxMagia].custo_base;
+    else custoFinal = bancoMagias[idxMagia].custo_base + 4;
+    if (!magiasPorPersonagem[idxPersonagem]) magiasPorPersonagem[idxPersonagem]=[];
+    magiasPorPersonagem[idxPersonagem].push({...bancoMagias[idxMagia], custoAtribuido: custoFinal});
+    bancoMagias.splice(idxMagia,1);
+    renderBancoMagias();
+    renderPersonagens();
+}
+function renderBancoItens() {
+    const ul = document.getElementById('banco-itens-lista');
+    ul.innerHTML = bancoItens.length
+        ? bancoItens.map((i, idx) =>
+            `<li>
+                <b>${i.nome}</b>
+                <br>
+                <i>${i.descricao||""}</i>
+                <br>
+                <small>${i.efeito||""}</small>
+                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
+}
+function adicionarBancoItemHandler(e) {
+    e.preventDefault();
+    const val = document.getElementById('item-dropdown').value;
+    const efeito = document.getElementById('item-efeito').value.trim();
+    const [grupo, nome] = val.split('|');
+    let item = null;
+    for(const g in itensPadrao) {
+        if(g === grupo) {
+            item = itensPadrao[g].find(i => i.nome === nome);
+            break;
+        }
+    }
+    if (!item) return;
+    bancoItens.push({
+        nome: item.nome,
+        descricao: item.descricao,
+        efeito
+    });
+    renderBancoItens();
+    e.target.reset();
+}
+function removerBancoItem(idx) {
+    bancoItens.splice(idx, 1);
+    renderBancoItens();
+}
+
+// =========== BESTIÁRIO ===========
 const bestiario = [
     {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
     {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
     {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
-    {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}},
-    {nome:"Snow Troll", tipo:"Troll", desc:"Troll das neves, regenera.", explicacao:"Regenera HP a cada turno.", stats:{move:6, fight:"+4", shoot:"-", armor:14, will:"+3", hp:18}},
-    {nome:"Demon (Minor)", tipo:"Demônio", desc:"Demoníaco menor.", explicacao:"Imune a medo e veneno. Pode aparecer em magias.", stats:{move:6, fight:"+2", shoot:"-", armor:12, will:"+2", hp:12}}
-    // ... adicione mais criaturas conforme necessário ...
+    {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
 ];
-
 function agrupaBestiarioPorTipo(lista) {
     const grupos = {};
     lista.forEach(c => {
@@ -362,7 +542,6 @@ function agrupaBestiarioPorTipo(lista) {
     });
     return grupos;
 }
-
 function renderActiveBeasts() {
     const div = document.getElementById('active-beasts-list');
     if (!bestiarioAtivo.length) {
@@ -389,21 +568,20 @@ function renderActiveBeasts() {
                 <span class="stat-label">HP:</span>
                 <span class="hp-box">
                     <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},-1)">-</button>
-                    <input class="hp-value" type="number" min="0" max="99" value="${b.hpAtual}" style="width:2.5em;text-align:center;" onchange="setHPBeastAtivo(event,${idx})">
+                    <input class="hp-value" type="number" min="0" max="99" value="${b.hpAtual||b.stats.hp}" style="width:2.5em;text-align:center;" onchange="setHPBeastAtivo(event,${idx})">
                     <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},1)">+</button>
                 </span>
             </div>
         </div>
     `).join("");
 }
-
 function removerBeastAtivo(idx) {
     bestiarioAtivo.splice(idx,1);
     renderActiveBeasts();
 }
 function alteraHPBeastAtivo(event, idx, delta) {
     event.stopPropagation();
-    bestiarioAtivo[idx].hpAtual = Math.max(0, Math.min(99, bestiarioAtivo[idx].hpAtual + delta));
+    bestiarioAtivo[idx].hpAtual = Math.max(0, Math.min(99, (bestiarioAtivo[idx].hpAtual || bestiarioAtivo[idx].stats.hp) + delta));
     renderActiveBeasts();
 }
 function setHPBeastAtivo(event, idx) {
@@ -460,7 +638,7 @@ function toggleBeastAtivo(nome, tipo) {
     renderBestiario();
 }
 
-// --- Abas: tornadas clicáveis ---
+// =========== ABAS ===========
 document.getElementById('tabnav').addEventListener('click', function(e) {
     if(e.target.tagName === "BUTTON") {
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -470,21 +648,24 @@ document.getElementById('tabnav').addEventListener('click', function(e) {
         document.getElementById(tab).classList.add('active');
         if(tab === 'dashboard') renderPersonagens();
         if(tab === 'bestiario') renderBestiario();
-        // Adicione chamadas para magias/itens se necessário
-        if (tab === 'magias') { renderMagiaDropdown && renderMagiaDropdown(); renderBancoMagias && renderBancoMagias(); }
-        if (tab === 'itens') { renderItemDropdown && renderItemDropdown(); renderBancoItens && renderBancoItens(); }
+        if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
+        if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
     }
 });
 
-// --- Inicialização ---
+// =========== EVENTOS SUBMIT DOS FORMULÁRIOS ===========
+document.getElementById('add-soldado-form').addEventListener('submit', adicionarSoldadoHandler);
+document.getElementById('add-magia-form').addEventListener('submit', adicionarBancoMagiaHandler);
+document.getElementById('add-item-form').addEventListener('submit', adicionarBancoItemHandler);
+
+// =========== INICIALIZAÇÃO ===========
 window.onload = function() {
     renderPersonagens();
     renderBestiario();
-    // Adicione inicialização de magias/itens se necessário
-    if (typeof renderMagiaDropdown === "function") renderMagiaDropdown();
-    if (typeof renderBancoMagias === "function") renderBancoMagias();
-    if (typeof renderItemDropdown === "function") renderItemDropdown();
-    if (typeof renderBancoItens === "function") renderBancoItens();
+    renderMagiaDropdown();
+    renderBancoMagias();
+    renderItemDropdown();
+    renderBancoItens();
 };
 </script>
 </body>
