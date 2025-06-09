@@ -53,12 +53,22 @@
     .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
     .stat-value, .stat-input { width: 2.2em; text-align: center; }
     .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
-    .hp-box { display: flex; align-items: center; gap: 0.2em;}
-    .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
-    .hp-btn:active { background: #2471a3; }
-    .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
     .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
     .remove-btn:active { background: #922b21; }
+    .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
+    .move-btn:active { background: #333; }
+    .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
+    .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-btn:active { background: #14507c; }
+    .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-cancel:active { background: #b04a02; }
+    .edit-name-form { display: inline; }
+    .stat-edit-form { display: inline; margin-left: 0.2em; }
+    .stat-edit-input { width: 2.4em; text-align: center; border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
+    .stat-edit-btn { background: #229954; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.1em 0.7em; cursor: pointer; margin-left: 2px;}
+    .stat-edit-btn:active { background: #14507c; }
+    .stat-edit-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.1em 0.7em; cursor: pointer; margin-left: 2px;}
+    .stat-edit-cancel:active { background: #b04a02; }
     .add-mago-btn {
       background: #229954;
       color: #fff;
@@ -209,13 +219,15 @@
 <script>
 let conteudo_frostgrave_json = { escolas:[], magias:[], itens:[], personagens:[], soldados:[], bestiario:[] };
 let warband = [];
+let editingIdx = null;
+let editingStat = null;
 
 async function loadJSON() {
   try {
     const resp = await fetch('conteudo_frostgrave.json');
     if (!resp.ok) throw new Error("Arquivo não encontrado!");
     conteudo_frostgrave_json = await resp.json();
-    warband = []; // começa vazio
+    warband = [];
     renderAll();
     enableTabs();
   } catch (err) {
@@ -300,4 +312,244 @@ function renderBestiario() {
             <div class="beast-desc">${b.desc || ''}</div>
             ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
             <div class="beast-stats">
-             
+              <span><b>Mov:</b> ${b.stats.move}</span>
+              <span><b>Fight:</b> ${b.stats.fight}</span>
+              <span><b>Shoot:</b> ${b.stats.shoot}</span>
+              <span><b>Armor:</b> ${b.stats.armor}</span>
+              <span><b>Will:</b> ${b.stats.will}</span>
+              <span><b>HP:</b> ${b.stats.hp}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>`
+    ).join('')}
+    </div>`;
+}
+
+function renderBancoMagias() {
+  const ul = document.getElementById('banco-magias-lista');
+  if (!ul) return;
+  ul.innerHTML = '';
+  (conteudo_frostgrave_json.magias || []).forEach(m => {
+    let desc = m.escola ? `Escola: ${m.escola}` : '';
+    ul.innerHTML += `<li>
+      <b title="${desc}">${m.nome}</b>
+      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
+    </li>`;
+  });
+}
+function renderMagiaDropdown() {
+  const sel = document.getElementById("magia-dropdown");
+  if (!sel) return;
+  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
+    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+  ).join('');
+}
+
+function renderBancoItens() {
+  const ul = document.getElementById('banco-itens-lista');
+  if (!ul) return;
+  ul.innerHTML = '';
+  (conteudo_frostgrave_json.itens || []).forEach(item => {
+    let desc = item.descricao ? item.descricao : '';
+    ul.innerHTML += `<li>
+      <b title="${desc}">${item.nome}</b>
+      <span style="color:#888">[${item.grupo}]</span>
+      <span style="color:#229954; margin-left:1em;">${desc}</span>
+    </li>`;
+  });
+}
+function renderItemDropdown() {
+  const sel = document.getElementById("item-dropdown");
+  if (!sel) return;
+  sel.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
+    `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
+  ).join('');
+}
+
+// Permite mover soldados para cima/baixo
+function moveSoldado(idx, dir) {
+  // soldados só começam depois dos mago/aprendiz, então apenas soldados são reordenáveis
+  // mago/aprendiz estão nos índices 0 e 1 se presentes
+  // idx = índice real em warband
+  // dir = -1 (para cima), 1 (para baixo)
+  const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz').length;
+  const soldStart = magos;
+  const soldEnd = warband.length - 1;
+  // só permite mover dentro dos soldados
+  if (idx < soldStart || idx > soldEnd) return;
+  let dest = idx + dir;
+  if (dest < soldStart || dest > soldEnd) return;
+  const temp = warband[idx];
+  warband[idx] = warband[dest];
+  warband[dest] = temp;
+  renderPersonagens();
+}
+
+function renderPersonagens() {
+  const magoDiv = document.getElementById('mago-aprendiz-lista');
+  const soldDiv = document.getElementById('soldado-lista');
+  if (magoDiv) magoDiv.innerHTML = '';
+  if (soldDiv) soldDiv.innerHTML = '';
+  warband.forEach((p, idx) => {
+    let el = renderPersonagemCard(p, idx, (p.tipo === 'Mago' || p.tipo === 'Aprendiz'));
+    if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
+    else soldDiv.innerHTML += el;
+  });
+}
+
+function editPersonagemNome(idx) {
+  editingIdx = idx;
+  renderPersonagens();
+}
+function savePersonagemNome(idx) {
+  const input = document.getElementById('input-nome-'+idx);
+  if (input) {
+    warband[idx].nome = input.value.trim();
+    editingIdx = null;
+    renderPersonagens();
+  }
+}
+function cancelEditNome() {
+  editingIdx = null;
+  renderPersonagens();
+}
+function editStat(idx, stat) {
+  editingStat = { idx, stat };
+  renderPersonagens();
+}
+function saveStat(idx, stat) {
+  const input = document.getElementById(`input-stat-${stat}-${idx}`);
+  if (input) {
+    warband[idx].stats[stat] = input.value;
+    editingStat = null;
+    renderPersonagens();
+  }
+}
+function cancelEditStat() {
+  editingStat = null;
+  renderPersonagens();
+}
+
+function renderPersonagemCard(p, idx, isMago) {
+  const isEditingNome = editingIdx === idx;
+  function statField(stat, label) {
+    const isEditingThis = editingStat && editingStat.idx === idx && editingStat.stat === stat;
+    if (isEditingThis) {
+      return `<span class="stat-label">${label}:</span>
+        <form class="stat-edit-form" onsubmit="event.preventDefault();saveStat(${idx},'${stat}')">
+          <input id="input-stat-${stat}-${idx}" class="stat-edit-input" value="${p.stats[stat]}">
+          <button type="submit" class="stat-edit-btn" title="Salvar">&#10003;</button>
+          <button type="button" class="stat-edit-cancel" onclick="cancelEditStat()" title="Cancelar">&#10006;</button>
+        </form>`;
+    }
+    return `<span class="stat-label">${label}:</span>
+      <span ondblclick="editStat(${idx},'${stat}')" title="Duplo clique para editar">${p.stats[stat]}</span>`;
+  }
+  return `<div class="person-card">
+    <div class="person-header">
+      <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
+      ${
+        isEditingNome
+        ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})">
+            <input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}">
+            <button type="submit" class="edit-name-btn">&#10003;</button>
+            <button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button>
+          </form>`
+        : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`
+      }
+      ${!isMago ? `
+        <button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover">&times;</button>
+        <button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button>
+        <button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>
+      ` : ''}
+    </div>
+    <div class="stats-line">
+      ${statField('move', 'Mov')}
+      ${statField('fight', 'Fight')}
+      ${statField('shoot', 'Shoot')}
+      ${statField('armor', 'Armor')}
+      ${statField('will', 'Will')}
+      ${statField('hp', 'HP')}
+    </div>
+  </div>`;
+}
+function removerPersonagem(idx) {
+  warband.splice(idx, 1);
+  renderPersonagens();
+}
+
+function renderAddSoldadoForm() {
+  const form = document.getElementById('add-soldado-form');
+  const sel = document.getElementById('soldado-tipo');
+  const custoSpan = document.getElementById('soldado-custo-span');
+  if (!form || !sel || !custoSpan) return;
+
+  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
+    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
+  ).join('');
+  sel.onchange = function() {
+    const opt = sel.options[sel.selectedIndex];
+    custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
+  };
+  sel.onchange();
+
+  form.onsubmit = function(e) {
+    e.preventDefault();
+    const tipo = sel.value;
+    const nome = document.getElementById('soldado-nome').value.trim();
+    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
+    if (soldado) {
+      warband.push({
+        tipo: soldado.tipo,
+        nome: nome || soldado.tipo,
+        stats: {...soldado.stats}
+      });
+      renderPersonagens();
+      form.reset();
+      sel.onchange();
+    }
+  };
+}
+
+document.getElementById('add-magia-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('magia-dropdown').value;
+  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
+  const comp = document.getElementById('magia-comp').value.trim();
+  if (!nome) return;
+  conteudo_frostgrave_json.magias.push({
+    nome, escola, descricao: comp
+  });
+  renderBancoMagias();
+  renderMagiaDropdown();
+  this.reset();
+};
+document.getElementById('add-item-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('item-dropdown').value;
+  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
+  const efeito = document.getElementById('item-efeito').value.trim();
+  if (!nome) return;
+  conteudo_frostgrave_json.itens.push({
+    nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
+  });
+  renderBancoItens();
+  renderItemDropdown();
+  this.reset();
+};
+
+function renderAll() {
+  renderBestiario();
+  renderBancoMagias();
+  renderBancoItens();
+  renderPersonagens();
+  renderAddSoldadoForm();
+  renderMagiaDropdown();
+  renderItemDropdown();
+}
+
+window.onload = loadJSON;
+</script>
+</body>
+</html>
