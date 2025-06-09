@@ -670,6 +670,16 @@ function mudaStat(idx, stat, delta) {
   let n = parseInt(v,10);
   if (isNaN(n)) n = 0;
   let novo = n + delta;
+  // XP: só permite aumentar stat se houver XP suficiente (100 XP por ponto)
+  if (delta > 0) {
+    let xpInput = document.getElementById('xp-input');
+    let xpAtual = parseInt(xpInput.value) || 0;
+    if (xpAtual < 100) {
+      alert('XP insuficiente para evoluir este atributo! (100 XP)');
+      return;
+    }
+    xpInput.value = xpAtual - 100;
+  }
   warband[idx].stats[stat] = (novo >= 0 ? "+" : "") + novo;
   if (stat === "hp") {
     warband[idx].currentHp = Math.min(getCurrentHP(warband[idx]), Number(warband[idx].stats.hp));
@@ -727,8 +737,8 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul>${magiasDropdown}</div>`;
   }
   let canEdit = (p.tipo !== "Aprendiz");
-  let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <span class='${statusObj.css}'>${statusObj.label}</span></div>`;
-  return `<div class="person-card"><div class="person-header"><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}${hpControl}<span class="person-status"><select class="status-selector ${statusObj.css}" onchange="setStatus(${idx},this.value)">${statusOptions.map(opt => `<option value="${opt.value}"${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}</select><span class="${statusObj.css}">${statusObj.label}</span></span><button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
+  let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}</select></div>`;
+  return `<div class="person-card"><div class="person-header"><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   warband.splice(idx, 1);
@@ -742,7 +752,6 @@ function renderAddSoldadoForm() {
   const alertDiv = document.getElementById('soldado-limit-alert');
   if (!form || !sel || !custoSpan || !alertDiv) return;
 
-  // Critério de especial: custo > 50 OU tipo em lista
   const especiaisLista = ["Knight","Templar","Barbarian","Treasure Hunter","Tracker","Ranger","Man-at-Arms","Apothecary"];
   let soldados = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
     ? conteudo_frostgrave_json.soldados.slice()
@@ -778,11 +787,19 @@ function renderAddSoldadoForm() {
       return;
     }
     const especiaisAtuais = soldadosAtuais.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
-    const isEspecial = (soldado.custo > 50 || especiaisLista.includes(s.tipo));
+    const isEspecial = (soldado.custo > 50 || especiaisLista.includes(soldado.tipo));
     if (isEspecial && especiaisAtuais.length >= 4) {
       alertDiv.textContent = 'Limite de 4 soldados elite atingido!';
       return;
     }
+    // GOLD: checar gold suficiente
+    let goldInput = document.getElementById('gold-input');
+    let goldAtual = parseInt(goldInput.value) || 0;
+    if (goldAtual < soldado.custo) {
+      alertDiv.textContent = 'Ouro insuficiente para contratar este soldado!';
+      return;
+    }
+    goldInput.value = goldAtual - soldado.custo;
     const novo = {
       tipo: soldado.tipo,
       nome: nome || soldado.tipo,
@@ -853,9 +870,16 @@ function addPersonMagia(idx) {
     alert('Defina a escola do personagem primeiro!');
     return;
   }
+  let xpInput = document.getElementById('xp-input');
+  let xpAtual = parseInt(xpInput.value) || 0;
+  if (xpAtual < 100) {
+    alert('XP insuficiente para aprender uma nova magia! (100 XP)');
+    return;
+  }
   if (!warband[idx].personMagias) warband[idx].personMagias = [];
   if (!warband[idx].personMagias.includes(magiaNome)) {
     warband[idx].personMagias.push(magiaNome);
+    xpInput.value = xpAtual - 100;
   }
   renderPersonagens();
 }
@@ -870,12 +894,35 @@ function renderAddMagoAprendizBtns() {
   if (!div) return;
   let html = '';
   if (!warband.some(p => p.tipo === 'Mago')) {
-    html += '<button class="add-mago-btn" onclick="adicionarMago()">Adicionar Mago</button>';
+    let escolas = conteudo_frostgrave_json.escolas || [];
+    html += '<form id="form-add-mago" style="display:inline-block;margin-bottom:1em;">';
+    html += '<select id="escola-mago-select" style="font-size:1.08em;padding:0.3em 0.7em;border-radius:7px;border:1px solid #bbb;">';
+    html += '<option value="">Escolha a escola do mago...</option>';
+    escolas.forEach(e => { html += `<option value="${e}">${e}</option>`; });
+    html += '</select>';
+    html += '<button type="submit" class="add-mago-btn" style="margin-left:0.7em;">Adicionar Mago</button>';
+    html += '</form>';
   }
   if (!warband.some(p => p.tipo === 'Aprendiz')) {
     html += '<button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>';
   }
   div.innerHTML = html;
+  // Lógica do form de mago
+  const form = document.getElementById('form-add-mago');
+  if (form) {
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      const sel = document.getElementById('escola-mago-select');
+      const escola = sel.value;
+      if (!escola) {
+        alert('Escolha uma escola para o mago!');
+        return;
+      }
+      const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
+      if (mago) warband.unshift({ ...mago, nome: mago.tipo, escola });
+      renderPersonagens();
+    };
+  }
 }
 
 function getDificuldadeMagia(escolaMago, escolaMagia) {
