@@ -82,39 +82,62 @@
             margin-top: 0.3em;
             margin-bottom: 0.2em;
         }
-        /* Bestiário */
-        .beast-card, .active-beast-card { margin-bottom: 1.2em;}
-        .beast-header { font-size: 1.13em; font-weight: bold; margin-bottom: .5em; }
-        .beast-type { color: #c0392b; font-weight: bold; }
-        .beast-desc { color: #222; font-size: 0.98em; font-style: italic; margin-bottom: .7em;}
-        .select-beast-btn { position: absolute; top: 10px; right: 10px; background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer;}
-        .select-beast-btn.selected { background: #229954; }
-        .beast-tooltip { position: relative; cursor: help; border-bottom: 1px dotted #aaa; }
-        .beast-tooltip .tooltiptext {
-            visibility: hidden;
-            width: 265px;
-            background-color: #222;
-            color: #fff;
-            text-align: left;
-            border-radius: 9px;
-            padding: 0.7em 1em;
-            position: absolute;
-            z-index: 10;
-            top: 145%;
-            left: 50%;
-            margin-left: -120px;
-            opacity: 0;
-            transition: opacity 0.22s;
-            font-size: 1em;
-            box-shadow: 0 3px 18px #0008;
+        /* Bestiário melhorado */
+        .bestiary-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6em;
         }
-        .beast-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-        .bestiary-list { margin-top: 1.2em; }
-        .bestiary-group { margin-bottom: 2.5em; }
-        .bestiary-group h3 { color: #c0392b; margin-bottom: 0.7em; }
-        .active-beasts-list { display: flex; flex-direction: column; gap: 1.2em; margin-bottom: 2em; }
+        .beast-card {
+            flex: 1 1 320px;
+            min-width: 290px;
+            max-width: 410px;
+            background: #f8fafc;
+            border: 1px solid #ccd;
+            border-radius: 10px;
+            box-shadow: 0 1px 8px #bbb3;
+            padding: 1.1em 1em 0.9em 1em;
+            position: relative;
+            margin-bottom: 0.6em;
+        }
+        .beast-header {
+            font-size: 1.23em;
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+        .beast-type {
+            font-size: 0.98em;
+            background: #dbeafe;
+            color: #21618c;
+            padding: 0.16em 0.55em;
+            border-radius: 5px;
+        }
+        .beast-desc {
+            margin: 0.3em 0 0.7em 0;
+            color: #555;
+            font-style: italic;
+        }
+        .beast-expl {
+            margin-bottom: .7em;
+            color: #555;
+            background: #eaf2f8;
+            padding: 0.5em 0.8em;
+            border-radius: 7px;
+            font-size: 0.97em;
+        }
+        .beast-stats {
+            margin-bottom: .4em;
+            margin-top: .4em;
+        }
+        .beast-stats span {
+            display: inline-block;
+            margin-right: 0.8em;
+        }
         @media (max-width: 700px) {
             main { padding: 0.5em 0.3em; }
+            .bestiary-list { flex-direction: column; gap: 1em;}
+            .beast-card { min-width: 0; max-width: 100%; }
         }
     </style>
 </head>
@@ -194,6 +217,9 @@
     </section>
 </main>
 <script>
+/* O JS do app, já com as alterações para visual do bestiário
+   e magias apenas para mago/aprendiz compartilhadas */
+
 let personagens = [];
 let bancoMagias = [];
 let bancoItens = [];
@@ -370,30 +396,9 @@ function adicionarSoldadoHandler(e) {
     renderSoldadoCusto();
 }
 
-// --- Magias e Itens para personagens ---
-function renderMagiasPersonagem(idx) {
-    let arr = magiasPorPersonagem[idx] || [];
-    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhuma magia</div>`;
-    return `<ul class="magic-list">${
-        arr.map((m,i)=>`<li>${m.nome} (${m.escola}) <button class="remove-btn" onclick="removerMagiaPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
-    }</ul>`;
-}
-function renderItensPersonagem(idx) {
-    let arr = itensPorPersonagem[idx] || [];
-    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhum item</div>`;
-    return `<ul class="item-list">${
-        arr.map((it,i)=>`<li>${it.nome} (${it.grupo}) <button class="remove-btn" onclick="removerItemPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
-    }</ul>`;
-}
-window.removerMagiaPersonagem = function(idx, i) {
-    (magiasPorPersonagem[idx]||[]).splice(i,1);
-    renderPersonagens();
-};
-window.removerItemPersonagem = function(idx, i) {
-    (itensPorPersonagem[idx]||[]).splice(i,1);
-    renderPersonagens();
-};
+/* === MAGIAS NO PERSONAGEM: só mago pode adicionar/remover, aprendiz compartilha === */
 function renderAddMagiaPersonagem(idx) {
+    if (personagens[idx]?.tipo !== "Mago") return "";
     let html = `<form class="add-magic-person-btn" onsubmit="return addMagiaPersonagem(${idx})">
         <select id="add-magia-person-${idx}">
             ${Object.keys(magiasPorEscola).sort().map(escola =>
@@ -409,6 +414,7 @@ function renderAddMagiaPersonagem(idx) {
     return html;
 }
 window.addMagiaPersonagem = function(idx) {
+    if (personagens[idx]?.tipo !== "Mago") return false;
     let sel = document.getElementById(`add-magia-person-${idx}`);
     let val = sel.value;
     if (!val) return false;
@@ -421,6 +427,30 @@ window.addMagiaPersonagem = function(idx) {
     renderPersonagens();
     return false;
 };
+function renderMagiasPersonagem(idx) {
+    if (personagens[idx]?.tipo === "Mago") {
+        let arr = magiasPorPersonagem[idx] || [];
+        if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhuma magia</div>`;
+        return `<ul class="magic-list">${
+            arr.map((m,i)=>`<li>${m.nome} (${m.escola}) <button class="remove-btn" onclick="removerMagiaPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
+        }</ul>`;
+    } else if (personagens[idx]?.tipo === "Aprendiz") {
+        let idxMago = personagens.findIndex(p => p.tipo === "Mago");
+        if (idxMago === -1 || !magiasPorPersonagem[idxMago] || !magiasPorPersonagem[idxMago].length)
+            return `<div style="color:#aaa;font-size:.98em;">Nenhuma magia</div>`;
+        return `<ul class="magic-list">${
+            magiasPorPersonagem[idxMago].map((m,i)=>`<li>${m.nome} (${m.escola})</li>`).join('')
+        }</ul>`;
+    } else {
+        return "";
+    }
+}
+window.removerMagiaPersonagem = function(idx, i) {
+    if (personagens[idx]?.tipo !== "Mago") return;
+    (magiasPorPersonagem[idx]||[]).splice(i,1);
+    renderPersonagens();
+};
+/* Itens: qualquer um pode */
 function renderAddItemPersonagem(idx) {
     let html = `<form class="add-item-person-btn" onsubmit="return addItemPersonagem(${idx})">
         <select id="add-item-person-${idx}">
@@ -448,8 +478,19 @@ window.addItemPersonagem = function(idx) {
     renderPersonagens();
     return false;
 };
+function renderItensPersonagem(idx) {
+    let arr = itensPorPersonagem[idx] || [];
+    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhum item</div>`;
+    return `<ul class="item-list">${
+        arr.map((it,i)=>`<li>${it.nome} (${it.grupo}) <button class="remove-btn" onclick="removerItemPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
+    }</ul>`;
+}
+window.removerItemPersonagem = function(idx, i) {
+    (itensPorPersonagem[idx]||[]).splice(i,1);
+    renderPersonagens();
+};
 
-// --- Banco de Magias / Itens ---
+/* === Banco de magias e itens, bestiário etc permanecem iguais === */
 function renderMagiaDropdown() {
     const sel = document.getElementById('magia-dropdown');
     if (!sel) return;
@@ -531,20 +572,38 @@ window.removerBancoItem = function(idx) {
     renderBancoItens();
 };
 
+/* --- Bestiário visual moderno --- */
 function renderBestiario() {
     const bestDiv = document.getElementById('bestiary-list');
     if (!bestDiv) return;
     bestDiv.innerHTML = "";
-    bestiario.forEach(b =>
-        bestDiv.innerHTML += `<div class="beast-card">
-            <div class="beast-header">${b.nome} <span class="beast-type">(${b.tipo})</span></div>
+    if (!bestiario.length) {
+        bestDiv.innerHTML = "<div style='color:#888'>Nenhuma criatura cadastrada.</div>";
+        return;
+    }
+    bestDiv.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:1.6em;">${
+        bestiario.map(b => `
+        <div class="beast-card">
+            <div class="beast-header">
+                <span style="font-weight:bold">${b.nome}</span> 
+                <span class="beast-type">${b.tipo}</span>
+            </div>
             <div class="beast-desc">${b.desc}</div>
-            <div style="margin-bottom:.4em;">${b.explicacao||""}</div>
-            <div><b>Mov:</b> ${b.stats.move} <b>Fight:</b> ${b.stats.fight} <b>Shoot:</b> ${b.stats.shoot} <b>Armor:</b> ${b.stats.armor} <b>Will:</b> ${b.stats.will} <b>HP:</b> ${b.stats.hp}</div>
-        </div>`
-    );
+            ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
+            <div class="beast-stats">
+                <span><b>Mov:</b> ${b.stats.move}</span>
+                <span><b>Fight:</b> ${b.stats.fight}</span>
+                <span><b>Shoot:</b> ${b.stats.shoot}</span>
+                <span><b>Armor:</b> ${b.stats.armor}</span>
+                <span><b>Will:</b> ${b.stats.will}</span>
+                <span><b>HP:</b> ${b.stats.hp}</span>
+            </div>
+        </div>
+        `).join('')}
+    </div>`;
 }
 
+/* --- Edição de nome e mover soldados --- */
 window.editarNomePersonagem = function(idx) {
     editandoNome = idx;
     renderPersonagens();
@@ -569,7 +628,6 @@ window.moverSoldado = function(idx, delta) {
     if (dest < 0 || dest >= soldadosIdx.length) return;
     let idx2 = soldadosIdx[dest];
     [personagens[idx], personagens[idx2]] = [personagens[idx2], personagens[idx]];
-    // também mover magias/itens associados
     [magiasPorPersonagem[idx], magiasPorPersonagem[idx2]] = [magiasPorPersonagem[idx2], magiasPorPersonagem[idx]];
     [itensPorPersonagem[idx], itensPorPersonagem[idx2]] = [itensPorPersonagem[idx2], itensPorPersonagem[idx]];
     renderPersonagens();
@@ -621,7 +679,7 @@ function getStats(pers) {
     }
     return STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
 }
-
+/* Personagem: magias só para mago/aprendiz, soldados não exibem */
 function personagemCard(pers, idx, displayOrder) {
     let tipoStr = pers.tipo;
     let stats = getStats(pers);
@@ -657,6 +715,26 @@ function personagemCard(pers, idx, displayOrder) {
         `;
     }
 
+    let magiasSection = '';
+    if (pers.tipo === "Mago") {
+        magiasSection = `<div class="magic-section">
+            <b>Magias:</b>
+            ${renderAddMagiaPersonagem(idx)}
+            ${renderMagiasPersonagem(idx)}
+        </div>`;
+    } else if (pers.tipo === "Aprendiz") {
+        magiasSection = `<div class="magic-section">
+            <b>Magias (as mesmas do mago):</b>
+            ${renderMagiasPersonagem(idx)}
+        </div>`;
+    }
+
+    let itensSection = `<div class="item-section">
+        <b>Itens:</b>
+        ${renderAddItemPersonagem(idx)}
+        ${renderItensPersonagem(idx)}
+    </div>`;
+
     return Object.assign(document.createElement('div'), {
         className: 'person-card',
         innerHTML: `
@@ -678,26 +756,18 @@ function personagemCard(pers, idx, displayOrder) {
                 <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
             </span>
         </div>
-        <div class="magic-section">
-            <b>Magias:</b>
-            ${renderAddMagiaPersonagem(idx)}
-            ${renderMagiasPersonagem(idx)}
-        </div>
-        <div class="item-section">
-            <b>Itens:</b>
-            ${renderAddItemPersonagem(idx)}
-            ${renderItensPersonagem(idx)}
-        </div>
+        ${magiasSection}
+        ${itensSection}
         `
     });
 }
-
 function renderPersonagens() {
     renderGoldXP();
     renderMagoAprendizSection();
     renderSoldadosSection();
 }
 
+/* Controle de abas */
 document.getElementById('tabnav').addEventListener('click', function(e) {
     if(e.target.tagName === "BUTTON") {
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
