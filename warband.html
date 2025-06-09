@@ -182,7 +182,7 @@
   </div>
   <nav id="tabnav">
     <button data-tab="dashboard" class="active" type="button">Warband</button>
-    <button data-tab="magias" type="button">Magias</button>
+    <button data-tab="grimorios" type="button">Grimórios</button>
     <button data-tab="itens" type="button">Itens</button>
     <button data-tab="bestiario" type="button">Bestiário</button>
     <button data-tab="notas" type="button">Notas</button>
@@ -217,18 +217,17 @@
       </section>
     </div>
   </section>
-  <section id="magias" class="tab-content">
+  <section id="grimorios" class="tab-content">
     <div class="tab-panel-box">
+      <div id="aprender-magia-form-div"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1em;">
-        <h2 class="tab-panel-title" style="margin:0;">Banco de Magias</h2>
+        <h2 class="tab-panel-title" style="margin:0;">Bando de Grimórios</h2>
         <div id="gold-xp-box-magias"></div>
       </div>
       <form class="magia-form" id="add-magia-form" autocomplete="off">
         <select id="magia-dropdown"></select>
-        <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
-        <button id="add-magia-btn" type="submit">Adicionar Magia</button>
+        <button id="add-magia-btn" type="submit">Adicionar Grimório</button>
       </form>
-      <div id="aprender-magia-form-div"></div>
       <ul id="banco-magias-lista" class="magias-list"></ul>
     </div>
   </section>
@@ -320,7 +319,7 @@ function enableTabs() {
       let tabSection = document.getElementById(tab);
       if (tabSection) tabSection.classList.add('active');
       if (tab === 'bestiario') renderBestiario();
-      if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
+      if (tab === 'grimorios') { renderMagiaDropdown(); renderBancoMagias(); }
       if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
       if (tab === 'dashboard') { renderPersonagens(); renderAddSoldadoForm(); }
       rebindFormEvents();
@@ -510,8 +509,15 @@ function renderBancoItens() {
   });
 }
 function removerBancoItem(nome, grupo) {
-  if (!confirm('Remover este item do banco?')) return;
-  bancoItens = bancoItens.filter(item => item.nome !== nome || item.grupo !== grupo);
+  if (!confirm('Remover uma unidade deste item do banco?')) return;
+  let idx = bancoItens.findIndex(item => item.nome === nome && item.grupo === grupo);
+  if (idx !== -1) {
+    if (bancoItens[idx].qtd && bancoItens[idx].qtd > 1) {
+      bancoItens[idx].qtd--;
+    } else {
+      bancoItens.splice(idx, 1);
+    }
+  }
   renderBancoItens();
   renderItemDropdown();
   renderPersonagens();
@@ -1125,7 +1131,7 @@ function renderAprenderMagiaForm() {
       const alertDiv = document.getElementById('aprender-magia-alert');
       alertDiv.textContent = '';
       if (!magiaNome) return;
-      let xpInput = document.getElementById('xp-input');
+      let xpInput = document.getElementById('xp-input-dashboard');
       let xpAtual = parseInt(xpInput.value) || 0;
       if (xpAtual < 100) {
         alertDiv.textContent = 'XP insuficiente para aprender uma nova magia! (100 XP)';
@@ -1139,6 +1145,7 @@ function renderAprenderMagiaForm() {
       if (mago && !mago.personMagias.includes(magiaNome)) mago.personMagias.push(magiaNome);
       if (aprendiz && !aprendiz.personMagias.includes(magiaNome)) aprendiz.personMagias.push(magiaNome);
       xpInput.value = xpAtual - 100;
+      syncGoldXPInputs();
       renderPersonagens();
       renderAprenderMagiaForm();
     };
@@ -1181,8 +1188,11 @@ function renderEditStatsBtn() {
 function renderGoldXPBoxes(targetId) {
   const box = document.getElementById(`gold-xp-box-${targetId}`);
   if (!box) return;
-  const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
-  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
+  // Se for a primeira renderização, defina XP como 600 se não houver valor
+  let xpInputDashboard = document.getElementById('xp-input-dashboard');
+  let xpVal = xpInputDashboard?.value;
+  if (!xpVal || isNaN(xpVal)) xpVal = 600;
+  let goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
   box.innerHTML = `
     <span class="gold-xp-label">Gold:
       <button class="gold-btn" onclick="alteraGold(-10)">-</button>
@@ -1197,6 +1207,7 @@ function renderGoldXPBoxes(targetId) {
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
+    inp.readOnly = false;
     inp.onchange = function() {
       setGold(document.getElementById(`gold-input-${targetId}`).value);
       setXP(document.getElementById(`xp-input-${targetId}`).value);
@@ -1309,6 +1320,7 @@ function renderGoldXPBoxes(targetId) {
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
+    inp.readOnly = false;
     inp.onchange = function() {
       setGold(document.getElementById(`gold-input-${targetId}`).value);
       setXP(document.getElementById(`xp-input-${targetId}`).value);
@@ -1316,6 +1328,16 @@ function renderGoldXPBoxes(targetId) {
     };
   });
 }
+
+// Garantir que o input principal de XP também inicie com 600
+window.onload = function() {
+  loadJSON();
+  setTimeout(() => {
+    let xpInput = document.getElementById('xp-input-dashboard');
+    if (xpInput && (!xpInput.value || isNaN(xpInput.value))) xpInput.value = 600;
+    syncGoldXPInputs();
+  }, 300);
+};
 </script>
 </body>
 </html>
