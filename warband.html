@@ -216,6 +216,17 @@
       border-left: 4px solid #3498db;
       padding-left: 0.7em;
     }
+    .notes-box {
+      width: 100%;
+      min-height: 120px;
+      font-size: 1.13em;
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      padding: 1em 1.2em;
+      background: #fff;
+      margin-top: 1em;
+      resize: vertical;
+    }
   </style>
 </head>
 <body>
@@ -225,46 +236,48 @@
     <button data-tab="dashboard" class="active" type="button">Warband</button>
     <button data-tab="magias" type="button">Magias</button>
     <button data-tab="itens" type="button">Itens</button>
-    <button data-tab="notas" type="button">Notas</button>
     <button data-tab="bestiario" type="button">Bestiário</button>
+    <button data-tab="notas" type="button">Notas</button>
   </nav>
   <section id="dashboard" class="tab-content active">
-    <div class="warband-header">
-      <h2>Warband</h2>
-      <div class="gold-xp-box">
-        <span class="gold-xp-label">Gold:
-          <button class="gold-btn" onclick="alteraGold(-10)">-</button>
-          <input id="gold-input" class="gold-xp-input" type="number" min="0" value="500" onchange="setGold(this.value)">
-          <button class="gold-btn" onclick="alteraGold(10)">+</button>
-        </span>
-        <span class="gold-xp-label">XP:
-          <button class="xp-btn" onclick="alteraXP(-10)">-</button>
-          <input id="xp-input" class="gold-xp-input" type="number" min="0" value="0" onchange="setXP(this.value)">
-          <button class="xp-btn" onclick="alteraXP(10)">+</button>
-        </span>
+    <div class="tab-panel-box">
+      <div class="warband-header">
+        <h2>Warband</h2>
+        <div class="gold-xp-box">
+          <span class="gold-xp-label">Gold:
+            <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+            <input id="gold-input" class="gold-xp-input" type="number" min="0" value="500" onchange="setGold(this.value)">
+            <button class="gold-btn" onclick="alteraGold(10)">+</button>
+          </span>
+          <span class="gold-xp-label">XP:
+            <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+            <input id="xp-input" class="gold-xp-input" type="number" min="0" value="0" onchange="setXP(this.value)">
+            <button class="xp-btn" onclick="alteraXP(10)">+</button>
+          </span>
+        </div>
       </div>
+      <div class="section-title">Mago & Aprendiz</div>
+      <div id="add-mago-aprendiz-btns"></div>
+      <div class="character-group" id="mago-aprendiz-lista"></div>
+      <div class="section-title">Soldados</div>
+      <div class="character-group" id="soldado-lista"></div>
+      <section class="add-section">
+        <h2 style="color:#229954">Adicionar Soldado</h2>
+        <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
+        <form class="add-form add-form-soldado" id="add-soldado-form" autocomplete="off">
+          <label>
+            Tipo de Soldado:
+            <select id="soldado-tipo"></select>
+          </label>
+          <label>
+            Nome:
+            <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
+          </label>
+          <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
+          <button type="submit">Adicionar Soldado</button>
+        </form>
+      </section>
     </div>
-    <div class="section-title">Mago & Aprendiz</div>
-    <div id="add-mago-aprendiz-btns"></div>
-    <div class="character-group" id="mago-aprendiz-lista"></div>
-    <div class="section-title">Soldados</div>
-    <div class="character-group" id="soldado-lista"></div>
-    <section class="add-section">
-      <h2 style="color:#229954">Adicionar Soldado</h2>
-      <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-      <form class="add-form add-form-soldado" id="add-soldado-form" autocomplete="off">
-        <label>
-          Tipo de Soldado:
-          <select id="soldado-tipo"></select>
-        </label>
-        <label>
-          Nome:
-          <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
-        </label>
-        <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
-        <button type="submit">Adicionar Soldado</button>
-      </form>
-    </section>
   </section>
   <section id="magias" class="tab-content">
     <div class="tab-panel-box">
@@ -288,13 +301,17 @@
       <ul id="banco-itens-lista" class="itens-list"></ul>
     </div>
   </section>
-  <section id="notas" class="tab-content">
-    <h2>Anotações da Warband</h2>
-    <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
-  </section>
   <section id="bestiario" class="tab-content">
-    <h2>Bestiário</h2>
-    <div id="bestiary-list" class="bestiary-list"></div>
+    <div class="tab-panel-box">
+      <h2>Bestiário</h2>
+      <div id="bestiary-list" class="bestiary-list"></div>
+    </div>
+  </section>
+  <section id="notas" class="tab-content">
+    <div class="tab-panel-box">
+      <h2>Anotações da Warband</h2>
+      <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
+    </div>
   </section>
 </main>
 <script>
@@ -380,24 +397,37 @@ function setXP(val) {
 }
 
 function adicionarMago() {
-  const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
   if (warband.some(p => p.tipo === 'Mago')) {
     alert('Já existe um Mago na warband!');
     return;
   }
-  if (mago) warband.unshift({ ...mago, nome: mago.tipo });
+  // Exibir prompt para escolher escola
+  let escolas = conteudo_frostgrave_json.escolas || [];
+  let escola = prompt('Escolha a escola do mago:\n' + escolas.join(', '));
+  if (!escola || !escolas.includes(escola)) {
+    alert('Escolha inválida.');
+    return;
+  }
+  const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
+  if (mago) warband.unshift({ ...mago, nome: mago.tipo, escola });
   renderPersonagens();
 }
 function adicionarAprendiz() {
-  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
   if (warband.some(p => p.tipo === 'Aprendiz')) {
     alert('Já existe um Aprendiz na warband!');
     return;
   }
   let idx = warband.findIndex(p => p.tipo === 'Mago');
+  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
+  let escola = warband.find(p => p.tipo === 'Mago')?.escola;
+  if (!escola) {
+    alert('Adicione um mago primeiro!');
+    return;
+  }
   if (aprendiz) {
-    if (idx === -1) warband.unshift({ ...aprendiz, nome: aprendiz.tipo });
-    else warband.splice(idx + 1, 0, { ...aprendiz, nome: aprendiz.tipo });
+    let novo = { ...aprendiz, nome: aprendiz.tipo, escola };
+    if (idx === -1) warband.unshift(novo);
+    else warband.splice(idx + 1, 0, novo);
   }
   vincularAprendizStats();
   renderPersonagens();
@@ -652,8 +682,9 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   let curHp = getCurrentHP(p);
   let statusVal = p.status || "normal";
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
-
-  // ITENS: apenas os do bancoItens, agrupados por grupo
+  // Escola
+  let escolaHtml = p.escola ? `<span style='margin-left:1em;font-size:0.98em;color:#21618c;font-weight:bold;'>[${p.escola}]</span>` : '';
+  // ITENS: apenas os do bancoItens, agrupados por grupo, com tooltip
   let agrupadosItens = {};
   (bancoItens || []).forEach(item => {
     let grupo = item.grupo || 'Outros';
@@ -662,34 +693,22 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   });
   let itemOpts = Object.keys(agrupadosItens).sort().map(grupo =>
     `<optgroup label="${grupo}">
-      ${agrupadosItens[grupo].map(item => `<option value='${item.nome}' title='${item.descricao || ''}'>${item.nome}</option>`).join('')}
+      ${agrupadosItens[grupo].map(item => `<option value='${item.nome}' title='${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}'>${item.nome}</option>`).join('')}
     </optgroup>`
   ).join('');
-
   let personItensList = (p.personItens || []).map((item, i) =>
-    `<li>
-      <b title="${item.descricao || ''}">${item.nome}</b>
-      <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span>
-      <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button>
-    </li>`
+    `<li><b title='${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}'>${item.nome}</b> <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span> <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button></li>`
   ).join('');
-
   // HP control ao lado do nome
-  let hpControl = `
-    <div class="hp-control" style="margin-left:0.5em; display:inline-flex;">
-      <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
-      <input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)">
-      <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
-      <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
-    </div>`;
-
+  let hpControl = `<div class="hp-control" style="margin-left:0.5em; display:inline-flex;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
   // Magias do personagem (apenas para mago/aprendiz)
   let magiasPersonagem = p.personMagias || [];
   let magiasList = magiasPersonagem.map((magia, i) => {
     let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
     let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
     let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
-    return `<li><b title='${tooltip.replace(/'/g, '&apos;')}'>${magia}</b> <span style='color:#888'>${desc}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
+    let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola) : '?';
+    return `<li><b title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
   }).join('');
   let magiasDropdown = '';
   if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
@@ -701,72 +720,15 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       agrupadas[escola].push(m);
     });
     let escolasOrd = Object.keys(agrupadas).sort();
-    magiasDropdown = `
-      <form class='add-item-person-form' onsubmit='event.preventDefault();addPersonMagia(${idx})' style='margin-top:0.6em;'>
-        <select id='add-person-magia-select-${idx}'>
-          <option value=''>Adicionar magia...</option>
-          ${escolasOrd.map(escola =>
-            `<optgroup label='${escola}'>${agrupadas[escola].map(m => `<option value='${m.nome}' title='${m.descricao || ''}'>${m.nome}</option>`).join('')}</optgroup>`
-          ).join('')}
-        </select>
-        <button type='submit'>Adicionar</button>
-      </form>`;
+    magiasDropdown = `<form class='add-item-person-form' onsubmit='event.preventDefault();addPersonMagia(${idx})' style='margin-top:0.6em;'><select id='add-person-magia-select-${idx}'><option value=''>Adicionar magia...</option>${escolasOrd.map(escola => `<optgroup label='${escola}'>${agrupadas[escola].map(m => `<option value='${m.nome}' title='${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}'>${m.nome}</option>`).join('')}</optgroup>`).join('')}</select><button type='submit'>Adicionar</button></form>`;
   }
   let magiasSection = '';
   if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
     magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul>${magiasDropdown}</div>`;
   }
-
   let canEdit = (p.tipo !== "Aprendiz");
-  // Status final
   let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <span class='${statusObj.css}'>${statusObj.label}</span></div>`;
-  return `<div class="person-card">
-    <div class="person-header">
-      <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
-      ${
-        isEditingNome
-        ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})">
-            <input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}">
-            <button type="submit" class="edit-name-btn">&#10003;</button>
-            <button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button>
-          </form>`
-        : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`
-      }
-      ${hpControl}
-      <span class="person-status">
-        <select class="status-selector ${statusObj.css}" onchange="setStatus(${idx},this.value)">
-          ${statusOptions.map(opt => `<option value="${opt.value}"${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}
-        </select>
-        <span class="${statusObj.css}">${statusObj.label}</span>
-      </span>
-      <button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>
-      ${!isMagoOuAprendiz ? `
-        <button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button>
-        <button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>
-      ` : ''}
-    </div>
-    ${magiasSection}
-    <div class="stats-line">
-      ${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}
-      ${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}
-      ${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}
-      ${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}
-      ${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}
-      ${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}
-    </div>
-    <div class="person-itens">
-      <b>Itens:</b>
-      <ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul>
-      <form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})">
-        <select id="add-person-item-select-${idx}">
-          <option value="">Adicionar item...</option>
-          ${itemOpts}
-        </select>
-        <button type="submit">Adicionar</button>
-      </form>
-    </div>
-    ${statusFooter}
-  </div>`;
+  return `<div class="person-card"><div class="person-header"><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}${hpControl}<span class="person-status"><select class="status-selector ${statusObj.css}" onchange="setStatus(${idx},this.value)">${statusOptions.map(opt => `<option value="${opt.value}"${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}</select><span class="${statusObj.css}">${statusObj.label}</span></span><button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   warband.splice(idx, 1);
@@ -887,6 +849,10 @@ function addPersonMagia(idx) {
   if (!sel) return;
   const magiaNome = sel.value;
   if (!magiaNome) return;
+  if (!warband[idx].escola) {
+    alert('Defina a escola do personagem primeiro!');
+    return;
+  }
   if (!warband[idx].personMagias) warband[idx].personMagias = [];
   if (!warband[idx].personMagias.includes(magiaNome)) {
     warband[idx].personMagias.push(magiaNome);
@@ -910,6 +876,41 @@ function renderAddMagoAprendizBtns() {
     html += '<button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>';
   }
   div.innerHTML = html;
+}
+
+function getDificuldadeMagia(escolaMago, escolaMagia) {
+  if (!escolaMago || !escolaMagia) return '?';
+  if (escolaMago === escolaMagia) return 8;
+  // Aliadas (FG2): cada escola tem 2 aliadas, definir mapa
+  const aliadas = {
+    'Chronomancer': ['Soothsayer', 'Sigilist'],
+    'Elementalist': ['Enchanter', 'Thaumaturge'],
+    'Enchanter': ['Elementalist', 'Sigilist'],
+    'Illusionist': ['Soothsayer', 'Sigilist'],
+    'Necromancer': ['Summoner', 'Witch'],
+    'Sigilist': ['Enchanter', 'Illusionist'],
+    'Soothsayer': ['Chronomancer', 'Illusionist'],
+    'Summoner': ['Necromancer', 'Witch'],
+    'Thaumaturge': ['Elementalist', 'Witch'],
+    'Witch': ['Necromancer', 'Thaumaturge']
+  };
+  if (aliadas[escolaMago]?.includes(escolaMagia)) return 10;
+  // Opostas (FG2): cada escola tem 1 oposta
+  const opostas = {
+    'Chronomancer': 'Necromancer',
+    'Elementalist': 'Witch',
+    'Enchanter': 'Summoner',
+    'Illusionist': 'Thaumaturge',
+    'Necromancer': 'Chronomancer',
+    'Sigilist': 'Summoner',
+    'Soothsayer': 'Elementalist',
+    'Summoner': 'Enchanter',
+    'Thaumaturge': 'Illusionist',
+    'Witch': 'Elementalist'
+  };
+  if (opostas[escolaMago] === escolaMagia) return 14;
+  // Neutra
+  return 12;
 }
 </script>
 </body>
