@@ -747,6 +747,10 @@ function renderStatWithArrows(idx, stat, label, isEditable) {
     ${(isEditable && statsEditEnabled) ? `<span class="stat-edit-arrows">${plusBtn}${minusBtn}</span>` : ""}
   </span>`;
 }
+function getNivelPersonagem(p) {
+  // Nível = 1 + pontos evoluídos
+  return 1 + (p.pontosEvoluidos || 0);
+}
 function mudaStat(idx, stat, delta) {
   if (warband[idx].tipo === "Aprendiz" && ["fight","shoot","will"].includes(stat)) return;
   let valor = warband[idx].stats[stat];
@@ -754,15 +758,25 @@ function mudaStat(idx, stat, delta) {
   let n = parseInt(v,10);
   if (isNaN(n)) n = 0;
   let novo = n + delta;
-  // XP: só permite aumentar stat se houver XP suficiente (100 XP por ponto)
+  // Só permite aumentar se pontos evoluídos < nível
   if (delta > 0) {
-    let xpInput = document.getElementById('xp-input');
+    let pontosEvoluidos = warband[idx].pontosEvoluidos || 0;
+    let nivel = getNivelPersonagem(warband[idx]);
+    if (pontosEvoluidos >= nivel) {
+      alert('Você precisa subir de nível (gastar mais XP) para evoluir outro atributo!');
+      return;
+    }
+    let xpInput = document.getElementById('xp-input-dashboard');
     let xpAtual = parseInt(xpInput.value) || 0;
     if (xpAtual < 100) {
       alert('XP insuficiente para evoluir este atributo! (100 XP)');
       return;
     }
     xpInput.value = xpAtual - 100;
+    warband[idx].pontosEvoluidos = pontosEvoluidos + 1;
+  }
+  if (delta < 0 && warband[idx].pontosEvoluidos && n > 0) {
+    warband[idx].pontosEvoluidos--;
   }
   warband[idx].stats[stat] = (novo >= 0 ? "+" : "") + novo;
   if (stat === "hp") {
@@ -778,14 +792,8 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
   // Escola
   let escolaHtml = p.escola ? `<span style='margin-left:1em;font-size:0.98em;color:#21618c;font-weight:bold;'>[${p.escola}]</span>` : '';
-  // Nível (XP/100 + 1)
-  let xpInput = document.getElementById('xp-input-dashboard');
-  let xpVal = xpInput ? parseInt(xpInput.value) || 0 : 0;
-  let nivel = Math.max(1, Math.floor(xpVal/100) + 1);
+  // Remover campo de nível
   let levelHtml = '';
-  if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') {
-    levelHtml = `<span style='margin-left:1em;font-size:0.97em;color:#888;'>Nível: <b>${nivel}</b></span>`;
-  }
   // Botão de promoção
   let promoHtml = '';
   if (p.tipo === 'Aprendiz' && !warband.some(x => x.tipo === 'Mago')) {
@@ -823,22 +831,13 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   }).join('');
   // HP control ao lado do nome, alinhado à direita
   let hpControl = `<div class="hp-control" style="margin-left:auto; display:inline-flex; float:right;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)" style="width:3.5em; font-size:1.08em;"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
-  // Magias do personagem (apenas para mago/aprendiz)
-  let magiasPersonagem = p.personMagias || [];
-  let magiasList = magiasPersonagem.map((magia, i) => {
-    let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
-    let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
-    let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
-    let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola, p.tipo) : '?';
-    return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'><b>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
-  }).join('');
+  // Magias do personagem (apenas para mago/aprendiz) - REMOVER
   let magiasSection = '';
-  if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
-    magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul></div>`;
-  }
+  // Espaçamento entre blocos
+  let spacing = 'margin-bottom:0.7em;';
   let canEdit = (p.tipo !== "Aprendiz");
   let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":''}>${opt.label}</option>`).join('')}</select></div>`;
-  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${levelHtml}${promoHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
+  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;${spacing}"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${promoHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div><div class="stats-line" style="${spacing}">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens" style="${spacing}"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   // Adicionar confirmação antes de remover
@@ -1260,20 +1259,23 @@ function renderGoldXPBoxes(targetId) {
   if (!box) return;
   const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
   const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
-  // Calcular nível pelo XP gasto
-  const nivel = getNivelPorXpGasto();
+  // Nível global: maior nível entre mago e aprendiz
+  let nivel = 1;
+  warband.forEach(p => { if (getNivelPersonagem(p) > nivel) nivel = getNivelPersonagem(p); });
   box.innerHTML = `
-    <span class="gold-xp-label">Gold:
-      <button class="gold-btn" onclick="alteraGold(-10)">-</button>
-      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
-      <button class="gold-btn" onclick="alteraGold(10)">+</button>
-    </span>
-    <span class="gold-xp-label">XP:
-      <button class="xp-btn" onclick="alteraXP(-10)">-</button>
-      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
-      <button class="xp-btn" onclick="alteraXP(10)">+</button>
-    </span>
-    <span class="gold-xp-label" style="margin-left:1.2em;">Nível: <b>${nivel}</b></span>
+    <div style="display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 1.5em; width: 100%;">
+      <span class="gold-xp-label">Gold:
+        <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+        <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
+        <button class="gold-btn" onclick="alteraGold(10)">+</button>
+      </span>
+      <span class="gold-xp-label">XP:
+        <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+        <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
+        <button class="xp-btn" onclick="alteraXP(10)">+</button>
+      </span>
+      <span class="gold-xp-label">Nível: <b>${nivel}</b></span>
+    </div>
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
@@ -1353,7 +1355,7 @@ document.getElementById('theme-select').onchange = function() {
 // 1. Sincronizar gold/xp entre abas
 function syncGoldXPInputs() {
   const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
-  const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
+  const xpVal = document.getElementById('xp-input-dashboard')?.value || 600;
   document.querySelectorAll('.gold-xp-input').forEach(el => {
     if (el.id.startsWith('gold-input')) el.value = goldVal;
     if (el.id.startsWith('xp-input')) el.value = xpVal;
@@ -1377,17 +1379,19 @@ function renderGoldXPBoxes(targetId) {
   const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
   const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
   box.innerHTML = `
-    <span class="gold-xp-label">Gold:
-      <button class="gold-btn" onclick="alteraGold(-10)">-</button>
-      <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
-      <button class="gold-btn" onclick="alteraGold(10)">+</button>
-    </span>
-    <span class="gold-xp-label">XP:
-      <button class="xp-btn" onclick="alteraXP(-10)">-</button>
-      <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
-      <button class="xp-btn" onclick="alteraXP(10)">+</button>
-    </span>
-    <span class="gold-xp-label" style="margin-left:1.2em;">Nível: <b>${Math.max(1, Math.floor(xpVal/100) + 1)}</b></span>
+    <div style="display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 1.5em; width: 100%;">
+      <span class="gold-xp-label">Gold:
+        <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+        <input id="gold-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${goldVal}" onchange="setGold(this.value)">
+        <button class="gold-btn" onclick="alteraGold(10)">+</button>
+      </span>
+      <span class="gold-xp-label">XP:
+        <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+        <input id="xp-input-${targetId}" class="gold-xp-input" type="number" min="0" value="${xpVal}" onchange="setXP(this.value)">
+        <button class="xp-btn" onclick="alteraXP(10)">+</button>
+      </span>
+      <span class="gold-xp-label">Nível: <b>${Math.max(1, Math.floor(xpVal/100) + 1)}</b></span>
+    </div>
   `;
   // Sincronizar valores ao alterar
   box.querySelectorAll('input').forEach(inp => {
