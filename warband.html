@@ -5,7 +5,149 @@
   <title>Frostgrave Warband Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* ... MANTENHA O CSS DO TEMA AZUL ANTERIOR ... */
+    /* Tema Azul Frostgrave */
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
+    main { max-width: 1100px; margin: 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+    h1 { text-align: center; margin-bottom: 0.7em; color: #154360; letter-spacing: 1px;}
+    h2 { color: #21618c; }
+    nav { text-align: center; margin-bottom: 1.5em; }
+    nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer; }
+    nav button.active, nav button:hover { background: #3498db; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
+    .warband-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 1em;
+      border-bottom: 2px solid #eaf2f8; margin-bottom: 1.2em;
+    }
+    .warband-header h2 { margin: 0; color: #154360; letter-spacing: 1px; font-size: 2em; }
+    .gold-xp-box { display: flex; gap: 2em; align-items: center; }
+    .gold-xp-label { font-weight: bold; color: #2e4053; }
+    .gold-xp-input { width: 6em; font-size:1.1em; padding: 0.19em 0.5em; border-radius: 6px; border: 1px solid #bbb; text-align: right;}
+    .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
+    .gold-btn:active, .xp-btn:active { background: #2471a3; }
+    .section-title { margin-top: 1.5em; color: #21618c; margin-bottom: 0.5em; }
+    .character-group { display: flex; gap: 2em; margin-bottom: 2em; flex-wrap: wrap; }
+    .person-card {
+      background: #fafdff;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px #bbb3;
+      padding: 1.3em 1.1em 1em 1.1em;
+      width: 350px;
+      min-width: 270px;
+      max-width: 99vw;
+      position: relative;
+      border: 2px solid #eaf2f8;
+      transition: box-shadow .2s;
+    }
+    .person-card:hover {
+      box-shadow: 0 5px 24px #bbb7;
+      border: 2px solid #3498db22;
+    }
+    .person-header { font-size: 1.16em; margin-bottom: .7em; display: flex; align-items: center; gap: 0.5em;}
+    .tipo-mago { color: #1a5276; font-weight: bold; }
+    .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
+    .tipo-soldado { color: #16a085; font-weight: bold; }
+    .soldado-elite { color: #c0392b; }
+    .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
+    .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
+    .stat-value, .stat-input { width: 2.2em; text-align: center; }
+    .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
+    .hp-box { display: flex; align-items: center; gap: 0.2em;}
+    .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+    .hp-btn:active { background: #2471a3; }
+    .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+    .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
+    .remove-btn:active { background: #922b21; }
+    .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
+    .move-btn:active { background: #333; }
+    .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
+    .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-btn:active { background: #14507c; }
+    .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-cancel:active { background: #b04a02; }
+    .edit-name-form { display: inline; }
+    .magic-section, .item-section {
+      margin-top: 0.7em;
+      background: #eaf6fb;
+      border-radius: 7px;
+      padding: 0.6em 0.9em 0.7em 0.9em;
+    }
+    .person-card .magic-section { margin-bottom: 0.5em; }
+    .magic-list, .item-list {
+      margin: 0.4em 0 0 1.2em; font-size: 0.97em;
+    }
+    .magic-list li.learned { color: #229954; font-weight: bold; }
+    .magic-list li.not-learned { opacity: .6; }
+    .item-list li.used { color: #2980b9; font-weight: bold; }
+    .item-list li.not-used { opacity: .6; }
+    .magic-learn-checkbox, .item-used-checkbox { margin-right: 0.4em; }
+    .magic-list li, .item-list li { margin-bottom: 0.2em }
+    .add-magic-person-btn, .add-item-person-btn {
+      margin-top: 0.3em;
+      margin-bottom: 0.2em;
+    }
+    .item-select-disabled { background: #f8d7da !important; color: #721c24 !important; }
+    .no-items-available { color: #c0392b; padding: 0.6em 0 0.2em 0; font-weight: bold; }
+    .beastiary-cats { display: flex; gap: 2em; flex-wrap: wrap; margin-bottom:2em;}
+    .beast-cat { min-width: 250px; max-width:380px; flex:1 1 300px;}
+    .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
+    .bestiary-list {margin:0;}
+    .beast-card {
+      flex: 1 1 320px;
+      min-width: 290px;
+      max-width: 410px;
+      background: #f8fafc;
+      border: 1px solid #ccd;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px #bbb3;
+      padding: 1.1em 1em 0.9em 1em;
+      position: relative;
+      margin-bottom: 0.6em;
+    }
+    .beast-header {
+      font-size: 1.13em;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .beast-type {
+      font-size: 0.98em;
+      background: #dbeafe;
+      color: #21618c;
+      padding: 0.16em 0.55em;
+      border-radius: 5px;
+    }
+    .beast-desc {
+      margin: 0.3em 0 0.7em 0;
+      color: #555;
+      font-style: italic;
+    }
+    .beast-expl {
+      margin-bottom: .7em;
+      color: #555;
+      background: #eaf2f8;
+      padding: 0.5em 0.8em;
+      border-radius: 7px;
+      font-size: 0.97em;
+    }
+    .beast-stats {
+      margin-bottom: .4em;
+      margin-top: .4em;
+    }
+    .beast-stats span {
+      display: inline-block;
+      margin-right: 0.8em;
+    }
+    @media (max-width: 950px) {
+      .character-group { flex-direction: column; gap: 1em;}
+      .person-card { width: 100%; min-width: 0; }
+    }
+    @media (max-width: 700px) {
+      main { padding: 0.5em 0.3em; }
+      .bestiary-list { flex-direction: column; gap: 1em;}
+      .beast-card { min-width: 0; max-width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -90,7 +232,7 @@ function setXP(val) {
   if (input) input.value = Math.max(0, parseInt(val) || 0);
 }
 
-/* --- JSON COMPLETO --- */
+/* --- JSON EXEMPLO PARA TODAS AS ABAS --- */
 const conteudo_frostgrave_json = {
   "magias": [
     {"nome": "Elemental Bolt", "escola": "Elementalist", "descricao": "Projétil elemental de energia pura.", "alcance": "24\""},
