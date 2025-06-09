@@ -249,12 +249,14 @@
   <section id="bestiario" class="tab-content">
     <div class="tab-panel-box">
       <h2>Bestiário</h2>
+      <div id="gold-xp-box-bestiario"></div>
       <div id="bestiary-list" class="bestiary-list"></div>
     </div>
   </section>
   <section id="notas" class="tab-content">
     <div class="tab-panel-box">
       <h2>Anotações da Warband</h2>
+      <div id="gold-xp-box-notas"></div>
       <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
     </div>
   </section>
@@ -329,8 +331,21 @@ function enableTabs() {
 }
 
 function alteraGold(delta) {
-  let input = document.getElementById("gold-input");
-  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
+  // Descobrir qual input está ativo
+  let activeInput = document.querySelector('.tab-content.active .gold-xp-input');
+  let dashboardInput = document.getElementById('gold-input-dashboard');
+  let val = 0;
+  if (activeInput) {
+    val = parseInt(activeInput.value) || 0;
+    val = Math.max(0, val + delta);
+    activeInput.value = val;
+  } else if (dashboardInput) {
+    val = parseInt(dashboardInput.value) || 0;
+    val = Math.max(0, val + delta);
+    dashboardInput.value = val;
+  }
+  if (dashboardInput) dashboardInput.value = val;
+  syncGoldXPInputs();
 }
 function setGold(val) {
   let input = document.getElementById("gold-input-dashboard");
@@ -338,8 +353,20 @@ function setGold(val) {
   syncGoldXPInputs();
 }
 function alteraXP(delta) {
-  let input = document.getElementById("xp-input");
-  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
+  let activeInput = document.querySelector('.tab-content.active .xp-xp-input, .tab-content.active .gold-xp-input[id^="xp-input"]');
+  let dashboardInput = document.getElementById('xp-input-dashboard');
+  let val = 0;
+  if (activeInput) {
+    val = parseInt(activeInput.value) || 0;
+    val = Math.max(0, val + delta);
+    activeInput.value = val;
+  } else if (dashboardInput) {
+    val = parseInt(dashboardInput.value) || 0;
+    val = Math.max(0, val + delta);
+    dashboardInput.value = val;
+  }
+  if (dashboardInput) dashboardInput.value = val;
+  syncGoldXPInputs();
 }
 function setXP(val) {
   let input = document.getElementById("xp-input-dashboard");
@@ -631,10 +658,11 @@ function renderPersonagens() {
         let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
         let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
         let escola = magiaObj && magiaObj.escola ? magiaObj.escola : '';
+        let descHtml = magiaObj && magiaObj.descricao ? `<div style='color:#888;font-size:0.96em;margin-top:0.1em;'>${magiaObj.descricao}</div>` : '';
         let difMago = mago ? getDificuldadeMagia(mago.escola, escola, 'Mago') : '?';
         let difApr = aprendiz ? (typeof difMago === 'number' ? difMago + 2 : (parseInt(difMago) + 2 || '?')) : '?';
         let difStr = (mago && aprendiz) ? `Mago: ${difMago} / Aprendiz: ${difApr}` : (mago ? `Mago: ${difMago}` : `Aprendiz: ${difApr}`);
-        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') : ''}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${difStr}</span></li>`;
+        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') : ''}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${difStr}</span>${descHtml}</li>`;
       }).join('');
       html += '</ul></div>';
       magiasDiv.innerHTML = html;
@@ -976,6 +1004,8 @@ function renderAll() {
   renderGoldXPBoxes('dashboard');
   renderGoldXPBoxes('magias');
   renderGoldXPBoxes('itens');
+  renderGoldXPBoxes('bestiario');
+  renderGoldXPBoxes('notas');
   rebindFormEvents();
 }
 
