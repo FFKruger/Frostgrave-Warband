@@ -302,4 +302,273 @@ function enableTabs() {
 
 function alteraGold(delta) {
   let input = document.getElementById("gold-input");
-  if (input) input.value = Math.max(0, parseInt
+  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
+}
+function setGold(val) {
+  let input = document.getElementById("gold-input");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
+}
+function alteraXP(delta) {
+  let input = document.getElementById("xp-input");
+  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
+}
+function setXP(val) {
+  let input = document.getElementById("xp-input");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
+}
+
+function adicionarMago() {
+  const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
+  if (warband.some(p => p.tipo === 'Mago')) {
+    alert('Já existe um Mago na warband!');
+    return;
+  }
+  if (mago) warband.unshift({ ...mago, nome: mago.tipo });
+  renderPersonagens();
+}
+function adicionarAprendiz() {
+  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
+  if (warband.some(p => p.tipo === 'Aprendiz')) {
+    alert('Já existe um Aprendiz na warband!');
+    return;
+  }
+  let idx = warband.findIndex(p => p.tipo === 'Mago');
+  if (aprendiz) {
+    if (idx === -1) warband.unshift({ ...aprendiz, nome: aprendiz.tipo });
+    else warband.splice(idx + 1, 0, { ...aprendiz, nome: aprendiz.tipo });
+  }
+  renderPersonagens();
+}
+
+function renderBestiario() {
+  const bestDiv = document.getElementById('bestiary-list');
+  if (!bestDiv) return;
+  bestDiv.innerHTML = "";
+  const bestiario = conteudo_frostgrave_json.bestiario || [];
+  if (!bestiario.length) {
+    bestDiv.innerHTML = "<div style='color:#888'>Nenhuma criatura cadastrada.</div>";
+    return;
+  }
+  let cats = {};
+  bestiario.forEach(b => {
+    cats[b.tipo] = cats[b.tipo] || [];
+    cats[b.tipo].push(b);
+  });
+  bestDiv.innerHTML = `<div class="beastiary-cats">${
+    Object.keys(cats).sort().map(cat =>
+      `<div class="beast-cat">
+        <h3>${cat}</h3>
+        ${cats[cat]
+          .slice()
+          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+          .map(b => `
+          <div class="beast-card">
+            <div class="beast-header">
+              <span style="font-weight:bold">${b.nome}</span>
+            </div>
+            <div class="beast-desc">${b.desc || ''}</div>
+            ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
+            <div class="beast-stats">
+              <span><b>Mov:</b> ${b.stats.move}</span>
+              <span><b>Fight:</b> ${b.stats.fight}</span>
+              <span><b>Shoot:</b> ${b.stats.shoot}</span>
+              <span><b>Armor:</b> ${b.stats.armor}</span>
+              <span><b>Will:</b> ${b.stats.will}</span>
+              <span><b>HP:</b> ${b.stats.hp}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>`
+    ).join('')}
+    </div>`;
+}
+
+function renderBancoMagias() {
+  const ul = document.getElementById('banco-magias-lista');
+  if (!ul) return;
+  ul.innerHTML = '';
+  (bancoMagias || []).forEach(m => {
+    let desc = m.escola ? `Escola: ${m.escola}` : '';
+    ul.innerHTML += `<li>
+      <b title="${desc}">${m.nome}</b>
+      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
+      ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
+    </li>`;
+  });
+}
+function renderMagiaDropdown() {
+  const sel = document.getElementById("magia-dropdown");
+  if (!sel) return;
+  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
+    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+  ).join('');
+}
+
+function renderBancoItens() {
+  const ul = document.getElementById('banco-itens-lista');
+  if (!ul) return;
+  ul.innerHTML = '';
+  (bancoItens || []).forEach(item => {
+    let desc = item.descricao ? item.descricao : '';
+    ul.innerHTML += `<li>
+      <b title="${desc}">${item.nome}</b>
+      <span style="color:#888">[${item.grupo}]</span>
+      <span style="color:#229954; margin-left:1em;">${desc}</span>
+    </li>`;
+  });
+}
+function renderItemDropdown() {
+  const sel = document.getElementById("soldado-tipo");
+  const selItem = document.getElementById("item-dropdown");
+  if (sel) {
+    sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(s =>
+      `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
+    ).join('');
+    sel.onchange = function() {
+      const opt = sel.options[sel.selectedIndex];
+      const custoSpan = document.getElementById('soldado-custo-span');
+      custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
+    };
+    sel.onchange();
+  }
+  if (selItem) {
+    selItem.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
+      `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
+    ).join('');
+  }
+}
+
+function moveSoldado(idx, dir) {
+  const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz').length;
+  const soldStart = magos;
+  const soldEnd = warband.length - 1;
+  if (idx < soldStart || idx > soldEnd) return;
+  let dest = idx + dir;
+  if (dest < soldStart || dest > soldEnd) return;
+  const temp = warband[idx];
+  warband[idx] = warband[dest];
+  warband[dest] = temp;
+  renderPersonagens();
+}
+
+function renderPersonagens() {
+  const magoDiv = document.getElementById('mago-aprendiz-lista');
+  const soldDiv = document.getElementById('soldado-lista');
+  if (magoDiv) magoDiv.innerHTML = '';
+  if (soldDiv) soldDiv.innerHTML = '';
+  warband.forEach((p, idx) => {
+    let el = renderPersonagemCard(p, idx, (p.tipo === 'Mago' || p.tipo === 'Aprendiz'));
+    if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
+    else soldDiv.innerHTML += el;
+  });
+}
+
+function editPersonagemNome(idx) {
+  editingIdx = idx;
+  renderPersonagens();
+}
+function savePersonagemNome(idx) {
+  const input = document.getElementById('input-nome-'+idx);
+  if (input) {
+    warband[idx].nome = input.value.trim();
+    editingIdx = null;
+    renderPersonagens();
+  }
+}
+function cancelEditNome() {
+  editingIdx = null;
+  renderPersonagens();
+}
+function editStat(idx, stat) {
+  editingStat = { idx, stat };
+  renderPersonagens();
+}
+function saveStat(idx, stat) {
+  const input = document.getElementById(`input-stat-${stat}-${idx}`);
+  if (input) {
+    warband[idx].stats[stat] = input.value;
+    if (stat === "hp") {
+      warband[idx].currentHp = Math.min(getCurrentHP(warband[idx]), Number(input.value));
+    }
+    editingStat = null;
+    renderPersonagens();
+  }
+}
+function cancelEditStat() {
+  editingStat = null;
+  renderPersonagens();
+}
+
+function setStatus(idx, val) {
+  warband[idx].status = val;
+  renderPersonagens();
+}
+
+// PERSONAGEM ITENS
+function addPersonItem(idx) {
+  const sel = document.getElementById(`add-person-item-select-${idx}`);
+  if (!sel) return;
+  const itemNome = sel.value;
+  if (!itemNome) return;
+  const item = (conteudo_frostgrave_json.itens || []).find(it => it.nome === itemNome);
+  if (!warband[idx].personItens) warband[idx].personItens = [];
+  warband[idx].personItens.push({ nome: itemNome, grupo: item?.grupo || '', descricao: item?.descricao || '' });
+  renderPersonagens();
+}
+function removePersonItem(idx, itemIdx) {
+  warband[idx].personItens.splice(itemIdx, 1);
+  renderPersonagens();
+}
+
+function renderPersonagemCard(p, idx, isMago) {
+  const isEditingNome = editingIdx === idx;
+  function statField(stat, label) {
+    const isEditingThis = editingStat && editingStat.idx === idx && editingStat.stat === stat;
+    if (isEditingThis) {
+      return `<span class="stat-label">${label}:</span>
+        <form class="stat-edit-form" onsubmit="event.preventDefault();saveStat(${idx},'${stat}')">
+          <input id="input-stat-${stat}-${idx}" class="stat-edit-input" value="${p.stats[stat]}">
+          <button type="submit" class="stat-edit-btn" title="Salvar">&#10003;</button>
+          <button type="button" class="stat-edit-cancel" onclick="cancelEditStat()" title="Cancelar">&#10006;</button>
+        </form>`;
+    }
+    return `<span class="stat-label">${label}:</span>
+      <span ondblclick="editStat(${idx},'${stat}')" title="Duplo clique para editar">${p.stats[stat]}</span>`;
+  }
+
+  let maxHp = Number(p.stats.hp) || 0;
+  let curHp = getCurrentHP(p);
+  let statusVal = p.status || "normal";
+  let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
+
+  // Itens do personagem
+  let itemOpts = (conteudo_frostgrave_json.itens || []).map(item =>
+    `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
+  ).join('');
+  let personItensList = (p.personItens || []).map((item, i) =>
+    `<li>
+      <b title="${item.descricao || ''}">${item.nome}</b>
+      <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span>
+      <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button>
+    </li>`
+  ).join('');
+
+  return `<div class="person-card">
+    <div class="person-header">
+      <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
+      ${
+        isEditingNome
+        ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})">
+            <input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}">
+            <button type="submit" class="edit-name-btn">&#10003;</button>
+            <button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button>
+          </form>`
+        : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`
+      }
+      <span class="person-status">
+        <select class="status-selector ${statusObj.css}" onchange="setStatus(${idx},this.value)">
+          ${statusOptions.map(opt => `<option value="${opt.value}"${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}
+        </select>
+        <span class="${statusObj.css}">${statusObj.label}</span>
+      </span>
+      <button class="remove-btn"
