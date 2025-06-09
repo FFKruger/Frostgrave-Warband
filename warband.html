@@ -180,6 +180,7 @@
       <option value="green">Verde</option>
     </select>
   </div>
+  <div id="edit-stats-btn-container"></div>
   <nav id="tabnav">
     <button data-tab="dashboard" class="active" type="button">Warband</button>
     <button data-tab="grimorios" type="button">Grimórios</button>
@@ -346,6 +347,11 @@ function setXP(val) {
   syncGoldXPInputs();
 }
 
+// Variáveis globais para manter escola e magias da warband
+let warbandEscola = '';
+let warbandMagias = [];
+
+// Ao adicionar mago, usar escola e magias da warband se existirem
 function adicionarMago() {
   if (warband.some(p => p.tipo === 'Mago')) {
     alert('Já existe um Mago na warband!');
@@ -353,13 +359,17 @@ function adicionarMago() {
   }
   // Exibir prompt para escolher escola
   let escolas = conteudo_frostgrave_json.escolas || [];
-  let escola = prompt('Escolha a escola do mago:\n' + escolas.join(', '));
+  let escola = warbandEscola || prompt('Escolha a escola do mago:\n' + escolas.join(', '));
   if (!escola || !escolas.includes(escola)) {
     alert('Escolha inválida.');
     return;
   }
+  warbandEscola = escola;
   const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
-  if (mago) warband.unshift({ ...mago, nome: mago.tipo, escola });
+  if (mago) {
+    let novo = { ...mago, nome: mago.tipo, escola, personMagias: warbandMagias.slice() };
+    warband.unshift(novo);
+  }
   renderPersonagens();
 }
 function adicionarAprendiz() {
@@ -369,13 +379,13 @@ function adicionarAprendiz() {
   }
   let idx = warband.findIndex(p => p.tipo === 'Mago');
   const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
-  let escola = warband.find(p => p.tipo === 'Mago')?.escola;
+  let escola = warbandEscola || warband.find(p => p.tipo === 'Mago')?.escola;
   if (!escola) {
     alert('Adicione um mago primeiro!');
     return;
   }
   if (aprendiz) {
-    let novo = { ...aprendiz, nome: aprendiz.tipo, escola };
+    let novo = { ...aprendiz, nome: aprendiz.tipo, escola, personMagias: warbandMagias.slice() };
     if (idx === -1) warband.unshift(novo);
     else warband.splice(idx + 1, 0, novo);
   }
@@ -611,6 +621,7 @@ function renderPersonagens() {
     let magias = [];
     if (mago && mago.personMagias) magias = magias.concat(mago.personMagias);
     if (aprendiz && aprendiz.personMagias) magias = magias.concat(aprendiz.personMagias);
+    if (!mago && !aprendiz) magias = warbandMagias.slice();
     magias = [...new Set(magias)];
     if (magias.length) {
       let html = `<div class="magias-compartilhadas-box" style="background:var(--card-bg);border-radius:10px;padding:1.2em 1.5em;margin:1.2em 0 2em 0;box-shadow:0 1px 8px var(--shadow);max-width:700px;">
@@ -621,9 +632,9 @@ function renderPersonagens() {
         let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
         let escola = magiaObj && magiaObj.escola ? magiaObj.escola : '';
         let difMago = mago ? getDificuldadeMagia(mago.escola, escola, 'Mago') : '?';
-        let difApr = aprendiz ? getDificuldadeMagia(aprendiz.escola, escola, 'Aprendiz') : '?';
+        let difApr = aprendiz ? (typeof difMago === 'number' ? difMago + 2 : (parseInt(difMago) + 2 || '?')) : '?';
         let difStr = (mago && aprendiz) ? `Mago: ${difMago} / Aprendiz: ${difApr}` : (mago ? `Mago: ${difMago}` : `Aprendiz: ${difApr}`);
-        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + difStr : 'Dificuldade: ' + difStr}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${difStr}</span></li>`;
+        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') : ''}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${difStr}</span></li>`;
       }).join('');
       html += '</ul></div>';
       magiasDiv.innerHTML = html;
@@ -779,7 +790,17 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
-  warband.splice(idx, 1);
+  // Adicionar confirmação antes de remover
+  if (!confirm('Tem certeza que deseja remover este personagem?')) return;
+  // Se for mago, não limpar magias do aprendiz
+  const tipo = warband[idx].tipo;
+  if (tipo === 'Mago') {
+    // Não limpar personMagias do aprendiz
+    // Apenas remover o mago
+    warband.splice(idx, 1);
+  } else {
+    warband.splice(idx, 1);
+  }
   renderPersonagens();
 }
 
