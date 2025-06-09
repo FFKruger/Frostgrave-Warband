@@ -128,5 +128,232 @@
     {"tipo": "Pack Mule", "stats": {"move":6, "fight":"0", "shoot":"0", "armor":10, "will":"0", "hp":10}},
     {"tipo": "Trap Expert", "stats": {"move":7, "fight":"0", "shoot":"0", "armor":10, "will":"0", "hp":10}},
     {"tipo": "Witch Doctor", "stats": {"move":6, "fight":"0", "shoot":"0", "armor":10, "will":"0", "hp":10}}
+  ],
+  "bestiario": [
+    {
+      "nome": "Giant Rat",
+      "tipo": "Animal",
+      "desc": "Roedor agressivo e rápido.",
+      "explicacao": "Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.",
+      "stats": { "move": 7, "fight": "+0", "shoot": "-", "armor": 8, "will": "-1", "hp": 6 }
+    },
+    {
+      "nome": "Wolf",
+      "tipo": "Animal",
+      "desc": "Lobo selvagem faminto.",
+      "explicacao": "Animal ágil, pode atacar em bando.",
+      "stats": { "move": 8, "fight": "+1", "shoot": "-", "armor": 10, "will": "+0", "hp": 8 }
+    },
+    {
+      "nome": "Boar",
+      "tipo": "Animal",
+      "desc": "Javali agressivo.",
+      "explicacao": "Carga poderosa.",
+      "stats": { "move": 7, "fight": "+2", "shoot": "-", "armor": 10, "will": "-1", "hp": 10 }
+    },
+    {
+      "nome": "Bear",
+      "tipo": "Animal",
+      "desc": "Urso feroz.",
+      "explicacao": "Alto dano em combate, resistente.",
+      "stats": { "move": 6, "fight": "+4", "shoot": "-", "armor": 12, "will": "0", "hp": 16 }
+    },
+    {
+      "nome": "Snow Leopard",
+      "tipo": "Animal",
+      "desc": "Leopardo ágil e mortal.",
+      "explicacao": "Pode escalar e atacar rapidamente.",
+      "stats": { "move": 9, "fight": "+3", "shoot": "-", "armor": 11, "will": "+2", "hp": 10 }
+    },
+    {
+      "nome": "Wild Dog",
+      "tipo": "Animal",
+      "desc": "Cão selvagem e agressivo.",
+      "explicacao": "Ataca em grupos.",
+      "stats": { "move": 7, "fight": "+0", "shoot": "-", "armor": 9, "will": "-1", "hp": 8 }
+    },
+    {
+      "nome": "Giant Spider",
+      "tipo": "Animal",
+      "desc": "Aranha gigante venenosa.",
+      "explicacao": "Venenosa, pode escalar.",
+      "stats": { "move": 8, "fight": "+1", "shoot": "-", "armor": 10, "will": "-1", "hp": 10 }
+    },
+    {
+      "nome": "Giant Worm",
+      "tipo": "Animal",
+      "desc": "Verme monstruoso subterrâneo.",
+      "explicacao": "Ataques de emboscada.",
+      "stats": { "move": 5, "fight": "+4", "shoot": "-", "armor": 12, "will": "+0", "hp": 18 }
+    },
+    {
+      "nome": "Ghoul",
+      "tipo": "Morto-vivo",
+      "desc": "Canibal necrófago.",
+      "explicacao": "Ignora o medo.",
+      "stats": { "move": 6, "fight": "+2", "shoot": "-", "armor": 10, "will": "-1", "hp": 12 }
+    },
+    {
+      "nome": "Skeleton",
+      "tipo": "Morto-vivo",
+      "desc": "Guarda esquelético, imune a venenos.",
+      "explicacao": "Imune a veneno, não pode ser curado.",
+      "stats": { "move": 6, "fight": "+1", "shoot": "-", "armor": 12, "will": "+0", "hp": 10 }
+    },
+    {
+      "nome": "Zombie",
+      "tipo": "Morto-vivo",
+      "desc": "Lento mas persistente.",
+      "explicacao": "Muito difícil de derrubar, não pode correr.",
+      "stats": { "move": 4, "fight": "+0", "shoot": "-", "armor": 12, "will": "-2", "hp": 12 }
+    },
+    {
+      "nome": "Vampire",
+      "tipo": "Morto-vivo",
+      "desc": "Vampiro antigo e perigoso.",
+      "explicacao": "Se cura ao causar dano.",
+      "stats": { "move": 7, "fight": "+4", "shoot": "-", "armor": 12, "will": "+4", "hp": 14 }
+    },
+    {
+      "nome": "Wraith",
+      "tipo": "Morto-vivo",
+      "desc": "Espírito espectral.",
+      "explicacao": "Ignora obstáculos, só sofre dano mágico.",
+      "stats": { "move": 8, "fight": "+3", "shoot": "-", "armor": 10, "will": "+4", "hp": 10 }
+    },
+    {
+      "nome": "Armoured Skeleton",
+      "tipo": "Morto-vivo",
+      "desc": "Esqueleto com armadura pesada.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+2", "shoot": "-", "armor": 14, "will": "+0", "hp": 12 }
+    },
+    {
+      "nome": "Imp",
+      "tipo": "Demônio",
+      "desc": "Demônio menor.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+1", "shoot": "-", "armor": 10, "will": "+2", "hp": 6 }
+    },
+    {
+      "nome": "Minor Demon",
+      "tipo": "Demônio",
+      "desc": "Demônio de poder moderado.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+2", "shoot": "-", "armor": 12, "will": "+3", "hp": 10 }
+    },
+    {
+      "nome": "Major Demon",
+      "tipo": "Demônio",
+      "desc": "Demônio formidável.",
+      "explicacao": "Grande força e resistência.",
+      "stats": { "move": 6, "fight": "+5", "shoot": "-", "armor": 14, "will": "+5", "hp": 18 }
+    },
+    {
+      "nome": "Giant",
+      "tipo": "Gigante",
+      "desc": "Gigante brutal.",
+      "explicacao": "Ataca com força massiva.",
+      "stats": { "move": 7, "fight": "+5", "shoot": "-", "armor": 13, "will": "+4", "hp": 20 }
+    },
+    {
+      "nome": "Troll",
+      "tipo": "Monstro",
+      "desc": "Troll regenerador.",
+      "explicacao": "Cura 2 HP no início de cada rodada.",
+      "stats": { "move": 6, "fight": "+4", "shoot": "-", "armor": 12, "will": "+2", "hp": 18 }
+    },
+    {
+      "nome": "Werewolf",
+      "tipo": "Monstro",
+      "desc": "Lobisomem feroz.",
+      "explicacao": "Imunidade a dano não-mágico.",
+      "stats": { "move": 8, "fight": "+4", "shoot": "-", "armor": 12, "will": "+2", "hp": 14 }
+    },
+    {
+      "nome": "Golem (Small)",
+      "tipo": "Constructo",
+      "desc": "Pequeno golem animado.",
+      "explicacao": "",
+      "stats": { "move": 5, "fight": "+2", "shoot": "-", "armor": 12, "will": "+0", "hp": 10 }
+    },
+    {
+      "nome": "Golem (Medium)",
+      "tipo": "Constructo",
+      "desc": "Médio golem animado.",
+      "explicacao": "",
+      "stats": { "move": 5, "fight": "+4", "shoot": "-", "armor": 13, "will": "+0", "hp": 12 }
+    },
+    {
+      "nome": "Golem (Large)",
+      "tipo": "Constructo",
+      "desc": "Grande golem animado.",
+      "explicacao": "",
+      "stats": { "move": 5, "fight": "+6", "shoot": "-", "armor": 14, "will": "+0", "hp": 14 }
+    },
+    {
+      "nome": "Construct",
+      "tipo": "Constructo",
+      "desc": "Criatura animada por magia.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+2", "shoot": "-", "armor": 12, "will": "+0", "hp": 12 }
+    },
+    {
+      "nome": "Ice Toad",
+      "tipo": "Animal",
+      "desc": "Sapo gelado e venenoso.",
+      "explicacao": "",
+      "stats": { "move": 5, "fight": "+3", "shoot": "-", "armor": 12, "will": "+2", "hp": 12 }
+    },
+    {
+      "nome": "Snow Troll",
+      "tipo": "Monstro",
+      "desc": "Troll ártico resistente.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+4", "shoot": "-", "armor": 12, "will": "+2", "hp": 18 }
+    },
+    {
+      "nome": "White Gorilla",
+      "tipo": "Animal",
+      "desc": "Gorila branco furioso.",
+      "explicacao": "",
+      "stats": { "move": 7, "fight": "+5", "shoot": "-", "armor": 12, "will": "+1", "hp": 14 }
+    },
+    {
+      "nome": "Small Construct",
+      "tipo": "Constructo",
+      "desc": "Pequeno construto animado.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+1", "shoot": "-", "armor": 12, "will": "+0", "hp": 10 }
+    },
+    {
+      "nome": "Medium Construct",
+      "tipo": "Constructo",
+      "desc": "Construto animado de tamanho médio.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+3", "shoot": "-", "armor": 12, "will": "+0", "hp": 12 }
+    },
+    {
+      "nome": "Large Construct",
+      "tipo": "Constructo",
+      "desc": "Construto animado de grande porte.",
+      "explicacao": "",
+      "stats": { "move": 6, "fight": "+5", "shoot": "-", "armor": 12, "will": "+0", "hp": 14 }
+    },
+    {
+      "nome": "Giant Worm",
+      "tipo": "Animal",
+      "desc": "Verme monstruoso subterrâneo.",
+      "explicacao": "Ataques de emboscada.",
+      "stats": { "move": 5, "fight": "+4", "shoot": "-", "armor": 12, "will": "+0", "hp": 18 }
+    },
+    {
+      "nome": "Frost Giant",
+      "tipo": "Gigante",
+      "desc": "Gigante gelado colossal.",
+      "explicacao": "Extremamente perigoso.",
+      "stats": { "move": 7, "fight": "+7", "shoot": "-", "armor": 15, "will": "+5", "hp": 22 }
+    }
   ]
+}
 }
