@@ -5,6 +5,7 @@
     <title>Frostgrave Warband Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /* ... (mantém o CSS anterior) ... */
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
         main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
         h1 { text-align: center; margin-bottom: 0.7em; }
@@ -127,7 +128,7 @@
         <form class="magia-form" id="add-magia-form">
             <select id="magia-dropdown"></select>
             <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
-            <button type="submit">Adicionar Magia</button>
+            <button id="add-magia-btn" type="submit">Adicionar Magia</button>
         </form>
         <ul id="banco-magias-lista" class="magias-list"></ul>
     </section>
@@ -136,7 +137,7 @@
         <form class="item-form" id="add-item-form">
             <select id="item-dropdown"></select>
             <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
-            <button type="submit">Adicionar Item</button>
+            <button id="add-item-btn" type="submit">Adicionar Item</button>
         </form>
         <ul id="banco-itens-lista" class="itens-list"></ul>
     </section>
@@ -152,7 +153,7 @@
 </main>
 <script>
 let personagens = [];
-let bancoMagias = []; // Magias adicionadas pelo usuário
+let bancoMagias = [];
 let bancoItens = [];
 let magiasPorPersonagem = {};
 let bestiarioAtivo = [];
@@ -165,7 +166,6 @@ let SOLDADOS_ELITES = [];
 let bestiario = [];
 let CUSTO_UNIDADES = {};
 
-// 1. Lê JSON e inicializa variáveis globais
 function fetchConteudoFrostgrave() {
     return fetch('conteudo_frostgrave.json')
         .then(r => r.json())
@@ -193,10 +193,16 @@ function fetchConteudoFrostgrave() {
                 else if (!["Mago", "Aprendiz"].includes(p.tipo))
                     SOLDADOS_ELITES.push(p.tipo);
             });
+            // Adiciona bestiário padrão (caso não venha do JSON)
+            bestiario = data.bestiario && data.bestiario.length ? data.bestiario : [
+                {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
+                {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
+                {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
+                {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
+            ];
         });
 }
 
-// 2. Renderizar Mago/Aprendiz (com botões sempre, mesmo se abas trocadas)
 function renderMagoAprendizSection() {
     const div = document.getElementById('mago-aprendiz-lista');
     div.innerHTML = '';
@@ -224,7 +230,7 @@ function renderMagoAprendizSection() {
         setTimeout(() => {
             if (document.getElementById("add-mago-btn")) document.getElementById("add-mago-btn").onclick = adicionarMago;
             if (document.getElementById("add-aprendiz-btn")) document.getElementById("add-aprendiz-btn").onclick = adicionarAprendiz;
-        }, 0); // Garante DOM atualizado
+        }, 0);
     }
 }
 function adicionarMago() {
@@ -237,8 +243,6 @@ function adicionarAprendiz() {
     personagens.push({tipo: "Aprendiz", nome: "Aprendiz", escola, hpAtual: STATS["Aprendiz"].hp});
     renderPersonagens();
 }
-
-// 3. Render soldados e dropdowns
 function renderSoldadosSection() {
     const soldadoDiv = document.getElementById('soldado-lista');
     soldadoDiv.innerHTML = '';
@@ -287,7 +291,7 @@ function adicionarSoldadoHandler(e) {
     e.target.reset();
 }
 
-// 4. Render magias, banco de magias e dropdown
+// --- Banco de Magias
 function renderMagiaDropdown() {
     const sel = document.getElementById('magia-dropdown');
     if (!sel) return;
@@ -316,7 +320,6 @@ function adicionarBancoMagiaHandler(e) {
     });
     document.getElementById('magia-comp').value = '';
     renderBancoMagias();
-    // Fica na aba Magias!
 }
 function renderBancoMagias() {
     const ul = document.getElementById('banco-magias-lista');
@@ -329,8 +332,7 @@ window.removerBancoMagia = function(i) {
     bancoMagias.splice(i, 1);
     renderBancoMagias();
 };
-
-// --- Itens: mesma lógica ---
+// --- Banco de Itens
 function renderItemDropdown() {
     const sel = document.getElementById('item-dropdown');
     if (!sel) return;
@@ -371,7 +373,20 @@ window.removerBancoItem = function(idx) {
     bancoItens.splice(idx, 1);
     renderBancoItens();
 };
-
+// --- Bestiário
+function renderBestiario() {
+    const bestDiv = document.getElementById('bestiary-list');
+    if (!bestDiv) return;
+    bestDiv.innerHTML = "";
+    bestiario.forEach(b =>
+        bestDiv.innerHTML += `<div class="beast-card">
+            <div class="beast-header">${b.nome} <span class="beast-type">(${b.tipo})</span></div>
+            <div class="beast-desc">${b.desc}</div>
+            <div style="margin-bottom:.4em;">${b.explicacao||""}</div>
+            <div><b>Mov:</b> ${b.stats.move} <b>Fight:</b> ${b.stats.fight} <b>Shoot:</b> ${b.stats.shoot} <b>Armor:</b> ${b.stats.armor} <b>Will:</b> ${b.stats.will} <b>HP:</b> ${b.stats.hp}</div>
+        </div>`
+    );
+}
 // --- Personagem card (mantém sua lógica original) ---
 function personagemCard(pers, idx) {
     let tipoStr = pers.tipo;
@@ -440,15 +455,10 @@ function getStats(pers) {
     }
     return STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
 }
-
-// --- Renderizadores principais ---
 function renderPersonagens() {
     renderMagoAprendizSection();
     renderSoldadosSection();
 }
-function renderBestiario() {}
-function renderBancoItens() {}
-function renderBancoMagias() {}
 
 // --- Controle de abas ---
 document.getElementById('tabnav').addEventListener('click', function(e) {
@@ -474,6 +484,7 @@ window.onload = function() {
         renderBancoMagias();
         renderItemDropdown();
         renderBancoItens();
+        renderBestiario();
     });
     document.getElementById('add-soldado-form').addEventListener('submit', adicionarSoldadoHandler);
     document.getElementById('add-magia-form').addEventListener('submit', adicionarBancoMagiaHandler);
