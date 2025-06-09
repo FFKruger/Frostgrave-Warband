@@ -411,6 +411,15 @@ function adicionarAprendiz() {
     alert('Adicione um mago primeiro!');
     return;
   }
+  // Descontar 200 gold
+  let goldInput = document.getElementById('gold-input-dashboard');
+  let goldAtual = parseInt(goldInput.value) || 0;
+  if (goldAtual < 200) {
+    alert('Ouro insuficiente para contratar um Aprendiz! (200g)');
+    return;
+  }
+  goldInput.value = goldAtual - 200;
+  syncGoldXPInputs();
   if (aprendiz) {
     let novo = { ...aprendiz, nome: aprendiz.tipo, escola, personMagias: warbandMagias.slice() };
     if (idx === -1) warband.unshift(novo);
@@ -768,6 +777,24 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
   // Escola
   let escolaHtml = p.escola ? `<span style='margin-left:1em;font-size:0.98em;color:#21618c;font-weight:bold;'>[${p.escola}]</span>` : '';
+  // Nível (XP/100 + 1)
+  let xpInput = document.getElementById('xp-input-dashboard');
+  let xpVal = xpInput ? parseInt(xpInput.value) || 0 : 0;
+  let nivel = Math.max(1, Math.floor(xpVal/100) + 1);
+  let levelHtml = '';
+  if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') {
+    levelHtml = `<span style='margin-left:1em;font-size:0.97em;color:#888;'>Nível: <b>${nivel}</b></span>`;
+  }
+  // Custo do Aprendiz
+  let aprendizCustoHtml = '';
+  if (p.tipo === 'Aprendiz') {
+    aprendizCustoHtml = `<span style='margin-left:1em;font-size:0.97em;color:#888;'>Custo: <b>200g</b></span>`;
+  }
+  // Botão de promoção
+  let promoHtml = '';
+  if (p.tipo === 'Aprendiz' && !warband.some(x => x.tipo === 'Mago')) {
+    promoHtml = `<button style='margin-left:1em;background:var(--primary);color:#fff;border:none;border-radius:5px;padding:0.1em 0.7em;cursor:pointer;font-size:0.97em;' onclick='promoverAprendiz(${idx})' title='Promover Aprendiz a Mago'>Promover a Mago</button>`;
+  }
   // ITENS: apenas os do bancoItens, agrupados por grupo, com tooltip
   let agrupadosItens = {};
   // Filtrar itens já atribuídos a outros personagens, respeitando quantidade
@@ -815,7 +842,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   }
   let canEdit = (p.tipo !== "Aprendiz");
   let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":''}>${opt.label}</option>`).join('')}</select></div>`;
-  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
+  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${levelHtml}${aprendizCustoHtml}${promoHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   // Adicionar confirmação antes de remover
@@ -1389,6 +1416,16 @@ window.onload = function() {
     syncGoldXPInputs();
   }, 300);
 };
+
+function promoverAprendiz(idx) {
+  let aprendiz = warband[idx];
+  if (!aprendiz || aprendiz.tipo !== 'Aprendiz') return;
+  // Promover: vira mago, mantém magias, escola, XP, etc
+  aprendiz.tipo = 'Mago';
+  // Atualizar nome se for padrão
+  if (aprendiz.nome === 'Aprendiz') aprendiz.nome = 'Mago';
+  renderPersonagens();
+}
 </script>
 </body>
 </html>
