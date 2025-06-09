@@ -335,7 +335,6 @@ function adicionarAprendiz() {
     if (idx === -1) warband.unshift({ ...aprendiz, nome: aprendiz.tipo });
     else warband.splice(idx + 1, 0, { ...aprendiz, nome: aprendiz.tipo });
   }
-  // Vincular stats do aprendiz no mago
   vincularAprendizStats();
   renderPersonagens();
 }
@@ -352,11 +351,9 @@ function vincularAprendizStats() {
   aprStats.fight = ajusteStat(magoStats.fight, -2);
   aprStats.shoot = ajusteStat(magoStats.shoot, -2);
   aprStats.will = ajusteStat(magoStats.will, -2);
-  // Atualiza HP atual se necessário
   warband[aprIdx].currentHp = Math.min(getCurrentHP(warband[aprIdx]), Number(aprStats.hp));
 }
 function ajusteStat(stat, delta) {
-  // stat pode ser "+2", "0", "-1", "+0" etc
   let st = String(stat||"0").replace("+","");
   let n = parseInt(st,10);
   if (isNaN(n)) n = 0;
@@ -407,11 +404,11 @@ function renderBestiario() {
     </div>`;
 }
 
+// MAGIAS E ITENS LISTAS AGRUPADAS E ORDENADAS
 function renderBancoMagias() {
   const ul = document.getElementById('banco-magias-lista');
   if (!ul) return;
   ul.innerHTML = '';
-  // Ordena magias por escola (tipo), depois nome
   let agrupadas = {};
   (bancoMagias || []).forEach(m => {
     let tipo = m.escola || "Outras";
@@ -431,19 +428,11 @@ function renderBancoMagias() {
     });
   });
 }
-function renderMagiaDropdown() {
-  const sel = document.getElementById("magia-dropdown");
-  if (!sel) return;
-  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
-    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
-  ).join('');
-}
 
 function renderBancoItens() {
   const ul = document.getElementById('banco-itens-lista');
   if (!ul) return;
   ul.innerHTML = '';
-  // Ordena por grupo (tipo), depois nome
   let agrupadas = {};
   (bancoItens || []).forEach(item => {
     let tipo = item.grupo || "Outros";
@@ -463,11 +452,29 @@ function renderBancoItens() {
     });
   });
 }
+
+function renderMagiaDropdown() {
+  const sel = document.getElementById("magia-dropdown");
+  if (!sel) return;
+  // Ordem por escola, depois nome
+  let magias = (conteudo_frostgrave_json.magias || []).slice();
+  magias.sort((a, b) => {
+    let ea = a.escola || '', eb = b.escola || '';
+    if (ea !== eb) return ea.localeCompare(eb);
+    return a.nome.localeCompare(b.nome);
+  });
+  sel.innerHTML = magias.map(m =>
+    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+  ).join('');
+}
+
 function renderItemDropdown() {
   const sel = document.getElementById("soldado-tipo");
   const selItem = document.getElementById("item-dropdown");
   if (sel) {
-    sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(s =>
+    // Ordenar soldados por tipo
+    let soldados = (conteudo_frostgrave_json.soldados || []).slice().sort((a, b) => a.tipo.localeCompare(b.tipo));
+    sel.innerHTML = soldados.map(s =>
       `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
     ).join('');
     sel.onchange = function() {
@@ -478,7 +485,14 @@ function renderItemDropdown() {
     sel.onchange();
   }
   if (selItem) {
-    selItem.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
+    // Ordenar itens por grupo, depois nome
+    let todos = (conteudo_frostgrave_json.itens || []).slice();
+    todos.sort((a, b) => {
+      let ga = a.grupo || "", gb = b.grupo || "";
+      if(ga!==gb) return ga.localeCompare(gb);
+      return a.nome.localeCompare(b.nome);
+    });
+    selItem.innerHTML = todos.map(item =>
       `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
     ).join('');
   }
@@ -498,7 +512,6 @@ function moveSoldado(idx, dir) {
 }
 
 function renderPersonagens() {
-  // vincula aprendiz se ambos estiverem na lista
   vincularAprendizStats();
   const magoDiv = document.getElementById('mago-aprendiz-lista');
   const soldDiv = document.getElementById('soldado-lista');
@@ -527,32 +540,10 @@ function cancelEditNome() {
   editingIdx = null;
   renderPersonagens();
 }
-function editStat(idx, stat) {
-  editingStat = { idx, stat };
-  renderPersonagens();
-}
-function saveStat(idx, stat) {
-  const input = document.getElementById(`input-stat-${stat}-${idx}`);
-  if (input) {
-    warband[idx].stats[stat] = input.value;
-    if (stat === "hp") {
-      warband[idx].currentHp = Math.min(getCurrentHP(warband[idx]), Number(input.value));
-    }
-    editingStat = null;
-    renderPersonagens();
-  }
-}
-function cancelEditStat() {
-  editingStat = null;
-  renderPersonagens();
-}
-
 function setStatus(idx, val) {
   warband[idx].status = val;
   renderPersonagens();
 }
-
-// PERSONAGEM ITENS
 function addPersonItem(idx) {
   const sel = document.getElementById(`add-person-item-select-${idx}`);
   if (!sel) return;
@@ -568,8 +559,6 @@ function removePersonItem(idx, itemIdx) {
   warband[idx].personItens.splice(itemIdx, 1);
   renderPersonagens();
 }
-
-// + e - setas para atributos (exibidas com hover)
 function renderStatWithArrows(idx, stat, label, isEditable) {
   let valor = warband[idx].stats[stat];
   let plusBtn = `<button class="stat-arrow-btn" onclick="mudaStat(${idx},'${stat}',1)" title="+">▲</button>`;
@@ -580,7 +569,6 @@ function renderStatWithArrows(idx, stat, label, isEditable) {
   </span>`;
 }
 function mudaStat(idx, stat, delta) {
-  // Não permitir edição dos atributos do Aprendiz vinculados!
   if (warband[idx].tipo === "Aprendiz" && ["fight","shoot","will"].includes(stat)) return;
   let valor = warband[idx].stats[stat];
   let v = String(valor||"0").replace("+","");
@@ -588,20 +576,17 @@ function mudaStat(idx, stat, delta) {
   if (isNaN(n)) n = 0;
   let novo = n + delta;
   warband[idx].stats[stat] = (novo >= 0 ? "+" : "") + novo;
-  // Se HP mudou, ajustar HP atual se necessário
   if (stat === "hp") {
     warband[idx].currentHp = Math.min(getCurrentHP(warband[idx]), Number(warband[idx].stats.hp));
   }
   renderPersonagens();
 }
-
 function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   const isEditingNome = editingIdx === idx;
   let maxHp = Number(p.stats.hp) || 0;
   let curHp = getCurrentHP(p);
   let statusVal = p.status || "normal";
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
-  // Itens do personagem: apenas os selecionados na aba Itens
   let itemOpts = (bancoItens || []).map(item =>
     `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
   ).join('');
@@ -612,7 +597,6 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button>
     </li>`
   ).join('');
-  // Controle de HP dentro da caixa do personagem
   let hpControl = `
     <div class="hp-control" style="margin-left:0.5em;">
       <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
@@ -620,10 +604,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
       <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
     </div>`;
-
-  // Atributos editáveis com + e - apenas se não for Aprendiz vinculado
   let canEdit = (p.tipo !== "Aprendiz");
-  // Aprendiz vinculado: fight, shoot, will são travados (não exibem setas)
   return `<div class="person-card">
     <div class="person-header">
       <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
@@ -682,9 +663,12 @@ function renderAddSoldadoForm() {
   const custoSpan = document.getElementById('soldado-custo-span');
   if (!form || !sel || !custoSpan) return;
 
-  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
+  // Ordena soldados por tipo
+  let soldados = (conteudo_frostgrave_json.soldados || []).slice().sort((a, b) => a.tipo.localeCompare(b.tipo));
+  sel.innerHTML = soldados.map(
     s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
   ).join('');
+
   sel.onchange = function() {
     const opt = sel.options[sel.selectedIndex];
     custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
@@ -695,7 +679,8 @@ function renderAddSoldadoForm() {
     e.preventDefault();
     const tipo = sel.value;
     const nome = document.getElementById('soldado-nome').value.trim();
-    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
+    const soldados = (conteudo_frostgrave_json.soldados || []).slice();
+    const soldado = soldados.find(s => s.tipo === tipo);
     if (soldado) {
       const novo = {
         tipo: soldado.tipo,
