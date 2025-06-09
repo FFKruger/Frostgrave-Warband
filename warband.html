@@ -59,36 +59,17 @@
     .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
     .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
     .remove-btn:active { background: #922b21; }
-    .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
-    .move-btn:active { background: #333; }
-    .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
-    .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-    .edit-name-btn:active { background: #14507c; }
-    .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-    .edit-name-cancel:active { background: #b04a02; }
-    .edit-name-form { display: inline; }
-    .magic-section, .item-section {
-      margin-top: 0.7em;
-      background: #eaf6fb;
-      border-radius: 7px;
-      padding: 0.6em 0.9em 0.7em 0.9em;
+    .add-mago-btn {
+      background: #229954;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      padding: 0.5em 1.1em;
+      margin: 0.5em 0 1em 0;
+      cursor: pointer;
     }
-    .person-card .magic-section { margin-bottom: 0.5em; }
-    .magic-list, .item-list {
-      margin: 0.4em 0 0 1.2em; font-size: 0.97em;
-    }
-    .magic-list li.learned { color: #229954; font-weight: bold; }
-    .magic-list li.not-learned { opacity: .6; }
-    .item-list li.used { color: #2980b9; font-weight: bold; }
-    .item-list li.not-used { opacity: .6; }
-    .magic-learn-checkbox, .item-used-checkbox { margin-right: 0.4em; }
-    .magic-list li, .item-list li { margin-bottom: 0.2em }
-    .add-magic-person-btn, .add-item-person-btn {
-      margin-top: 0.3em;
-      margin-bottom: 0.2em;
-    }
-    .item-select-disabled { background: #f8d7da !important; color: #721c24 !important; }
-    .no-items-available { color: #c0392b; padding: 0.6em 0 0.2em 0; font-weight: bold; }
+    .add-mago-btn:active { background: #157347; }
     .bestiary-list {margin:0;}
     .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
     .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
@@ -177,8 +158,8 @@
       </div>
     </div>
     <div class="section-title">Mago & Aprendiz</div>
+    <button class="add-mago-btn" onclick="adicionarMago()">Adicionar Mago</button>
     <div class="character-group" id="mago-aprendiz-lista"></div>
-    <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
     <div class="section-title">Soldados</div>
     <div class="character-group" id="soldado-lista"></div>
     <section class="add-section">
@@ -236,27 +217,29 @@ async function loadJSON() {
     conteudo_frostgrave_json = await resp.json();
     warband = []; // começa vazio
     renderAll();
+    enableTabs();
   } catch (err) {
     alert("Falha ao carregar conteudo_frostgrave.json: " + err.message);
   }
 }
 
-document.getElementById('tabnav').addEventListener('click', function(e) {
-  if (e.target.tagName === "BUTTON") {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
-    let tab = e.target.getAttribute('data-tab');
-    let tabSection = document.getElementById(tab);
-    if (tabSection) tabSection.classList.add('active');
-    if (tab === 'bestiario') renderBestiario();
-    if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
-    if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
-    if (tab === 'dashboard') { renderPersonagens(); renderAddSoldadoForm(); }
-  }
-});
+function enableTabs() {
+  document.getElementById('tabnav').addEventListener('click', function(e) {
+    if (e.target.tagName === "BUTTON") {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
+      let tab = e.target.getAttribute('data-tab');
+      let tabSection = document.getElementById(tab);
+      if (tabSection) tabSection.classList.add('active');
+      if (tab === 'bestiario') renderBestiario();
+      if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
+      if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
+      if (tab === 'dashboard') { renderPersonagens(); renderAddSoldadoForm(); }
+    }
+  });
+}
 
-/* --- Gold/XP --- */
 function alteraGold(delta) {
   let input = document.getElementById("gold-input");
   if (input) input.value = Math.max(0, parseInt(input.value) + delta);
@@ -274,7 +257,20 @@ function setXP(val) {
   if (input) input.value = Math.max(0, parseInt(val) || 0);
 }
 
-/* --- Renderização do Bestiário --- */
+function adicionarMago() {
+  const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
+  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
+  if (warband.some(p => p.tipo === 'Mago')) {
+    alert('Já existe um Mago na warband!');
+    return;
+  }
+  if (mago) warband.unshift({ ...mago, nome: mago.tipo });
+  if (aprendiz && !warband.some(p => p.tipo === 'Aprendiz')) {
+    warband.splice(1, 0, { ...aprendiz, nome: aprendiz.tipo });
+  }
+  renderPersonagens();
+}
+
 function renderBestiario() {
   const bestDiv = document.getElementById('bestiary-list');
   if (!bestDiv) return;
@@ -293,7 +289,10 @@ function renderBestiario() {
     Object.keys(cats).sort().map(cat =>
       `<div class="beast-cat">
         <h3>${cat}</h3>
-        ${cats[cat].map(b => `
+        ${cats[cat]
+          .slice()
+          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+          .map(b => `
           <div class="beast-card">
             <div class="beast-header">
               <span style="font-weight:bold">${b.nome}</span>
@@ -301,171 +300,4 @@ function renderBestiario() {
             <div class="beast-desc">${b.desc || ''}</div>
             ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
             <div class="beast-stats">
-              <span><b>Mov:</b> ${b.stats.move}</span>
-              <span><b>Fight:</b> ${b.stats.fight}</span>
-              <span><b>Shoot:</b> ${b.stats.shoot}</span>
-              <span><b>Armor:</b> ${b.stats.armor}</span>
-              <span><b>Will:</b> ${b.stats.will}</span>
-              <span><b>HP:</b> ${b.stats.hp}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>`
-    ).join('')}
-    </div>`;
-}
-
-/* --- Renderização de Magias --- */
-function renderBancoMagias() {
-  const ul = document.getElementById('banco-magias-lista');
-  if (!ul) return;
-  ul.innerHTML = '';
-  (conteudo_frostgrave_json.magias || []).forEach(m => {
-    let desc = m.escola ? `Escola: ${m.escola}` : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${m.nome}</b>
-      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
-    </li>`;
-  });
-}
-function renderMagiaDropdown() {
-  const sel = document.getElementById("magia-dropdown");
-  if (!sel) return;
-  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
-    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
-  ).join('');
-}
-
-/* --- Renderização de Itens --- */
-function renderBancoItens() {
-  const ul = document.getElementById('banco-itens-lista');
-  if (!ul) return;
-  ul.innerHTML = '';
-  (conteudo_frostgrave_json.itens || []).forEach(item => {
-    let desc = item.descricao ? item.descricao : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${item.nome}</b>
-      <span style="color:#888">[${item.grupo}]</span>
-      <span style="color:#229954; margin-left:1em;">${desc}</span>
-    </li>`;
-  });
-}
-function renderItemDropdown() {
-  const sel = document.getElementById("item-dropdown");
-  if (!sel) return;
-  sel.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
-    `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
-  ).join('');
-}
-
-/* --- Renderização de Personagens --- */
-function renderPersonagens() {
-  const magoDiv = document.getElementById('mago-aprendiz-lista');
-  const soldDiv = document.getElementById('soldado-lista');
-  if (magoDiv) magoDiv.innerHTML = '';
-  if (soldDiv) soldDiv.innerHTML = '';
-  // Um abaixo do outro
-  warband.forEach((p, idx) => {
-    let el = renderPersonagemCard(p, idx, (p.tipo === 'Mago' || p.tipo === 'Aprendiz'));
-    if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
-    else soldDiv.innerHTML += el;
-  });
-}
-function renderPersonagemCard(p, idx, isMago) {
-  return `<div class="person-card">
-    <div class="person-header">
-      <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
-      <b>${p.nome || ''}</b>
-      ${!isMago ? `<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover">&times;</button>` : ''}
-    </div>
-    <div class="stats-line">
-      <span class="stat-label">Mov:</span> <span>${p.stats.move}</span>
-      <span class="stat-label">Fight:</span> <span>${p.stats.fight}</span>
-      <span class="stat-label">Shoot:</span> <span>${p.stats.shoot}</span>
-      <span class="stat-label">Armor:</span> <span>${p.stats.armor}</span>
-      <span class="stat-label">Will:</span> <span>${p.stats.will}</span>
-      <span class="stat-label">HP:</span> <span>${p.stats.hp}</span>
-    </div>
-  </div>`;
-}
-function removerPersonagem(idx) {
-  warband.splice(idx, 1);
-  renderPersonagens();
-}
-
-/* --- Formulário de Adicionar Soldado --- */
-function renderAddSoldadoForm() {
-  const form = document.getElementById('add-soldado-form');
-  const sel = document.getElementById('soldado-tipo');
-  const custoSpan = document.getElementById('soldado-custo-span');
-  if (!form || !sel || !custoSpan) return;
-
-  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
-    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
-  ).join('');
-  sel.onchange = function() {
-    const opt = sel.options[sel.selectedIndex];
-    custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
-  };
-  sel.onchange();
-
-  form.onsubmit = function(e) {
-    e.preventDefault();
-    const tipo = sel.value;
-    const nome = document.getElementById('soldado-nome').value.trim();
-    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
-    if (soldado) {
-      warband.push({
-        tipo: soldado.tipo,
-        nome: nome || soldado.tipo,
-        stats: {...soldado.stats}
-      });
-      renderPersonagens();
-      form.reset();
-      sel.onchange();
-    }
-  };
-}
-
-/* --- Adição de magias/itens ao banco (exemplo simples) --- */
-document.getElementById('add-magia-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('magia-dropdown').value;
-  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
-  const comp = document.getElementById('magia-comp').value.trim();
-  if (!nome) return;
-  conteudo_frostgrave_json.magias.push({
-    nome, escola, descricao: comp
-  });
-  renderBancoMagias();
-  renderMagiaDropdown();
-  this.reset();
-};
-document.getElementById('add-item-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('item-dropdown').value;
-  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
-  const efeito = document.getElementById('item-efeito').value.trim();
-  if (!nome) return;
-  conteudo_frostgrave_json.itens.push({
-    nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
-  });
-  renderBancoItens();
-  renderItemDropdown();
-  this.reset();
-};
-
-function renderAll() {
-  renderBestiario();
-  renderBancoMagias();
-  renderBancoItens();
-  renderPersonagens();
-  renderAddSoldadoForm();
-  renderMagiaDropdown();
-  renderItemDropdown();
-}
-
-window.onload = loadJSON;
-</script>
-</body>
-</html>
+             
