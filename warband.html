@@ -1,958 +1,332 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Frostgrave Warband Manager</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* (tema anterior, azul, responsivo, cards) */
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
-        main { max-width: 1100px; margin: 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
-        h1 { text-align: center; margin-bottom: 0.7em; color: #154360; letter-spacing: 1px;}
-        h2 { color: #21618c; }
-        nav { text-align: center; margin-bottom: 1.5em; }
-        nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer; }
-        nav button.active, nav button:hover { background: #3498db; color: #fff; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
-        .warband-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1em;
-            border-bottom: 2px solid #eaf2f8;
-            margin-bottom: 1.2em;
-        }
-        .warband-header h2 {
-            margin: 0;
-            color: #154360;
-            letter-spacing: 1px;
-            font-size: 2em;
-        }
-        .gold-xp-box { display: flex; gap: 2em; align-items: center; }
-        .gold-xp-label { font-weight: bold; color: #2e4053; }
-        .gold-xp-input { width: 6em; font-size:1.1em; padding: 0.19em 0.5em; border-radius: 6px; border: 1px solid #bbb; text-align: right;}
-        .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
-        .gold-btn:active, .xp-btn:active { background: #2471a3; }
-        .section-title { margin-top: 1.5em; color: #21618c; margin-bottom: 0.5em; }
-        .character-group { display: flex; gap: 2em; margin-bottom: 2em; flex-wrap: wrap; }
-        .person-card {
-            background: #fafdff;
-            border-radius: 10px;
-            box-shadow: 0 1px 8px #bbb3;
-            padding: 1.3em 1.1em 1em 1.1em;
-            width: 350px;
-            min-width: 270px;
-            max-width: 99vw;
-            position: relative;
-            margin-bottom: 0;
-            margin-top: 0;
-            border: 2px solid #eaf2f8;
-            transition: box-shadow .2s;
-        }
-        .person-card:hover {
-            box-shadow: 0 5px 24px #bbb7;
-            border: 2px solid #3498db22;
-        }
-        .person-header { font-size: 1.16em; margin-bottom: .7em; display: flex; align-items: center; gap: 0.5em;}
-        .tipo-mago { color: #1a5276; font-weight: bold; }
-        .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
-        .tipo-soldado { color: #16a085; font-weight: bold; }
-        .soldado-elite { color: #c0392b; }
-        .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
-        .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
-        .stat-value, .stat-input { width: 2.2em; text-align: center; }
-        .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
-        .hp-box { display: flex; align-items: center; gap: 0.2em;}
-        .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
-        .hp-btn:active { background: #2471a3; }
-        .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
-        .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
-        .remove-btn:active { background: #922b21; }
-        .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
-        .move-btn:active { background: #333; }
-        .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
-        .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-        .edit-name-btn:active { background: #14507c; }
-        .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-        .edit-name-cancel:active { background: #b04a02; }
-        .edit-name-form { display: inline; }
-        .magic-section, .item-section {
-            margin-top: 0.7em;
-            background: #eaf6fb;
-            border-radius: 7px;
-            padding: 0.6em 0.9em 0.7em 0.9em;
-        }
-        .person-card .magic-section { margin-bottom: 0.5em; }
-        .magic-list, .item-list {
-            margin: 0.4em 0 0 1.2em; font-size: 0.97em;
-        }
-        .magic-list li.learned { color: #229954; font-weight: bold; }
-        .magic-list li.not-learned { opacity: .6; }
-        .item-list li.used { color: #2980b9; font-weight: bold; }
-        .item-list li.not-used { opacity: .6; }
-        .magic-learn-checkbox, .item-used-checkbox { margin-right: 0.4em; }
-        .magic-list li, .item-list li { margin-bottom: 0.2em }
-        .add-magic-person-btn, .add-item-person-btn {
-            margin-top: 0.3em;
-            margin-bottom: 0.2em;
-        }
-        .item-select-disabled { background: #f8d7da !important; color: #721c24 !important; }
-        .no-items-available { color: #c0392b; padding: 0.6em 0 0.2em 0; font-weight: bold; }
-        /* Bestiário categorias */
-        .beastiary-cats { display: flex; gap: 2em; flex-wrap: wrap; margin-bottom:2em;}
-        .beast-cat { min-width: 250px; max-width:380px; flex:1 1 300px;}
-        .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
-        .bestiary-list {margin:0;}
-        .beast-card {
-            flex: 1 1 320px;
-            min-width: 290px;
-            max-width: 410px;
-            background: #f8fafc;
-            border: 1px solid #ccd;
-            border-radius: 10px;
-            box-shadow: 0 1px 8px #bbb3;
-            padding: 1.1em 1em 0.9em 1em;
-            position: relative;
-            margin-bottom: 0.6em;
-        }
-        .beast-header {
-            font-size: 1.13em;
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-        }
-        .beast-type {
-            font-size: 0.98em;
-            background: #dbeafe;
-            color: #21618c;
-            padding: 0.16em 0.55em;
-            border-radius: 5px;
-        }
-        .beast-desc {
-            margin: 0.3em 0 0.7em 0;
-            color: #555;
-            font-style: italic;
-        }
-        .beast-expl {
-            margin-bottom: .7em;
-            color: #555;
-            background: #eaf2f8;
-            padding: 0.5em 0.8em;
-            border-radius: 7px;
-            font-size: 0.97em;
-        }
-        .beast-stats {
-            margin-bottom: .4em;
-            margin-top: .4em;
-        }
-        .beast-stats span {
-            display: inline-block;
-            margin-right: 0.8em;
-        }
-        @media (max-width: 950px) {
-            .character-group { flex-direction: column; gap: 1em;}
-            .person-card { width: 100%; min-width: 0; }
-        }
-        @media (max-width: 700px) {
-            main { padding: 0.5em 0.3em; }
-            .bestiary-list { flex-direction: column; gap: 1em;}
-            .beast-card { min-width: 0; max-width: 100%; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Frostgrave Warband Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Tema Azul anterior, visual Frostgrave */
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
+    main { max-width: 1100px; margin: 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
+    h1 { text-align: center; margin-bottom: 0.7em; color: #154360; letter-spacing: 1px;}
+    h2 { color: #21618c; }
+    nav { text-align: center; margin-bottom: 1.5em; }
+    nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer; }
+    nav button.active, nav button:hover { background: #3498db; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
+    .warband-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 1em;
+      border-bottom: 2px solid #eaf2f8; margin-bottom: 1.2em;
+    }
+    .warband-header h2 { margin: 0; color: #154360; letter-spacing: 1px; font-size: 2em; }
+    .gold-xp-box { display: flex; gap: 2em; align-items: center; }
+    .gold-xp-label { font-weight: bold; color: #2e4053; }
+    .gold-xp-input { width: 6em; font-size:1.1em; padding: 0.19em 0.5em; border-radius: 6px; border: 1px solid #bbb; text-align: right;}
+    .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
+    .gold-btn:active, .xp-btn:active { background: #2471a3; }
+    .section-title { margin-top: 1.5em; color: #21618c; margin-bottom: 0.5em; }
+    .character-group { display: flex; gap: 2em; margin-bottom: 2em; flex-wrap: wrap; }
+    .person-card {
+      background: #fafdff;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px #bbb3;
+      padding: 1.3em 1.1em 1em 1.1em;
+      width: 350px;
+      min-width: 270px;
+      max-width: 99vw;
+      position: relative;
+      border: 2px solid #eaf2f8;
+      transition: box-shadow .2s;
+    }
+    .person-card:hover {
+      box-shadow: 0 5px 24px #bbb7;
+      border: 2px solid #3498db22;
+    }
+    .person-header { font-size: 1.16em; margin-bottom: .7em; display: flex; align-items: center; gap: 0.5em;}
+    .tipo-mago { color: #1a5276; font-weight: bold; }
+    .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
+    .tipo-soldado { color: #16a085; font-weight: bold; }
+    .soldado-elite { color: #c0392b; }
+    .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
+    .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
+    .stat-value, .stat-input { width: 2.2em; text-align: center; }
+    .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
+    .hp-box { display: flex; align-items: center; gap: 0.2em;}
+    .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+    .hp-btn:active { background: #2471a3; }
+    .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+    .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
+    .remove-btn:active { background: #922b21; }
+    .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
+    .move-btn:active { background: #333; }
+    .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
+    .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-btn:active { background: #14507c; }
+    .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+    .edit-name-cancel:active { background: #b04a02; }
+    .edit-name-form { display: inline; }
+    .magic-section, .item-section {
+      margin-top: 0.7em;
+      background: #eaf6fb;
+      border-radius: 7px;
+      padding: 0.6em 0.9em 0.7em 0.9em;
+    }
+    .person-card .magic-section { margin-bottom: 0.5em; }
+    .magic-list, .item-list {
+      margin: 0.4em 0 0 1.2em; font-size: 0.97em;
+    }
+    .magic-list li.learned { color: #229954; font-weight: bold; }
+    .magic-list li.not-learned { opacity: .6; }
+    .item-list li.used { color: #2980b9; font-weight: bold; }
+    .item-list li.not-used { opacity: .6; }
+    .magic-learn-checkbox, .item-used-checkbox { margin-right: 0.4em; }
+    .magic-list li, .item-list li { margin-bottom: 0.2em }
+    .add-magic-person-btn, .add-item-person-btn {
+      margin-top: 0.3em;
+      margin-bottom: 0.2em;
+    }
+    .item-select-disabled { background: #f8d7da !important; color: #721c24 !important; }
+    .no-items-available { color: #c0392b; padding: 0.6em 0 0.2em 0; font-weight: bold; }
+    .beastiary-cats { display: flex; gap: 2em; flex-wrap: wrap; margin-bottom:2em;}
+    .beast-cat { min-width: 250px; max-width:380px; flex:1 1 300px;}
+    .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
+    .bestiary-list {margin:0;}
+    .beast-card {
+      flex: 1 1 320px;
+      min-width: 290px;
+      max-width: 410px;
+      background: #f8fafc;
+      border: 1px solid #ccd;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px #bbb3;
+      padding: 1.1em 1em 0.9em 1em;
+      position: relative;
+      margin-bottom: 0.6em;
+    }
+    .beast-header {
+      font-size: 1.13em;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .beast-type {
+      font-size: 0.98em;
+      background: #dbeafe;
+      color: #21618c;
+      padding: 0.16em 0.55em;
+      border-radius: 5px;
+    }
+    .beast-desc {
+      margin: 0.3em 0 0.7em 0;
+      color: #555;
+      font-style: italic;
+    }
+    .beast-expl {
+      margin-bottom: .7em;
+      color: #555;
+      background: #eaf2f8;
+      padding: 0.5em 0.8em;
+      border-radius: 7px;
+      font-size: 0.97em;
+    }
+    .beast-stats {
+      margin-bottom: .4em;
+      margin-top: .4em;
+    }
+    .beast-stats span {
+      display: inline-block;
+      margin-right: 0.8em;
+    }
+    @media (max-width: 950px) {
+      .character-group { flex-direction: column; gap: 1em;}
+      .person-card { width: 100%; min-width: 0; }
+    }
+    @media (max-width: 700px) {
+      main { padding: 0.5em 0.3em; }
+      .bestiary-list { flex-direction: column; gap: 1em;}
+      .beast-card { min-width: 0; max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
 <main>
-    <h1>Frostgrave Warband Manager</h1>
-    <nav id="tabnav">
-        <button data-tab="dashboard" class="active" type="button">Warband</button>
-        <button data-tab="magias" type="button">Magias</button>
-        <button data-tab="itens" type="button">Itens</button>
-        <button data-tab="notas" type="button">Notas</button>
-        <button data-tab="bestiario" type="button">Bestiário</button>
-    </nav>
-    <section id="dashboard" class="tab-content active">
-        <div class="warband-header">
-            <h2>Warband</h2>
-            <div class="gold-xp-box">
-                <span class="gold-xp-label">Gold: 
-                    <button class="gold-btn" onclick="alteraGold(-10)">-</button>
-                    <input id="gold-input" class="gold-xp-input" type="number" min="0" value="500" onchange="setGold(this.value)"> 
-                    <button class="gold-btn" onclick="alteraGold(10)">+</button>
-                </span>
-                <span class="gold-xp-label">XP: 
-                    <button class="xp-btn" onclick="alteraXP(-10)">-</button>
-                    <input id="xp-input" class="gold-xp-input" type="number" min="0" value="0" onchange="setXP(this.value)"> 
-                    <button class="xp-btn" onclick="alteraXP(10)">+</button>
-                </span>
-            </div>
-        </div>
-        <div class="section-title">Mago & Aprendiz</div>
-        <div class="character-group" id="mago-aprendiz-lista"></div>
-        <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
-        <div class="section-title">Soldados</div>
-        <div class="character-group" id="soldado-lista"></div>
-        <section class="add-section">
-            <h2 style="color:#229954">Adicionar Soldado</h2>
-            <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-            <form class="add-form add-form-soldado" id="add-soldado-form">
-                <label>
-                    Tipo de Soldado:
-                    <select id="soldado-tipo"></select>
-                </label>
-                <label>
-                    Nome:
-                    <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
-                </label>
-                <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
-                <button type="submit">Adicionar Soldado</button>
-            </form>
-        </section>
+  <h1>Frostgrave Warband Manager</h1>
+  <nav id="tabnav">
+    <button data-tab="dashboard" class="active" type="button">Warband</button>
+    <button data-tab="magias" type="button">Magias</button>
+    <button data-tab="itens" type="button">Itens</button>
+    <button data-tab="notas" type="button">Notas</button>
+    <button data-tab="bestiario" type="button">Bestiário</button>
+  </nav>
+  <section id="dashboard" class="tab-content active">
+    <!-- ... conteúdo da dashboard ... -->
+    <div class="warband-header">
+      <h2>Warband</h2>
+      <div class="gold-xp-box">
+        <span class="gold-xp-label">Gold:
+          <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+          <input id="gold-input" class="gold-xp-input" type="number" min="0" value="500" onchange="setGold(this.value)">
+          <button class="gold-btn" onclick="alteraGold(10)">+</button>
+        </span>
+        <span class="gold-xp-label">XP:
+          <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+          <input id="xp-input" class="gold-xp-input" type="number" min="0" value="0" onchange="setXP(this.value)">
+          <button class="xp-btn" onclick="alteraXP(10)">+</button>
+        </span>
+      </div>
+    </div>
+    <div class="section-title">Mago & Aprendiz</div>
+    <div class="character-group" id="mago-aprendiz-lista"></div>
+    <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
+    <div class="section-title">Soldados</div>
+    <div class="character-group" id="soldado-lista"></div>
+    <section class="add-section">
+      <h2 style="color:#229954">Adicionar Soldado</h2>
+      <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
+      <form class="add-form add-form-soldado" id="add-soldado-form">
+        <label>
+          Tipo de Soldado:
+          <select id="soldado-tipo"></select>
+        </label>
+        <label>
+          Nome:
+          <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
+        </label>
+        <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
+        <button type="submit">Adicionar Soldado</button>
+      </form>
     </section>
-    <section id="magias" class="tab-content">
-        <h2>Banco de Magias</h2>
-        <form class="magia-form" id="add-magia-form">
-            <select id="magia-dropdown"></select>
-            <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
-            <button id="add-magia-btn" type="submit">Adicionar Magia</button>
-        </form>
-        <ul id="banco-magias-lista" class="magias-list"></ul>
-    </section>
-    <section id="itens" class="tab-content">
-        <h2>Banco de Itens</h2>
-        <form class="item-form" id="add-item-form">
-            <select id="item-dropdown"></select>
-            <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
-            <button id="add-item-btn" type="submit">Adicionar Item</button>
-        </form>
-        <ul id="banco-itens-lista" class="itens-list"></ul>
-    </section>
-    <section id="notas" class="tab-content">
-        <h2>Anotações da Warband</h2>
-        <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
-    </section>
-    <section id="bestiario" class="tab-content">
-        <h2>Bestiário</h2>
-        <div id="bestiary-list" class="bestiary-list"></div>
-    </section>
+  </section>
+  <section id="magias" class="tab-content">
+    <h2>Banco de Magias</h2>
+    <form class="magia-form" id="add-magia-form">
+      <select id="magia-dropdown"></select>
+      <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
+      <button id="add-magia-btn" type="submit">Adicionar Magia</button>
+    </form>
+    <ul id="banco-magias-lista" class="magias-list"></ul>
+  </section>
+  <section id="itens" class="tab-content">
+    <h2>Banco de Itens</h2>
+    <form class="item-form" id="add-item-form">
+      <select id="item-dropdown"></select>
+      <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
+      <button id="add-item-btn" type="submit">Adicionar Item</button>
+    </form>
+    <ul id="banco-itens-lista" class="itens-list"></ul>
+  </section>
+  <section id="notas" class="tab-content">
+    <h2>Anotações da Warband</h2>
+    <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
+  </section>
+  <section id="bestiario" class="tab-content">
+    <h2>Bestiário</h2>
+    <div id="bestiary-list" class="bestiary-list"></div>
+  </section>
 </main>
 <script>
-/* ------------------- VARIÁVEIS GLOBAIS ------------------- */
-let personagens = [];
-let bancoMagias = [];
-let bancoItens = [];
-let itensDisponiveis = [];
-let magiasPorPersonagem = {};
-let itensPorPersonagem = {};
-let ESCOLAS = [];
-let magiasPorEscola = {};
-let itensPadrao = {};
-let STATS = {};
-let SOLDADOS_NORMAIS = [];
-let SOLDADOS_ELITES = [];
-let bestiario = [];
-let CUSTO_UNIDADES = {};
-let gold = 500;
-let xp = 0;
-let editandoNome = null;
-let learnedMagics = {};
-let usedItems = {};
-let statsEditActive = {};
-let statsEditBuffer = {};
-
-/* ------------------- JSON DE CONTEÚDO (SIMULADO EMBUTIDO) ------------------- */
-const conteudo_frostgrave_json = {
-"escolas":["Chronomancer","Elementalist","Enchanter","Illusionist","Necromancer","Sigilist","Soothsayer","Summoner","Thaumaturge","Witch"],
-"magias":[
-    {"nome":"Elemental Bolt","escola":"Elementalist","custo":8,"descricao":"Projétil elemental."},
-    {"nome":"Bone Dart","escola":"Necromancer","custo":8,"descricao":"Projétil de osso."}
-],
-"itens":[
-    {"nome":"Potion of Healing","grupo":"Poção","descricao":"+5 HP"},
-    {"nome":"Magic Dagger","grupo":"Arma","descricao":"+1 Fight"}
-],
-"personagens":[
-    {"tipo":"Mago","stats":{"move":6,"fight":"+2","shoot":"+0","armor":10,"will":"+4","hp":14},"custo":0},
-    {"tipo":"Aprendiz","stats":{"move":6,"fight":"+0","shoot":"+0","armor":10,"will":"+2","hp":10},"custo":0},
-    {"tipo":"Thief","stats":{"move":7,"fight":"+0","shoot":"+0","armor":10,"will":"+0","hp":10},"custo":20},
-    {"tipo":"Infantryman","stats":{"move":6,"fight":"+3","shoot":"+0","armor":11,"will":"+0","hp":12},"custo":50},
-    {"tipo":"Knight","stats":{"move":6,"fight":"+4","shoot":"+0","armor":13,"will":"+1","hp":14},"custo":100}
-],
-"bestiario":[
-    {"nome":"Giant Rat","tipo":"Animal","desc":"Roedor agressivo e rápido.","explicacao":"Aparecem em grupos.","stats":{"move":7,"fight":"+0","shoot":"-","armor":8,"will":"-1","hp":6}},
-    {"nome":"Bear","tipo":"Animal","desc":"Urso feroz.","explicacao":"Alto dano, resistente.","stats":{"move":6,"fight":"+4","shoot":"-","armor":12,"will":"0","hp":16}},
-    {"nome":"Skeleton","tipo":"Morto-vivo","desc":"Guarda esquelético, imune a venenos.","explicacao":"Imune a veneno.","stats":{"move":6,"fight":"+1","shoot":"-","armor":12,"will":"+0","hp":10}},
-    {"nome":"Zombie","tipo":"Morto-vivo","desc":"Lento mas persistente.","explicacao":"Não pode correr.","stats":{"move":4,"fight":"+0","shoot":"-","armor":12,"will":"-2","hp":12}}
-]
-};
-
-/* ------------------- INICIALIZAÇÃO (usa o JSON acima) ------------------- */
-function carregarConteudoFrostgrave() {
-    let data = conteudo_frostgrave_json;
-    ESCOLAS = data.escolas;
-    magiasPorEscola = {};
-    data.magias.forEach(m => {
-        if (!magiasPorEscola[m.escola]) magiasPorEscola[m.escola] = [];
-        magiasPorEscola[m.escola].push(m);
-    });
-    itensPadrao = {};
-    data.itens.forEach(i => {
-        if (!itensPadrao[i.grupo]) itensPadrao[i.grupo] = [];
-        itensPadrao[i.grupo].push(i);
-    });
-    STATS = {};
-    SOLDADOS_NORMAIS = [];
-    SOLDADOS_ELITES = [];
-    CUSTO_UNIDADES = {};
-    data.personagens.forEach(p => {
-        STATS[p.tipo] = p.stats;
-        if (p.custo) CUSTO_UNIDADES[p.tipo] = p.custo;
-        if (["Thief","Infantryman"].includes(p.tipo))
-            SOLDADOS_NORMAIS.push(p.tipo);
-        else if (!["Mago","Aprendiz"].includes(p.tipo))
-            SOLDADOS_ELITES.push(p.tipo);
-    });
-    bestiario = data.bestiario;
-}
-
-/* ------------------- ABA FUNCIONAL ------------------- */
+/* --- Troca de abas --- */
 document.getElementById('tabnav').addEventListener('click', function(e) {
-    if (e.target.tagName === "BUTTON") {
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        let tab = e.target.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
-        let tabSection = document.getElementById(tab);
-        if (tabSection) tabSection.classList.add('active');
-        if (tab === 'dashboard') renderPersonagens();
-        if (tab === 'bestiario') renderBestiario();
-        if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
-        if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
-    }
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
+    let tab = e.target.getAttribute('data-tab');
+    let tabSection = document.getElementById(tab);
+    if (tabSection) tabSection.classList.add('active');
+    if (tab === 'bestiario') renderBestiario();
+  }
 });
 
-/* ------------------- GOLD / XP ------------------- */
-function renderGoldXP() {
-    document.getElementById("gold-input").value = gold;
-    document.getElementById("xp-input").value = xp;
+function alteraGold(delta) {
+  let input = document.getElementById("gold-input");
+  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
 }
-function alteraGold(delta) { gold = Math.max(0, gold + delta); renderGoldXP(); }
-function setGold(val) { gold = Math.max(0, parseInt(val) || 0); renderGoldXP(); }
-function alteraXP(delta) { xp = Math.max(0, xp + delta); renderGoldXP(); }
-function setXP(val) { xp = Math.max(0, parseInt(val) || 0); renderGoldXP(); }
-
-/* ------------------- MAGO/APRENDIZ ------------------- */
-function renderMagoAprendizSection() {
-    const div = document.getElementById('mago-aprendiz-lista');
-    div.innerHTML = '';
-    let magoIdx = personagens.findIndex(p => p.tipo === "Mago");
-    let aprendizIdx = personagens.findIndex(p => p.tipo === "Aprendiz");
-    if (magoIdx !== -1) div.appendChild(personagemCard(personagens[magoIdx], magoIdx));
-    if (aprendizIdx !== -1) div.appendChild(personagemCard(personagens[aprendizIdx], aprendizIdx));
-    // Botões de adicionar
-    const btnDiv = document.getElementById('add-mago-aprendiz-btns');
-    btnDiv.innerHTML = '';
-    if (ESCOLAS.length) {
-        if (magoIdx === -1) {
-            let sel = `<select id="escola-mago" style="margin-right:1em;">
-                ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
-            </select>`;
-            btnDiv.innerHTML +=
-                `<button id="add-mago-btn" type="button">+ Adicionar Mago</button> ${sel}`;
-        }
-        if (aprendizIdx === -1) {
-            let sel = `<select id="escola-aprendiz" style="margin-right:1em;">
-                ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
-            </select>`;
-            btnDiv.innerHTML +=
-                `<button id="add-aprendiz-btn" type="button">+ Adicionar Aprendiz</button> ${sel}`;
-        }
-        setTimeout(() => {
-            if (document.getElementById("add-mago-btn")) document.getElementById("add-mago-btn").onclick = adicionarMago;
-            if (document.getElementById("add-aprendiz-btn")) document.getElementById("add-aprendiz-btn").onclick = adicionarAprendiz;
-        }, 0);
-    }
+function setGold(val) {
+  let input = document.getElementById("gold-input");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
 }
-function adicionarMago() {
-    let escola = document.getElementById('escola-mago')?.value || ESCOLAS[0];
-    personagens.push({tipo: "Mago", nome: "Mago", escola, hpAtual: STATS["Mago"].hp});
-    renderPersonagens();
+function alteraXP(delta) {
+  let input = document.getElementById("xp-input");
+  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
 }
-function adicionarAprendiz() {
-    let escola = document.getElementById('escola-aprendiz')?.value || ESCOLAS[0];
-    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", escola, hpAtual: STATS["Aprendiz"].hp});
-    renderPersonagens();
+function setXP(val) {
+  let input = document.getElementById("xp-input");
+  if (input) input.value = Math.max(0, parseInt(val) || 0);
 }
 
-/* ------------------- SOLDADOS ------------------- */
-function renderSoldadosSection() {
-    const soldadoDiv = document.getElementById('soldado-lista');
-    soldadoDiv.innerHTML = '';
-    personagens
-        .map((p, idx) => ({p, idx}))
-        .filter(obj => obj.p.tipo === "Soldado")
-        .forEach(({p, idx}, displayOrder) => soldadoDiv.appendChild(personagemCard(p, idx, displayOrder)));
-    renderSoldadoDropdown();
-    renderSoldadoAlert();
-    renderSoldadoCusto();
-}
-function renderSoldadoDropdown() {
-    let soldadoSel = document.getElementById('soldado-tipo');
-    if (!soldadoSel) return;
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    soldadoSel.innerHTML = `<optgroup label="Normais">` +
-        SOLDADOS_NORMAIS.map(k => `<option value="${k}"${norm>=4?' disabled':''}>${k}</option>`).join('') +
-        `</optgroup><optgroup label="Elites">` +
-        SOLDADOS_ELITES.map(k => `<option value="${k}"${elite>=4?' disabled':''}>${k}</option>`).join('') +
-        `</optgroup>`;
-}
-function renderSoldadoCusto() {
-    let sel = document.getElementById('soldado-tipo');
-    let span = document.getElementById('soldado-custo-span');
-    if (!sel || !span) return;
-    let tipo = sel.value;
-    span.textContent = tipo && CUSTO_UNIDADES[tipo] ? `Custo: ${CUSTO_UNIDADES[tipo]} gold` : '';
-}
-document.addEventListener('change', function(e){
-    if(e.target && e.target.id==='soldado-tipo') renderSoldadoCusto();
-});
-function renderSoldadoAlert() {
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    let total = norm+elite;
-    let alertDiv = document.getElementById('soldado-limit-alert');
-    let msg = "";
-    if (total >= 8) msg = "Limite total de 8 soldados atingido!";
-    else if (norm >= 4) msg = "Limite de 4 soldados normais atingido.";
-    else if (elite >= 4) msg = "Limite de 4 soldados elite atingido.";
-    alertDiv.textContent = msg;
-}
-function adicionarSoldadoHandler(e) {
-    e.preventDefault();
-    let tipoSoldado = document.getElementById('soldado-tipo').value;
-    let nome = document.getElementById('soldado-nome').value;
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    let custo = CUSTO_UNIDADES[tipoSoldado] || 0;
-    if (SOLDADOS_NORMAIS.includes(tipoSoldado) && norm >= 4)
-        return alert("Máximo de 4 soldados normais!");
-    if (SOLDADOS_ELITES.includes(tipoSoldado) && elite >= 4)
-        return alert("Máximo de 4 soldados elite!");
-    if (norm+elite >= 8)
-        return alert("Máximo de 8 soldados!");
-    if (gold < custo) return alert("Gold insuficiente para contratar este soldado!");
-    personagens.push({tipo: "Soldado", tipoSoldado, nome, hpAtual: STATS[tipoSoldado]?.hp||10});
-    gold -= custo;
-    renderPersonagens();
-    e.target.reset();
-    renderSoldadoCusto();
-}
+/* --- Bestiário Completo Frostgrave 2E --- */
+const bestiario = [
+  {"nome":"Giant Rat","tipo":"Animal","desc":"Roedor agressivo e rápido","explicacao":"Aparecem em grupos.","stats":{"move":7,"fight":"+0","shoot":"-","armor":8,"will":"-1","hp":6}},
+  {"nome":"Giant Spider","tipo":"Animal","desc":"Aranha grande e venenosa","explicacao":"Ataques podem causar veneno.","stats":{"move":7,"fight":"+2","shoot":"-","armor":11,"will":"-2","hp":10}},
+  {"nome":"Bear","tipo":"Animal","desc":"Urso feroz","explicacao":"Alto dano, resistente.","stats":{"move":6,"fight":"+4","shoot":"-","armor":12,"will":"0","hp":16}},
+  {"nome":"Wolf","tipo":"Animal","desc":"Lobo selvagem","explicacao":"Sempre em bandos.","stats":{"move":8,"fight":"+1","shoot":"-","armor":10,"will":"-1","hp":8}},
+  {"nome":"Snow Leopard","tipo":"Animal","desc":"Leopardo ágil","explicacao":"Grande salto.","stats":{"move":8,"fight":"+2","shoot":"-","armor":10,"will":"0","hp":8}},
+  {"nome":"Boar","tipo":"Animal","desc":"Javali agressivo","explicacao":"Carga poderosa.","stats":{"move":7,"fight":"+2","shoot":"-","armor":11,"will":"+1","hp":10}},
+  {"nome":"White Gorilla","tipo":"Animal","desc":"Gorila do gelo","explicacao":"Ataque arrasador.","stats":{"move":8,"fight":"+4","shoot":"-","armor":12,"will":"+3","hp":16}},
+  {"nome":"Ice Toad","tipo":"Animal","desc":"Sapo monstruoso","explicacao":"Língua longa, ataque à distância.","stats":{"move":5,"fight":"+2","shoot":"-","armor":12,"will":"+2","hp":18}},
+  {"nome":"Giant Worm","tipo":"Animal","desc":"Verme gigante subterrâneo","explicacao":"Aparece debaixo da terra.","stats":{"move":4,"fight":"+4","shoot":"-","armor":12,"will":"-2","hp":20}},
+  {"nome":"Zombie","tipo":"Morto-vivo","desc":"Lento mas persistente","explicacao":"Não pode correr.","stats":{"move":4,"fight":"+0","shoot":"-","armor":12,"will":"-2","hp":12}},
+  {"nome":"Skeleton","tipo":"Morto-vivo","desc":"Guarda esquelético, imune a venenos","explicacao":"Imune a veneno.","stats":{"move":6,"fight":"+1","shoot":"-","armor":12,"will":"0","hp":10}},
+  {"nome":"Ghoul","tipo":"Morto-vivo","desc":"Carniçal ágil","explicacao":"Ignora medo, pode se mover após atacar.","stats":{"move":6,"fight":"+2","shoot":"-","armor":10,"will":"0","hp":12}},
+  {"nome":"Wraith","tipo":"Morto-vivo","desc":"Fantasma sombrio","explicacao":"Ignora terreno, só recebe dano mágico.","stats":{"move":7,"fight":"+2","shoot":"-","armor":12,"will":"+4","hp":6}},
+  {"nome":"Vampire","tipo":"Morto-vivo","desc":"Senhor das trevas","explicacao":"Regenera 2 HP por turno, imune a armas comuns.","stats":{"move":7,"fight":"+4","shoot":"+0","armor":12,"will":"+4","hp":18}},
+  {"nome":"Armored Skeleton","tipo":"Morto-vivo","desc":"Esqueleto com armadura pesada","explicacao":"Mais resistente que o esqueleto comum.","stats":{"move":6,"fight":"+2","shoot":"-","armor":13,"will":"+1","hp":12}},
+  {"nome":"Imp","tipo":"Demônio","desc":"Pequeno demônio","explicacao":"Fácil de invocar, ataque venenoso.","stats":{"move":6,"fight":"+1","shoot":"-","armor":10,"will":"-1","hp":6}},
+  {"nome":"Minor Demon","tipo":"Demônio","desc":"Demônio menor","explicacao":"Resistente a magia.","stats":{"move":6,"fight":"+2","shoot":"-","armor":12,"will":"+2","hp":10}},
+  {"nome":"Major Demon","tipo":"Demônio","desc":"Demônio maior","explicacao":"Causa medo.","stats":{"move":6,"fight":"+4","shoot":"-","armor":14,"will":"+3","hp":20}},
+  {"nome":"Construct (Small)","tipo":"Constructo","desc":"Construto pequeno animado","explicacao":"Invocado por magos Enchanter.","stats":{"move":6,"fight":"+1","shoot":"-","armor":10,"will":"-1","hp":10}},
+  {"nome":"Construct (Medium)","tipo":"Constructo","desc":"Construto médio animado","explicacao":"Invocado por magos Enchanter.","stats":{"move":6,"fight":"+3","shoot":"-","armor":12,"will":"+0","hp":12}},
+  {"nome":"Construct (Large)","tipo":"Constructo","desc":"Construto grande animado","explicacao":"Invocado por magos Enchanter.","stats":{"move":6,"fight":"+5","shoot":"-","armor":14,"will":"+1","hp":14}},
+  {"nome":"Giant","tipo":"Gigante","desc":"Gigante das ruínas","explicacao":"Muito forte e resistente.","stats":{"move":6,"fight":"+6","shoot":"-","armor":14,"will":"+3","hp":30}},
+  {"nome":"Troll","tipo":"Monstro","desc":"Troll das ruínas geladas","explicacao":"Regenera 2 HP por turno.","stats":{"move":6,"fight":"+4","shoot":"-","armor":12,"will":"+1","hp":18}},
+  {"nome":"Werewolf","tipo":"Monstro","desc":"Lobisomem","explicacao":"Ignora Will contra magias de controle, regenera 2 HP por turno.","stats":{"move":7,"fight":"+4","shoot":"-","armor":12,"will":"+3","hp":14}}
+];
 
-/* ------------------- PERSONAGEM CARD E EDIÇÃO DE STATS ------------------- */
-function personagemCard(pers, idx, displayOrder) {
-    let tipoStr = pers.tipo;
-    let stats = getStats(pers, idx);
-    let name = pers.nome || pers.tipoSoldado || "";
-    if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
-    else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
-    else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
-    else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado||pers.tipo}</span>`;
-    let hpAtual = typeof pers.hpAtual === 'number' ? pers.hpAtual : stats.hp;
-
-    let nomeHtml;
-    if (editandoNome === idx) {
-        nomeHtml = `<form class="edit-name-form" onsubmit="return salvarNomePersonagem(${idx})">
-            <input class="edit-name-input" id="edit-name-input-${idx}" type="text" value="${name.replace(/"/g,'&quot;')}" maxlength="40">
-            <button class="edit-name-btn" type="submit" title="Salvar">💾</button>
-            <button class="edit-name-cancel" type="button" onclick="cancelarEditarNome()">✖</button>
-        </form>`;
-        setTimeout(() => {
-            let el = document.getElementById(`edit-name-input-${idx}`);
-            if (el) { el.focus(); el.select(); }
-        }, 0);
-    } else {
-        nomeHtml = `<span>${name ? ' - ' + name : ''}</span> <button class="edit-name-btn" type="button" onclick="editarNomePersonagem(${idx})" title="Editar nome">✎</button>`;
-    }
-
-    let moverBtns = "";
-    if (pers.tipo === "Soldado") {
-        let first = personagens.findIndex(p => p.tipo === "Soldado");
-        let last = personagens.length-1 - [...personagens].reverse().findIndex(p => p.tipo === "Soldado");
-        moverBtns = `
-            <button class="move-btn" type="button" onclick="moverSoldado(${idx}, -1)" title="Subir" ${idx===first?'disabled':''}>↑</button>
-            <button class="move-btn" type="button" onclick="moverSoldado(${idx}, 1)" title="Descer" ${idx===last?'disabled':''}>↓</button>
-        `;
-    }
-
-    // --- Edição das características (stats) ---
-    let statsLine = "";
-    if (statsEditActive[idx]) {
-        // Edição ativa
-        let buf = statsEditBuffer[idx] || stats;
-        statsLine = `
-        <form class="stats-edit-form" style="display:flex; align-items:center; gap:1.25em; margin-bottom:.6em; background:#eaf6fb; border-radius:6px; padding:0.6em 0;">
-            <span class="stat-label">Mov:</span>
-            <input type="number" class="stat-input" style="width:3em;" value="${buf.move}" id="stat-move-${idx}">
-            <span class="stat-label">Fight:</span>
-            <input type="text" class="stat-input" style="width:3em;" value="${buf.fight}" id="stat-fight-${idx}">
-            <span class="stat-label">Shoot:</span>
-            <input type="text" class="stat-input" style="width:3em;" value="${buf.shoot}" id="stat-shoot-${idx}">
-            <span class="stat-label">Armor:</span>
-            <input type="number" class="stat-input" style="width:3em;" value="${buf.armor}" id="stat-armor-${idx}">
-            <span class="stat-label">Will:</span>
-            <input type="text" class="stat-input" style="width:3em;" value="${buf.will}" id="stat-will-${idx}">
-            <span class="stat-label">HP:</span>
-            <input type="number" class="stat-input" style="width:3em;" value="${buf.hp}" id="stat-hp-${idx}">
-            <button type="button" class="edit-name-btn" title="Salvar" onclick="salvarStats(${idx})">Salvar</button>
-            <button type="button" class="edit-name-cancel" title="Cancelar" onclick="cancelarEditarStats(${idx})">✖</button>
-        </form>
-        `;
-    } else {
-        statsLine = `
-        <div class="stats-line">
-            <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
-            <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
-            <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
-            <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
-            <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
-            <span class="stat-label">HP:</span>
-            <span class="hp-box">
-                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
-                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
-                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
-            </span>
-            <button type="button" class="edit-name-btn" title="Editar características" style="margin-left:1em;" onclick="ativarEditarStats(${idx})">✎</button>
-        </div>
-        `;
-    }
-
-    let magiasSection = '';
-    if (pers.tipo === "Mago") {
-        magiasSection = `<div class="magic-section">
-            <b>Magias:</b>
-            ${renderAddMagiaPersonagem(idx)}
-            ${renderMagiasPersonagem(idx)}
-        </div>`;
-    } else if (pers.tipo === "Aprendiz") {
-        magiasSection = `<div class="magic-section">
-            <b>Magias (as mesmas do mago):</b>
-            ${renderMagiasPersonagem(idx)}
-        </div>`;
-    }
-
-    let itensSection = `<div class="item-section">
-        <b>Itens:</b>
-        ${renderAddItemPersonagem(idx)}
-        ${renderItensPersonagem(idx)}
-    </div>`;
-
-    return Object.assign(document.createElement('div'), {
-        className: 'person-card',
-        innerHTML: `
-        <div class="person-header">
-            ${tipoStr} ${nomeHtml}
-            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
-            ${moverBtns}
-        </div>
-        ${statsLine}
-        ${magiasSection}
-        ${itensSection}
-        `
-    });
-}
-window.ativarEditarStats = function(idx) {
-    statsEditBuffer[idx] = {...getStats(personagens[idx], idx)};
-    statsEditActive[idx] = true;
-    renderPersonagens();
-};
-window.cancelarEditarStats = function(idx) {
-    statsEditActive[idx] = false;
-    statsEditBuffer[idx] = undefined;
-    renderPersonagens();
-};
-window.salvarStats = function(idx) {
-    let move = document.getElementById(`stat-move-${idx}`).value;
-    let fight = document.getElementById(`stat-fight-${idx}`).value;
-    let shoot = document.getElementById(`stat-shoot-${idx}`).value;
-    let armor = document.getElementById(`stat-armor-${idx}`).value;
-    let will = document.getElementById(`stat-will-${idx}`).value;
-    let hp = document.getElementById(`stat-hp-${idx}`).value;
-    personagens[idx].stats = {
-        move: move,
-        fight: fight,
-        shoot: shoot,
-        armor: armor,
-        will: will,
-        hp: hp
-    };
-    if (typeof personagens[idx].hpAtual !== "number" || personagens[idx].hpAtual > parseInt(hp)) {
-        personagens[idx].hpAtual = parseInt(hp) || 0;
-    }
-    statsEditActive[idx] = false;
-    statsEditBuffer[idx] = undefined;
-    renderPersonagens();
-};
-
-/* ------------------- GET STATS (inclui alteração por item usado) ------------------- */
-function getStats(pers, idx) {
-    let base = (pers.tipo === "Aprendiz")
-        ? (() => {
-            let mago = personagens.find(p => p.tipo === "Mago");
-            if (!mago || !mago.stats) return {...STATS["Aprendiz"]};
-            const m = mago.stats || STATS["Mago"];
-            let stat = val => { let n = parseInt(val); if (isNaN(n)) n = 0; return n; };
-            let fightA = (stat(m.fight) - 2 >= -2 ? (stat(m.fight) - 2) : -2);
-            let willA = (stat(m.will) - 2 >= -2 ? (stat(m.will) - 2) : -2);
-            return {
-                move: m.move,
-                fight: (fightA >= 0 ? "+" + fightA : fightA),
-                shoot: m.shoot,
-                armor: m.armor,
-                will: (willA >= 0 ? "+" + willA : willA),
-                hp: 10
-            };
-        })()
-        : (pers.stats || STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"});
-    let arr = itensPorPersonagem[idx] || [];
-    let used = usedItems[idx] || [];
-    let stats = {...base};
-    arr.forEach((it, i) => {
-        if (!used[i]) return;
-        let efeitos = (it.descricao||"").match(/[+-]\d+ *(Fight|Shoot|Armor|Will|HP|Move)/ig);
-        if (efeitos) {
-            efeitos.forEach(str => {
-                let m = str.match(/([+-]\d+)\s*(Fight|Shoot|Armor|Will|HP|Move)/i);
-                if (!m) return;
-                let val = parseInt(m[1]);
-                let stat = m[2].toLowerCase();
-                if (stat === "fight" || stat === "shoot" || stat === "will") {
-                    let cur = parseInt(stats[stat]) || 0;
-                    stats[stat] = (cur + val >= 0 ? "+" : "") + (cur + val);
-                }
-                if (stat === "armor" || stat === "hp" || stat === "move") {
-                    stats[stat] = (parseInt(stats[stat]) || 0) + val;
-                }
-            });
-        }
-    });
-    return stats;
-}
-
-/* ------------------- MAGIAS (marcação aprendida) ------------------- */
-function renderMagiasPersonagem(idx) {
-    let arr;
-    if (personagens[idx]?.tipo === "Mago") {
-        arr = magiasPorPersonagem[idx] || [];
-    } else if (personagens[idx]?.tipo === "Aprendiz") {
-        let idxMago = personagens.findIndex(p => p.tipo === "Mago");
-        arr = idxMago !== -1 ? (magiasPorPersonagem[idxMago] || []) : [];
-    } else {
-        return "";
-    }
-    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhuma magia</div>`;
-    learnedMagics[idx] = learnedMagics[idx] || [];
-    return `<ul class="magic-list">${
-        arr.map((m,i) => {
-            let isLearned = !!learnedMagics[idx][i];
-            return `<li class="${isLearned ? "learned" : "not-learned"}">
-                <input type="checkbox" class="magic-learn-checkbox" ${isLearned ? "checked" : ""} onchange="toggleLearnedMagic(${idx},${i})">
-                ${m.nome} (${m.escola})
-                ${personagens[idx]?.tipo === "Mago" ? `<button class="remove-btn" onclick="removerMagiaPersonagem(${idx},${i})" title="Remover">✖</button>`:""}
-            </li>`;
-        }).join("")
-    }</ul>`;
-}
-window.toggleLearnedMagic = function(idx, i) {
-    learnedMagics[idx] = learnedMagics[idx] || [];
-    learnedMagics[idx][i] = !learnedMagics[idx][i];
-    renderPersonagens();
-};
-
-/* ------------------- ITENS (utilizado ou não, quantidade controlada) ------------------- */
-function atualizarItensDisponiveis() {
-    itensDisponiveis = bancoItens.map(i => ({...i}));
-}
-function renderAddItemPersonagem(idx) {
-    let usados = {};
-    personagens.forEach((p, pidx) => {
-        (itensPorPersonagem[pidx]||[]).forEach(it => {
-            let key = it.nome + "|" + it.grupo + "|" + (it.descricao||"");
-            usados[key] = (usados[key]||0)+1;
-        });
-    });
-    let options = [];
-    itensDisponiveis.forEach(i => {
-        let key = i.nome + "|" + i.grupo + "|" + (i.descricao||"");
-        let disponivel = (i.quantidade||1) - (usados[key]||0);
-        if (disponivel > 0) {
-            options.push(`<option value="${key}">${i.nome} (${i.grupo}) - ${i.descricao} (x${disponivel})</option>`);
-        }
-    });
-    if (!options.length) {
-        return `<div class="no-items-available">Nenhum item disponível</div>`;
-    }
-    return `<form class="add-item-person-btn" onsubmit="return addItemPersonagem(${idx})">
-        <select id="add-item-person-${idx}">
-            ${options.join('')}
-        </select>
-        <button type="submit">Adicionar Item</button>
-    </form>`;
-}
-window.addItemPersonagem = function(idx) {
-    let sel = document.getElementById(`add-item-person-${idx}`);
-    let val = sel.value;
-    if (!val) return false;
-    let [nome, grupo, ...descArr] = val.split("|");
-    let descricao = descArr.join("|");
-    let item = itensDisponiveis.find(i =>
-        i.nome === nome && i.grupo === grupo && (i.descricao||"") === descricao
-    );
-    if (!item) return false;
-    if (!itensPorPersonagem[idx]) itensPorPersonagem[idx] = [];
-    let usados = 0;
-    personagens.forEach((p, pidx) => {
-        (itensPorPersonagem[pidx]||[]).forEach(it => {
-            if (it.nome === nome && it.grupo === grupo && (it.descricao||"") === descricao) usados++;
-        });
-    });
-    if (usados >= (item.quantidade||1)) return false;
-    itensPorPersonagem[idx].push({...item});
-    renderPersonagens();
-    return false;
-};
-function renderItensPersonagem(idx) {
-    let arr = itensPorPersonagem[idx] || [];
-    usedItems[idx] = usedItems[idx] || [];
-    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhum item</div>`;
-    return `<ul class="item-list">${
-        arr.map((it,i) => {
-            let isUsed = !!usedItems[idx][i];
-            return `<li class="${isUsed ? "used" : "not-used"}">
-                <input type="checkbox" class="item-used-checkbox" ${isUsed ? "checked" : ""} onchange="toggleUsedItem(${idx},${i})">
-                ${it.nome} (${it.grupo})
-                <button class="remove-btn" onclick="removerItemPersonagem(${idx},${i})" title="Remover">✖</button>
-            </li>`;
-        }).join("")
-    }</ul>`;
-}
-window.toggleUsedItem = function(idx, i) {
-    usedItems[idx] = usedItems[idx] || [];
-    usedItems[idx][i] = !usedItems[idx][i];
-    renderPersonagens();
-};
-window.removerItemPersonagem = function(idx, i) {
-    (itensPorPersonagem[idx]||[]).splice(i,1);
-    renderPersonagens();
-};
-
-/* ------------------- BANCO DE MAGIAS E ITENS ------------------- */
-function renderMagiaDropdown() {
-    const sel = document.getElementById('magia-dropdown');
-    if (!sel) return;
-    let html = '';
-    Object.keys(magiasPorEscola).sort().forEach(escola => {
-        html += `<optgroup label="${escola}">`;
-        magiasPorEscola[escola].forEach(m =>
-            html += `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo}) - ${m.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
-function adicionarBancoMagiaHandler(e) {
-    e.preventDefault();
-    const sel = document.getElementById('magia-dropdown');
-    let val = sel.value;
-    if (!val) return;
-    let [escola, nome] = val.split('|');
-    let magia = (magiasPorEscola[escola]||[]).find(m => m.nome === nome);
-    if (!magia) return;
-    let descricaoExtra = document.getElementById('magia-comp').value;
-    bancoMagias.push({
-        ...magia,
-        descricao: magia.descricao + (descricaoExtra ? " | " + descricaoExtra : "")
-    });
-    document.getElementById('magia-comp').value = '';
-    renderBancoMagias();
-}
-function renderBancoMagias() {
-    const ul = document.getElementById('banco-magias-lista');
-    if (!ul) return;
-    ul.innerHTML = bancoMagias.map((m, i) =>
-        `<li>${m.nome} (${m.escola}) - ${m.descricao} <button class="remove-btn" onclick="removerBancoMagia(${i})" title="Remover">✖</button></li>`
-    ).join('');
-}
-window.removerBancoMagia = function(i) {
-    bancoMagias.splice(i, 1);
-    renderBancoMagias();
-};
-function renderItemDropdown() {
-    const sel = document.getElementById('item-dropdown');
-    if (!sel) return;
-    let html = '';
-    Object.keys(itensPadrao).sort().forEach(grupo => {
-        html += `<optgroup label="${grupo}">`;
-        itensPadrao[grupo].forEach(i =>
-            html += `<option value="${grupo}|${i.nome}">${i.nome} - ${i.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
-function adicionarBancoItemHandler(e) {
-    e.preventDefault();
-    const sel = document.getElementById('item-dropdown');
-    let val = sel.value;
-    if (!val) return;
-    let [grupo, nome] = val.split('|');
-    let item = (itensPadrao[grupo]||[]).find(i => i.nome === nome);
-    if (!item) return;
-    let desc = document.getElementById('item-efeito').value;
-    let idx = bancoItens.findIndex(i => i.nome === nome && i.grupo === grupo && i.descricao === (item.descricao + (desc ? " | " + desc : "")));
-    if (idx !== -1) {
-        bancoItens[idx].quantidade = (bancoItens[idx].quantidade || 1) + 1;
-    } else {
-        bancoItens.push({
-            ...item,
-            descricao: item.descricao + (desc ? " | " + desc : ""),
-            quantidade: 1
-        });
-    }
-    document.getElementById('item-efeito').value = '';
-    renderBancoItens();
-}
-function renderBancoItens() {
-    const ul = document.getElementById('banco-itens-lista');
-    if (!ul) return;
-    ul.innerHTML = bancoItens.map((i, idx) =>
-        `<li>
-            <b>${i.nome}</b> (${i.grupo}) - ${i.descricao}
-            <span style="color:#229954;font-weight:bold;">x${i.quantidade||1}</span>
-            <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
-        </li>`
-    ).join('');
-    atualizarItensDisponiveis();
-}
-window.removerBancoItem = function(idx) {
-    if (bancoItens[idx].quantidade > 1) {
-        bancoItens[idx].quantidade--;
-    } else {
-        bancoItens.splice(idx, 1);
-    }
-    renderBancoItens();
-};
-
-/* ------------------- BESTIÁRIO (agrupado por categoria) ------------------- */
+/* --- Renderização do Bestiário --- */
 function renderBestiario() {
-    const bestDiv = document.getElementById('bestiary-list');
-    if (!bestDiv) return;
-    bestDiv.innerHTML = "";
-    if (!bestiario.length) {
-        bestDiv.innerHTML = "<div style='color:#888'>Nenhuma criatura cadastrada.</div>";
-        return;
-    }
-    let cats = {};
-    bestiario.forEach(b => {
-        cats[b.tipo] = cats[b.tipo] || [];
-        cats[b.tipo].push(b);
-    });
-    bestDiv.innerHTML = `<div class="beastiary-cats">${
-        Object.keys(cats).sort().map(cat =>
-            `<div class="beast-cat">
-                <h3>${cat}</h3>
-                ${cats[cat].map(b => `
-                    <div class="beast-card">
-                        <div class="beast-header">
-                            <span style="font-weight:bold">${b.nome}</span>
-                        </div>
-                        <div class="beast-desc">${b.desc}</div>
-                        ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
-                        <div class="beast-stats">
-                            <span><b>Mov:</b> ${b.stats.move}</span>
-                            <span><b>Fight:</b> ${b.stats.fight}</span>
-                            <span><b>Shoot:</b> ${b.stats.shoot}</span>
-                            <span><b>Armor:</b> ${b.stats.armor}</span>
-                            <span><b>Will:</b> ${b.stats.will}</span>
-                            <span><b>HP:</b> ${b.stats.hp}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>`
-        ).join('')}
-        </div>`;
+  const bestDiv = document.getElementById('bestiary-list');
+  if (!bestDiv) return;
+  bestDiv.innerHTML = "";
+  if (!bestiario.length) {
+    bestDiv.innerHTML = "<div style='color:#888'>Nenhuma criatura cadastrada.</div>";
+    return;
+  }
+  let cats = {};
+  bestiario.forEach(b => {
+    cats[b.tipo] = cats[b.tipo] || [];
+    cats[b.tipo].push(b);
+  });
+  bestDiv.innerHTML = `<div class="beastiary-cats">${
+    Object.keys(cats).sort().map(cat =>
+      `<div class="beast-cat">
+        <h3>${cat}</h3>
+        ${cats[cat].map(b => `
+          <div class="beast-card">
+            <div class="beast-header">
+              <span style="font-weight:bold">${b.nome}</span>
+            </div>
+            <div class="beast-desc">${b.desc}</div>
+            ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
+            <div class="beast-stats">
+              <span><b>Mov:</b> ${b.stats.move}</span>
+              <span><b>Fight:</b> ${b.stats.fight}</span>
+              <span><b>Shoot:</b> ${b.stats.shoot}</span>
+              <span><b>Armor:</b> ${b.stats.armor}</span>
+              <span><b>Will:</b> ${b.stats.will}</span>
+              <span><b>HP:</b> ${b.stats.hp}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>`
+    ).join('')}
+    </div>`;
 }
 
-/* ------------------- OUTROS HANDLERS E RENDER ------------------- */
-window.editarNomePersonagem = function(idx) {
-    editandoNome = idx;
-    renderPersonagens();
-};
-window.cancelarEditarNome = function() {
-    editandoNome = null;
-    renderPersonagens();
-};
-window.salvarNomePersonagem = function(idx) {
-    let el = document.getElementById(`edit-name-input-${idx}`);
-    let novoNome = el.value.trim();
-    personagens[idx].nome = novoNome;
-    editandoNome = null;
-    renderPersonagens();
-    return false;
-};
-window.moverSoldado = function(idx, delta) {
-    let soldadosIdx = personagens.map((p,i)=>({p,i})).filter(obj=>obj.p.tipo==="Soldado").map(obj=>obj.i);
-    let pos = soldadosIdx.indexOf(idx);
-    if (pos === -1) return;
-    let dest = pos + delta;
-    if (dest < 0 || dest >= soldadosIdx.length) return;
-    let idx2 = soldadosIdx[dest];
-    [personagens[idx], personagens[idx2]] = [personagens[idx2], personagens[idx]];
-    [magiasPorPersonagem[idx], magiasPorPersonagem[idx2]] = [magiasPorPersonagem[idx2], magiasPorPersonagem[idx]];
-    [itensPorPersonagem[idx], itensPorPersonagem[idx2]] = [itensPorPersonagem[idx2], itensPorPersonagem[idx]];
-    renderPersonagens();
-};
-window.removerPersonagem = function(idx) {
-    personagens.splice(idx, 1);
-    let magiasTemp = {}, itensTemp = {};
-    Object.keys(magiasPorPersonagem).forEach(oldIdx=>{
-        if (oldIdx < idx) magiasTemp[oldIdx] = magiasPorPersonagem[oldIdx];
-        else if(oldIdx > idx) magiasTemp[oldIdx-1] = magiasPorPersonagem[oldIdx];
-    });
-    Object.keys(itensPorPersonagem).forEach(oldIdx=>{
-        if (oldIdx < idx) itensTemp[oldIdx] = itensPorPersonagem[oldIdx];
-        else if(oldIdx > idx) itensTemp[oldIdx-1] = itensPorPersonagem[oldIdx];
-    });
-    magiasPorPersonagem = magiasTemp;
-    itensPorPersonagem = itensTemp;
-    renderPersonagens();
-};
-window.alteraHP = function(idx, delta) {
-    personagens[idx].hpAtual = (personagens[idx].hpAtual||getStats(personagens[idx],idx).hp) + delta;
-    renderPersonagens();
-};
-window.setHP = function(e, idx) {
-    personagens[idx].hpAtual = parseInt(e.target.value) || 0;
-    renderPersonagens();
-};
-
-function renderPersonagens() {
-    renderGoldXP();
-    renderMagoAprendizSection();
-    renderSoldadosSection();
-}
-
-/* ------------------- INICIALIZAÇÃO ------------------- */
 window.onload = function() {
-    carregarConteudoFrostgrave();
-    renderPersonagens();
-    renderBancoMagias();
-    renderBancoItens();
-    renderBestiario();
-    document.getElementById('add-soldado-form').addEventListener('submit', adicionarSoldadoHandler);
-    document.getElementById('add-magia-form').addEventListener('submit', adicionarBancoMagiaHandler);
-    document.getElementById('add-item-form').addEventListener('submit', adicionarBancoItemHandler);
+  renderBestiario();
 };
 </script>
 </body>
