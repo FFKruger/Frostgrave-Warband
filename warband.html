@@ -411,13 +411,24 @@ function renderBancoMagias() {
   const ul = document.getElementById('banco-magias-lista');
   if (!ul) return;
   ul.innerHTML = '';
+  // Ordena magias por escola (tipo), depois nome
+  let agrupadas = {};
   (bancoMagias || []).forEach(m => {
-    let desc = m.escola ? `Escola: ${m.escola}` : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${m.nome}</b>
-      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
-      ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
-    </li>`;
+    let tipo = m.escola || "Outras";
+    if (!agrupadas[tipo]) agrupadas[tipo] = [];
+    agrupadas[tipo].push(m);
+  });
+  let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
+  tiposOrd.forEach(tipo => {
+    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
+    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(m => {
+      let desc = m.escola ? `Escola: ${m.escola}` : '';
+      ul.innerHTML += `<li>
+        <b title="${desc}">${m.nome}</b>
+        <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
+        ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
+      </li>`;
+    });
   });
 }
 function renderMagiaDropdown() {
@@ -432,13 +443,24 @@ function renderBancoItens() {
   const ul = document.getElementById('banco-itens-lista');
   if (!ul) return;
   ul.innerHTML = '';
+  // Ordena por grupo (tipo), depois nome
+  let agrupadas = {};
   (bancoItens || []).forEach(item => {
-    let desc = item.descricao ? item.descricao : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${item.nome}</b>
-      <span style="color:#888">[${item.grupo}]</span>
-      <span style="color:#229954; margin-left:1em;">${desc}</span>
-    </li>`;
+    let tipo = item.grupo || "Outros";
+    if (!agrupadas[tipo]) agrupadas[tipo] = [];
+    agrupadas[tipo].push(item);
+  });
+  let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
+  tiposOrd.forEach(tipo => {
+    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
+    agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(item => {
+      let desc = item.descricao ? item.descricao : '';
+      ul.innerHTML += `<li>
+        <b title="${desc}">${item.nome}</b>
+        <span style="color:#888">[${item.grupo}]</span>
+        <span style="color:#229954; margin-left:1em;">${desc}</span>
+      </li>`;
+    });
   });
 }
 function renderItemDropdown() {
