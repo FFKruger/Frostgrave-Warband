@@ -29,27 +29,27 @@
     .character-group { display: flex; flex-direction: column; gap: 1em; margin-bottom: 2em; }
     .person-card {
       background: #fafdff;
-      border-radius: 10px;
-      box-shadow: 0 1px 8px #bbb3;
-      padding: 1.3em 1.1em 1em 1.1em;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px #bbb4;
+      padding: 2em 1.5em 1.5em 1.5em;
       width: 100%;
-      min-width: 270px;
-      max-width: 600px;
+      min-width: 320px;
+      max-width: 700px;
       position: relative;
       border: 2px solid #eaf2f8;
       transition: box-shadow .2s;
-      margin-bottom: 1em;
+      margin-bottom: 1.5em;
     }
     .person-card:hover {
       box-shadow: 0 5px 24px #bbb7;
       border: 2px solid #3498db22;
     }
-    .person-header { font-size: 1.16em; margin-bottom: .7em; display: flex; align-items: center; gap: 0.5em;}
+    .person-header { font-size: 1.22em; margin-bottom: 1em; display: flex; align-items: center; gap: 0.7em; }
     .tipo-mago { color: #1a5276; font-weight: bold; }
     .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
     .tipo-soldado { color: #16a085; font-weight: bold; }
     .soldado-elite { color: #c0392b; }
-    .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
+    .stats-line { font-size: 1.13em; display: flex; align-items: center; gap: 1.5em; margin-bottom: .8em; padding: 0.8em 0; background: #f2f7fa; border-radius: 8px; }
     .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
     .stat-value, .stat-input { width: 2.2em; text-align: center; }
     .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
@@ -57,15 +57,9 @@
     .stat-hover:hover .stat-edit-arrows { opacity: 1; }
     .stat-arrow-btn { background:transparent; border:none; color:#2980b9; cursor:pointer; padding:0; line-height:0.8em; font-size:1.05em; }
     .stat-arrow-btn:active { color:#21618c; }
-    .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
-    .remove-btn:active { background: #922b21; }
-    .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
-    .move-btn:active { background: #333; }
-    .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
-    .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-    .edit-name-btn:active { background: #14507c; }
-    .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
-    .edit-name-cancel:active { background: #b04a02; }
+    .remove-btn, .move-btn { font-size: 1.08em; padding: 0.22em 0.8em; }
+    .edit-name-input { font-size: 1.08em; border-radius: 6px; border: 1px solid #bbb; padding: 0.15em 0.4em; width: 12em; }
+    .edit-name-btn, .edit-name-cancel { font-size: 1.01em; padding: 0.19em 0.8em; }
     .edit-name-form { display: inline; }
     .add-mago-btn, .add-aprendiz-btn {
       background: #229954;
@@ -80,22 +74,22 @@
     }
     .add-mago-btn:active, .add-aprendiz-btn:active { background: #157347; }
     .hp-control { display: flex; align-items: center; gap: 0.2em; margin-left: 0.5em;}
-    .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+    .hp-btn { font-size: 1.18em; width: 2.2em; height: 2.2em; }
     .hp-btn:active { background: #2471a3; }
-    .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+    .hp-value { width: 2.7em; text-align: center; font-size: 1.13em; border: 1px solid #bbb; border-radius: 6px; margin: 0 0.2em; }
     .person-status { margin-left: 0.7em; }
-    .person-itens { margin-top: 0.7em; background: #eaf6fb; border-radius: 7px; padding: 0.5em 0.9em 0.7em 0.9em; }
-    .person-itens-list { margin: 0.4em 0 0 1.2em; font-size: 0.97em; }
+    .person-itens { margin-top: 1em; background: #eaf6fb; border-radius: 8px; padding: 0.7em 1.2em 1em 1.2em; }
+    .person-itens-list { margin: 0.5em 0 0 1.3em; font-size: 1.07em; }
     .remove-item-btn { background: #c0392b; color: #fff; border:none; border-radius:4px; margin-left:5px; cursor:pointer; font-size:0.9em;}
     .add-item-person-form { margin-top: 0.6em; }
-    .add-item-person-form select, .add-item-person-form input { font-size:1em; }
-    .add-item-person-form button { margin-left:0.5em; font-size:1em;}
+    .add-item-person-form select, .add-item-person-form input { font-size:1.08em; }
+    .add-item-person-form button { font-size:1.08em; }
     .status-wounded { color: #f39c12; font-weight: bold;}
     .status-missing { color: #2980b9; font-weight: bold;}
     .status-dead { color: #c0392b; font-weight: bold;}
     .status-normal { color: #229954; font-weight: bold;}
     .status-none { color: #999; }
-    .status-selector { font-size: 0.96em; margin-left:0.2em; }
+    .status-selector { font-size: 1.01em; margin-left:0.2em; }
     .bestiary-list {margin:0;}
     .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
     .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
@@ -146,7 +140,7 @@
     }
     @media (max-width: 950px) {
       .character-group { flex-direction: column; gap: 1em;}
-      .person-card { width: 100%; min-width: 0; }
+      .person-card { max-width: 98vw; min-width: 0; }
       .beastiary-cats { flex-direction: column; }
       .beast-cat { max-width: 100%; }
     }
@@ -154,6 +148,73 @@
       main { padding: 0.5em 0.3em; }
       .bestiary-list { flex-direction: column; gap: 1em;}
       .beast-card { min-width: 0; max-width: 100%; }
+    }
+    .tab-panel-box {
+      background: #f2f7fa;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px #bbb3;
+      padding: 2em 2em 1.5em 2em;
+      margin: 1.5em auto 2em auto;
+      max-width: 700px;
+      min-width: 280px;
+    }
+    .tab-panel-title {
+      color: #21618c;
+      font-size: 2em;
+      margin-bottom: 1.2em;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .magia-form, .item-form {
+      display: flex;
+      gap: 1em;
+      flex-wrap: wrap;
+      margin-bottom: 1.5em;
+      align-items: center;
+      justify-content: center;
+    }
+    .magia-form select, .item-form select, .magia-form input, .item-form input {
+      font-size: 1.08em;
+      padding: 0.4em 0.7em;
+      border-radius: 7px;
+      border: 1px solid #bbb;
+      min-width: 160px;
+      background: #fff;
+    }
+    .magia-form button, .item-form button {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1.08em;
+      padding: 0.5em 1.2em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .magia-form button:active, .item-form button:active {
+      background: #2471a3;
+    }
+    .magias-list, .itens-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .magias-list > li, .itens-list > li {
+      margin-bottom: 0.7em;
+      padding: 0.7em 1em;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 6px #bbb2;
+      font-size: 1.08em;
+    }
+    .magias-list > li[style*='font-weight:bold'], .itens-list > li[style*='font-weight:bold'] {
+      background: #eaf2f8;
+      box-shadow: none;
+      margin-top: 1.2em;
+      margin-bottom: 0.3em;
+      font-size: 1.13em;
+      border-left: 4px solid #3498db;
+      padding-left: 0.7em;
     }
   </style>
 </head>
@@ -184,8 +245,7 @@
       </div>
     </div>
     <div class="section-title">Mago & Aprendiz</div>
-    <button class="add-mago-btn" onclick="adicionarMago()">Adicionar Mago</button>
-    <button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>
+    <div id="add-mago-aprendiz-btns"></div>
     <div class="character-group" id="mago-aprendiz-lista"></div>
     <div class="section-title">Soldados</div>
     <div class="character-group" id="soldado-lista"></div>
@@ -207,22 +267,26 @@
     </section>
   </section>
   <section id="magias" class="tab-content">
-    <h2>Banco de Magias</h2>
-    <form class="magia-form" id="add-magia-form" autocomplete="off">
-      <select id="magia-dropdown"></select>
-      <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
-      <button id="add-magia-btn" type="submit">Adicionar Magia</button>
-    </form>
-    <ul id="banco-magias-lista" class="magias-list"></ul>
+    <div class="tab-panel-box">
+      <h2 class="tab-panel-title">Banco de Magias</h2>
+      <form class="magia-form" id="add-magia-form" autocomplete="off">
+        <select id="magia-dropdown"></select>
+        <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
+        <button id="add-magia-btn" type="submit">Adicionar Magia</button>
+      </form>
+      <ul id="banco-magias-lista" class="magias-list"></ul>
+    </div>
   </section>
   <section id="itens" class="tab-content">
-    <h2>Banco de Itens</h2>
-    <form class="item-form" id="add-item-form" autocomplete="off">
-      <select id="item-dropdown"></select>
-      <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
-      <button id="add-item-btn" type="submit">Adicionar Item</button>
-    </form>
-    <ul id="banco-itens-lista" class="itens-list"></ul>
+    <div class="tab-panel-box">
+      <h2 class="tab-panel-title">Banco de Itens</h2>
+      <form class="item-form" id="add-item-form" autocomplete="off">
+        <select id="item-dropdown"></select>
+        <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
+        <button id="add-item-btn" type="submit">Adicionar Item</button>
+      </form>
+      <ul id="banco-itens-lista" class="itens-list"></ul>
+    </div>
   </section>
   <section id="notas" class="tab-content">
     <h2>Anotações da Warband</h2>
@@ -522,6 +586,7 @@ function renderPersonagens() {
     if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
     else soldDiv.innerHTML += el;
   });
+  renderAddMagoAprendizBtns();
 }
 
 function editPersonagemNome(idx) {
@@ -587,9 +652,20 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   let curHp = getCurrentHP(p);
   let statusVal = p.status || "normal";
   let statusObj = statusOptions.find(s => s.value === statusVal) || statusOptions[0];
-  let itemOpts = (bancoItens || []).map(item =>
-    `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
+
+  // ITENS: apenas os do bancoItens, agrupados por grupo
+  let agrupadosItens = {};
+  (bancoItens || []).forEach(item => {
+    let grupo = item.grupo || 'Outros';
+    if (!agrupadosItens[grupo]) agrupadosItens[grupo] = [];
+    agrupadosItens[grupo].push(item);
+  });
+  let itemOpts = Object.keys(agrupadosItens).sort().map(grupo =>
+    `<optgroup label="${grupo}">
+      ${agrupadosItens[grupo].map(item => `<option value='${item.nome}' title='${item.descricao || ''}'>${item.nome}</option>`).join('')}
+    </optgroup>`
   ).join('');
+
   let personItensList = (p.personItens || []).map((item, i) =>
     `<li>
       <b title="${item.descricao || ''}">${item.nome}</b>
@@ -610,24 +686,28 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   // Magias do personagem (apenas para mago/aprendiz)
   let magiasPersonagem = p.personMagias || [];
   let magiasList = magiasPersonagem.map((magia, i) => {
-    let magiaObj = (conteudo_frostgrave_json.magias || []).find(m => m.nome === magia);
+    let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
     let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
     let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
-    return `<li title="${tooltip}"><b>${magia}</b> <span style='color:#888'>${desc}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
+    return `<li><b title='${tooltip.replace(/'/g, '&apos;')}'>${magia}</b> <span style='color:#888'>${desc}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
   }).join('');
   let magiasDropdown = '';
   if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
-    let magias = (conteudo_frostgrave_json.magias || []).slice();
-    magias.sort((a, b) => {
-      let ea = a.escola || '', eb = b.escola || '';
-      if (ea !== eb) return ea.localeCompare(eb);
-      return a.nome.localeCompare(b.nome);
+    // Apenas magias do bancoMagias, agrupadas por escola
+    let agrupadas = {};
+    (bancoMagias || []).forEach(m => {
+      let escola = m.escola || 'Outras';
+      if (!agrupadas[escola]) agrupadas[escola] = [];
+      agrupadas[escola].push(m);
     });
+    let escolasOrd = Object.keys(agrupadas).sort();
     magiasDropdown = `
       <form class='add-item-person-form' onsubmit='event.preventDefault();addPersonMagia(${idx})' style='margin-top:0.6em;'>
         <select id='add-person-magia-select-${idx}'>
           <option value=''>Adicionar magia...</option>
-          ${magias.map(m => `<option value='${m.nome}' title='${m.descricao || ''}'>${m.nome} (${m.escola})</option>`).join('')}
+          ${escolasOrd.map(escola =>
+            `<optgroup label='${escola}'>${agrupadas[escola].map(m => `<option value='${m.nome}' title='${m.descricao || ''}'>${m.nome}</option>`).join('')}</optgroup>`
+          ).join('')}
         </select>
         <button type='submit'>Adicionar</button>
       </form>`;
@@ -638,6 +718,8 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   }
 
   let canEdit = (p.tipo !== "Aprendiz");
+  // Status final
+  let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <span class='${statusObj.css}'>${statusObj.label}</span></div>`;
   return `<div class="person-card">
     <div class="person-header">
       <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
@@ -683,6 +765,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
         <button type="submit">Adicionar</button>
       </form>
     </div>
+    ${statusFooter}
   </div>`;
 }
 function removerPersonagem(idx) {
@@ -694,16 +777,21 @@ function renderAddSoldadoForm() {
   const form = document.getElementById('add-soldado-form');
   const sel = document.getElementById('soldado-tipo');
   const custoSpan = document.getElementById('soldado-custo-span');
-  if (!form || !sel || !custoSpan) return;
+  const alertDiv = document.getElementById('soldado-limit-alert');
+  if (!form || !sel || !custoSpan || !alertDiv) return;
 
-  // Tenta pegar soldados de personagens se soldados não existir
+  // Critério de especial: custo > 50 OU tipo em lista
+  const especiaisLista = ["Knight","Templar","Barbarian","Treasure Hunter","Tracker","Ranger","Man-at-Arms","Apothecary"];
   let soldados = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
     ? conteudo_frostgrave_json.soldados.slice()
     : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
   soldados = soldados.sort((a, b) => a.tipo.localeCompare(b.tipo));
-  sel.innerHTML = soldados.map(
-    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
-  ).join('');
+  let normais = soldados.filter(s => (s.custo <= 50 && !especiaisLista.includes(s.tipo)));
+  let especiais = soldados.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
+
+  sel.innerHTML =
+    (normais.length ? `<optgroup label="Normais">${normais.map(s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`).join('')}</optgroup>` : '') +
+    (especiais.length ? `<optgroup label="Especiais">${especiais.map(s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`).join('')}</optgroup>` : '');
 
   sel.onchange = function() {
     const opt = sel.options[sel.selectedIndex];
@@ -713,26 +801,38 @@ function renderAddSoldadoForm() {
 
   form.onsubmit = function(e) {
     e.preventDefault();
+    alertDiv.textContent = '';
     const tipo = sel.value;
     const nome = document.getElementById('soldado-nome').value.trim();
     let soldadosOrig = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
       ? conteudo_frostgrave_json.soldados.slice()
       : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
     const soldado = soldadosOrig.find(s => s.tipo === tipo);
-    if (soldado) {
-      const novo = {
-        tipo: soldado.tipo,
-        nome: nome || soldado.tipo,
-        stats: {...soldado.stats},
-        currentHp: Number(soldado.stats.hp),
-        status: "normal",
-        personItens: []
-      };
-      warband.push(novo);
-      renderPersonagens();
-      form.reset();
-      sel.onchange();
+    if (!soldado) return;
+    // Limites
+    const soldadosAtuais = warband.filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+    if (soldadosAtuais.length >= 8) {
+      alertDiv.textContent = 'Limite de 8 soldados atingido!';
+      return;
     }
+    const especiaisAtuais = soldadosAtuais.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
+    const isEspecial = (soldado.custo > 50 || especiaisLista.includes(s.tipo));
+    if (isEspecial && especiaisAtuais.length >= 4) {
+      alertDiv.textContent = 'Limite de 4 soldados elite atingido!';
+      return;
+    }
+    const novo = {
+      tipo: soldado.tipo,
+      nome: nome || soldado.tipo,
+      stats: {...soldado.stats},
+      currentHp: Number(soldado.stats.hp),
+      status: "normal",
+      personItens: []
+    };
+    warband.push(novo);
+    renderPersonagens();
+    form.reset();
+    sel.onchange();
   };
 }
 
@@ -797,6 +897,19 @@ function removePersonMagia(idx, magiaIdx) {
   if (!warband[idx].personMagias) return;
   warband[idx].personMagias.splice(magiaIdx, 1);
   renderPersonagens();
+}
+
+function renderAddMagoAprendizBtns() {
+  const div = document.getElementById('add-mago-aprendiz-btns');
+  if (!div) return;
+  let html = '';
+  if (!warband.some(p => p.tipo === 'Mago')) {
+    html += '<button class="add-mago-btn" onclick="adicionarMago()">Adicionar Mago</button>';
+  }
+  if (!warband.some(p => p.tipo === 'Aprendiz')) {
+    html += '<button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>';
+  }
+  div.innerHTML = html;
 }
 </script>
 </body>
