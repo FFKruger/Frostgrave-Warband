@@ -5,10 +5,15 @@
     <title>Frostgrave Warband Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* ... (mantém o CSS anterior) ... */
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
         main { max-width: 1100px; margin: 2em auto 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
         h1 { text-align: center; margin-bottom: 0.7em; }
+        .top-controls { display: flex; gap: 2em; align-items: center; justify-content: center; margin-bottom: 1.7em;}
+        .top-controls label { font-weight: bold; color: #2e4053;}
+        .gold-xp-box { display: flex; gap: 1.6em; align-items: center;}
+        .gold-xp-input { width: 6em; font-size:1.1em; padding: 0.19em 0.5em; border-radius: 6px; border: 1px solid #bbb; text-align: right;}
+        .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
+        .gold-btn:active, .xp-btn:active { background: #2471a3; }
         h2 { color: #2e4053; }
         nav { text-align: center; margin-bottom: 1.5em; }
         nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer;}
@@ -40,6 +45,14 @@
         .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
         .remove-btn { margin-left: 4px; background: #c0392b; color: #fff; border: none; border-radius: 5px; font-size: 0.97em; padding: 0.18em 0.7em; cursor: pointer; }
         .remove-btn:active { background: #922b21; }
+        .move-btn { margin-left: 4px; background: #888; color: #fff; border: none; border-radius: 5px; font-size: 1em; padding: 0.18em 0.7em; cursor: pointer; }
+        .move-btn:active { background: #333; }
+        .edit-name-input { font-size: 1em; border-radius: 5px; border: 1px solid #bbb; padding: 0.1em 0.3em; width: 10em; }
+        .edit-name-btn { background: #2980b9; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+        .edit-name-btn:active { background: #14507c; }
+        .edit-name-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.17em 0.7em; cursor: pointer; margin-left: 4px;}
+        .edit-name-cancel:active { background: #b04a02; }
+        .edit-name-form { display: inline; }
         .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
         .add-form select { min-width: 160px; }
         .add-mago-aprendiz-btns { margin-bottom: 2em; }
@@ -55,6 +68,20 @@
         .person-magias { margin-top: 0.5em; padding-left: 1.1em; color: #1a5276; font-size: 0.98em; }
         .magia-form, .item-form { margin-bottom: 1.2em; }
         .magia-form select, .item-form select { min-width: 200px; margin-right: 1em;}
+        .person-card .magic-section, .person-card .item-section {
+            margin-top: 0.7em;
+            background: #eaf6fb;
+            border-radius: 7px;
+            padding: 0.6em 0.9em 0.7em 0.9em;
+        }
+        .magic-list, .item-list {
+            margin: 0.4em 0 0 1.2em; font-size: 0.97em;
+        }
+        .magic-list li, .item-list li { margin-bottom: 0.2em }
+        .add-magic-person-btn, .add-item-person-btn {
+            margin-top: 0.3em;
+            margin-bottom: 0.2em;
+        }
         /* Bestiário */
         .beast-card, .active-beast-card { margin-bottom: 1.2em;}
         .beast-header { font-size: 1.13em; font-weight: bold; margin-bottom: .5em; }
@@ -102,6 +129,20 @@
         <button data-tab="bestiario" type="button">Bestiário</button>
     </nav>
     <section id="dashboard" class="tab-content active">
+        <div class="top-controls">
+            <div class="gold-xp-box">
+                <label>Gold: 
+                    <button class="gold-btn" onclick="alteraGold(-10)">-</button>
+                    <input id="gold-input" class="gold-xp-input" type="number" min="0" value="500" onchange="setGold(this.value)"> 
+                    <button class="gold-btn" onclick="alteraGold(10)">+</button>
+                </label>
+                <label>XP: 
+                    <button class="xp-btn" onclick="alteraXP(-10)">-</button>
+                    <input id="xp-input" class="gold-xp-input" type="number" min="0" value="0" onchange="setXP(this.value)"> 
+                    <button class="xp-btn" onclick="alteraXP(10)">+</button>
+                </label>
+            </div>
+        </div>
         <h2>Mago & Aprendiz</h2>
         <div class="vertical-list" id="mago-aprendiz-lista"></div>
         <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
@@ -119,6 +160,7 @@
                     Nome:
                     <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
                 </label>
+                <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
                 <button type="submit">Adicionar Soldado</button>
             </form>
         </section>
@@ -156,6 +198,7 @@ let personagens = [];
 let bancoMagias = [];
 let bancoItens = [];
 let magiasPorPersonagem = {};
+let itensPorPersonagem = {};
 let bestiarioAtivo = [];
 let ESCOLAS = [];
 let magiasPorEscola = {};
@@ -165,42 +208,62 @@ let SOLDADOS_NORMAIS = [];
 let SOLDADOS_ELITES = [];
 let bestiario = [];
 let CUSTO_UNIDADES = {};
+let gold = 500;
+let xp = 0;
+let editandoNome = null;
 
-function fetchConteudoFrostgrave() {
-    return fetch('conteudo_frostgrave.json')
-        .then(r => r.json())
-        .then(data => {
-            ESCOLAS = data.escolas;
-            magiasPorEscola = {};
-            data.magias.forEach(m => {
-                if (!magiasPorEscola[m.escola]) magiasPorEscola[m.escola] = [];
-                magiasPorEscola[m.escola].push(m);
-            });
-            itensPadrao = {};
-            data.itens.forEach(i => {
-                if (!itensPadrao[i.grupo]) itensPadrao[i.grupo] = [];
-                itensPadrao[i.grupo].push(i);
-            });
-            STATS = {};
-            SOLDADOS_NORMAIS = [];
-            SOLDADOS_ELITES = [];
-            CUSTO_UNIDADES = {};
-            data.personagens.forEach(p => {
-                STATS[p.tipo] = p.stats;
-                if (p.custo) CUSTO_UNIDADES[p.tipo] = p.custo;
-                if (["Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"].includes(p.tipo))
-                    SOLDADOS_NORMAIS.push(p.tipo);
-                else if (!["Mago", "Aprendiz"].includes(p.tipo))
-                    SOLDADOS_ELITES.push(p.tipo);
-            });
-            // Adiciona bestiário padrão (caso não venha do JSON)
-            bestiario = data.bestiario && data.bestiario.length ? data.bestiario : [
-                {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
-                {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
-                {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
-                {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
-            ];
-        });
+function renderGoldXP() {
+    document.getElementById("gold-input").value = gold;
+    document.getElementById("xp-input").value = xp;
+}
+function alteraGold(delta) {
+    gold = Math.max(0, gold + delta);
+    renderGoldXP();
+}
+function setGold(val) {
+    gold = Math.max(0, parseInt(val) || 0);
+    renderGoldXP();
+}
+function alteraXP(delta) {
+    xp = Math.max(0, xp + delta);
+    renderGoldXP();
+}
+function setXP(val) {
+    xp = Math.max(0, parseInt(val) || 0);
+    renderGoldXP();
+}
+
+async function fetchConteudoFrostgrave() {
+    let data = await fetch('conteudo_frostgrave.json').then(r => r.json());
+    ESCOLAS = data.escolas;
+    magiasPorEscola = {};
+    data.magias.forEach(m => {
+        if (!magiasPorEscola[m.escola]) magiasPorEscola[m.escola] = [];
+        magiasPorEscola[m.escola].push(m);
+    });
+    itensPadrao = {};
+    data.itens.forEach(i => {
+        if (!itensPadrao[i.grupo]) itensPadrao[i.grupo] = [];
+        itensPadrao[i.grupo].push(i);
+    });
+    STATS = {};
+    SOLDADOS_NORMAIS = [];
+    SOLDADOS_ELITES = [];
+    CUSTO_UNIDADES = {};
+    data.personagens.forEach(p => {
+        STATS[p.tipo] = p.stats;
+        if (p.custo) CUSTO_UNIDADES[p.tipo] = p.custo;
+        if (["Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"].includes(p.tipo))
+            SOLDADOS_NORMAIS.push(p.tipo);
+        else if (!["Mago", "Aprendiz"].includes(p.tipo))
+            SOLDADOS_ELITES.push(p.tipo);
+    });
+    bestiario = data.bestiario && data.bestiario.length ? data.bestiario : [
+        {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
+        {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
+        {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
+        {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
+    ];
 }
 
 function renderMagoAprendizSection() {
@@ -247,10 +310,12 @@ function renderSoldadosSection() {
     const soldadoDiv = document.getElementById('soldado-lista');
     soldadoDiv.innerHTML = '';
     personagens
-        .filter(p => p.tipo === "Soldado")
-        .forEach((pers, idx) => soldadoDiv.appendChild(personagemCard(pers, idx)));
+        .map((p, idx) => ({p, idx}))
+        .filter(obj => obj.p.tipo === "Soldado")
+        .forEach(({p, idx}, displayOrder) => soldadoDiv.appendChild(personagemCard(p, idx, displayOrder)));
     renderSoldadoDropdown();
     renderSoldadoAlert();
+    renderSoldadoCusto();
 }
 function renderSoldadoDropdown() {
     let soldadoSel = document.getElementById('soldado-tipo');
@@ -263,6 +328,16 @@ function renderSoldadoDropdown() {
         SOLDADOS_ELITES.map(k => `<option value="${k}"${elite>=4?' disabled':''}>${k}</option>`).join('') +
         `</optgroup>`;
 }
+function renderSoldadoCusto() {
+    let sel = document.getElementById('soldado-tipo');
+    let span = document.getElementById('soldado-custo-span');
+    if (!sel || !span) return;
+    let tipo = sel.value;
+    span.textContent = tipo && CUSTO_UNIDADES[tipo] ? `Custo: ${CUSTO_UNIDADES[tipo]} gold` : '';
+}
+document.addEventListener('change', function(e){
+    if(e.target && e.target.id==='soldado-tipo') renderSoldadoCusto();
+});
 function renderSoldadoAlert() {
     let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
     let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
@@ -280,18 +355,101 @@ function adicionarSoldadoHandler(e) {
     let nome = document.getElementById('soldado-nome').value;
     let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
     let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
+    let custo = CUSTO_UNIDADES[tipoSoldado] || 0;
     if (SOLDADOS_NORMAIS.includes(tipoSoldado) && norm >= 4)
         return alert("Máximo de 4 soldados normais!");
     if (SOLDADOS_ELITES.includes(tipoSoldado) && elite >= 4)
         return alert("Máximo de 4 soldados elite!");
     if (norm+elite >= 8)
         return alert("Máximo de 8 soldados!");
+    if (gold < custo) return alert("Gold insuficiente para contratar este soldado!");
     personagens.push({tipo: "Soldado", tipoSoldado, nome, hpAtual: STATS[tipoSoldado]?.hp||10});
+    gold -= custo;
     renderPersonagens();
     e.target.reset();
+    renderSoldadoCusto();
 }
 
-// --- Banco de Magias
+// --- Magias e Itens para personagens ---
+function renderMagiasPersonagem(idx) {
+    let arr = magiasPorPersonagem[idx] || [];
+    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhuma magia</div>`;
+    return `<ul class="magic-list">${
+        arr.map((m,i)=>`<li>${m.nome} (${m.escola}) <button class="remove-btn" onclick="removerMagiaPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
+    }</ul>`;
+}
+function renderItensPersonagem(idx) {
+    let arr = itensPorPersonagem[idx] || [];
+    if (!arr.length) return `<div style="color:#aaa;font-size:.98em;">Nenhum item</div>`;
+    return `<ul class="item-list">${
+        arr.map((it,i)=>`<li>${it.nome} (${it.grupo}) <button class="remove-btn" onclick="removerItemPersonagem(${idx},${i})" title="Remover">✖</button></li>`).join('')
+    }</ul>`;
+}
+window.removerMagiaPersonagem = function(idx, i) {
+    (magiasPorPersonagem[idx]||[]).splice(i,1);
+    renderPersonagens();
+};
+window.removerItemPersonagem = function(idx, i) {
+    (itensPorPersonagem[idx]||[]).splice(i,1);
+    renderPersonagens();
+};
+function renderAddMagiaPersonagem(idx) {
+    let html = `<form class="add-magic-person-btn" onsubmit="return addMagiaPersonagem(${idx})">
+        <select id="add-magia-person-${idx}">
+            ${Object.keys(magiasPorEscola).sort().map(escola =>
+                `<optgroup label="${escola}">`+
+                magiasPorEscola[escola].map(m =>
+                    `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo})</option>`
+                ).join('')
+                +'</optgroup>'
+            ).join('')}
+        </select>
+        <button type="submit">Adicionar Magia</button>
+    </form>`;
+    return html;
+}
+window.addMagiaPersonagem = function(idx) {
+    let sel = document.getElementById(`add-magia-person-${idx}`);
+    let val = sel.value;
+    if (!val) return false;
+    let [escola, nome] = val.split('|');
+    let magia = (magiasPorEscola[escola] || []).find(m => m.nome === nome);
+    if (!magia) return false;
+    if (!magiasPorPersonagem[idx]) magiasPorPersonagem[idx] = [];
+    if (magiasPorPersonagem[idx].length >= 8) { alert("Limite de magias atingido!"); return false; }
+    magiasPorPersonagem[idx].push(magia);
+    renderPersonagens();
+    return false;
+};
+function renderAddItemPersonagem(idx) {
+    let html = `<form class="add-item-person-btn" onsubmit="return addItemPersonagem(${idx})">
+        <select id="add-item-person-${idx}">
+            ${Object.keys(itensPadrao).sort().map(grupo =>
+                `<optgroup label="${grupo}">`+
+                itensPadrao[grupo].map(i =>
+                    `<option value="${grupo}|${i.nome}">${i.nome}</option>`
+                ).join('')
+                +'</optgroup>'
+            ).join('')}
+        </select>
+        <button type="submit">Adicionar Item</button>
+    </form>`;
+    return html;
+}
+window.addItemPersonagem = function(idx) {
+    let sel = document.getElementById(`add-item-person-${idx}`);
+    let val = sel.value;
+    if (!val) return false;
+    let [grupo, nome] = val.split('|');
+    let item = (itensPadrao[grupo] || []).find(i => i.nome === nome);
+    if (!item) return false;
+    if (!itensPorPersonagem[idx]) itensPorPersonagem[idx] = [];
+    itensPorPersonagem[idx].push(item);
+    renderPersonagens();
+    return false;
+};
+
+// --- Banco de Magias / Itens ---
 function renderMagiaDropdown() {
     const sel = document.getElementById('magia-dropdown');
     if (!sel) return;
@@ -332,7 +490,6 @@ window.removerBancoMagia = function(i) {
     bancoMagias.splice(i, 1);
     renderBancoMagias();
 };
-// --- Banco de Itens
 function renderItemDropdown() {
     const sel = document.getElementById('item-dropdown');
     if (!sel) return;
@@ -373,7 +530,7 @@ window.removerBancoItem = function(idx) {
     bancoItens.splice(idx, 1);
     renderBancoItens();
 };
-// --- Bestiário
+
 function renderBestiario() {
     const bestDiv = document.getElementById('bestiary-list');
     if (!bestDiv) return;
@@ -387,42 +544,51 @@ function renderBestiario() {
         </div>`
     );
 }
-// --- Personagem card (mantém sua lógica original) ---
-function personagemCard(pers, idx) {
-    let tipoStr = pers.tipo;
-    let stats = getStats(pers);
-    let name = pers.nome || pers.tipoSoldado || "";
-    if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
-    else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
-    else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
-    else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado||pers.tipo}</span>`;
-    let hpAtual = typeof pers.hpAtual === 'number' ? pers.hpAtual : stats.hp;
 
-    return Object.assign(document.createElement('div'), {
-        className: 'person-card',
-        innerHTML: `
-        <div class="person-header">
-            ${tipoStr} ${name ? ' - ' + name : ''}
-            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
-        </div>
-        <div class="stats-line">
-            <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
-            <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
-            <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
-            <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
-            <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
-            <span class="stat-label">HP:</span>
-            <span class="hp-box">
-                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
-                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
-                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
-            </span>
-        </div>
-        `
-    });
-}
+window.editarNomePersonagem = function(idx) {
+    editandoNome = idx;
+    renderPersonagens();
+};
+window.cancelarEditarNome = function() {
+    editandoNome = null;
+    renderPersonagens();
+};
+window.salvarNomePersonagem = function(idx) {
+    let el = document.getElementById(`edit-name-input-${idx}`);
+    let novoNome = el.value.trim();
+    personagens[idx].nome = novoNome;
+    editandoNome = null;
+    renderPersonagens();
+    return false;
+};
+window.moverSoldado = function(idx, delta) {
+    let soldadosIdx = personagens.map((p,i)=>({p,i})).filter(obj=>obj.p.tipo==="Soldado").map(obj=>obj.i);
+    let pos = soldadosIdx.indexOf(idx);
+    if (pos === -1) return;
+    let dest = pos + delta;
+    if (dest < 0 || dest >= soldadosIdx.length) return;
+    let idx2 = soldadosIdx[dest];
+    [personagens[idx], personagens[idx2]] = [personagens[idx2], personagens[idx]];
+    // também mover magias/itens associados
+    [magiasPorPersonagem[idx], magiasPorPersonagem[idx2]] = [magiasPorPersonagem[idx2], magiasPorPersonagem[idx]];
+    [itensPorPersonagem[idx], itensPorPersonagem[idx2]] = [itensPorPersonagem[idx2], itensPorPersonagem[idx]];
+    renderPersonagens();
+};
 window.removerPersonagem = function(idx) {
     personagens.splice(idx, 1);
+    // Remover magias/itens associados também (mantém índices corretos)
+    let magiasTemp = {};
+    let itensTemp = {};
+    Object.keys(magiasPorPersonagem).forEach(oldIdx=>{
+        if (oldIdx < idx) magiasTemp[oldIdx] = magiasPorPersonagem[oldIdx];
+        else if(oldIdx > idx) magiasTemp[oldIdx-1] = magiasPorPersonagem[oldIdx];
+    });
+    Object.keys(itensPorPersonagem).forEach(oldIdx=>{
+        if (oldIdx < idx) itensTemp[oldIdx] = itensPorPersonagem[oldIdx];
+        else if(oldIdx > idx) itensTemp[oldIdx-1] = itensPorPersonagem[oldIdx];
+    });
+    magiasPorPersonagem = magiasTemp;
+    itensPorPersonagem = itensTemp;
     renderPersonagens();
 };
 window.alteraHP = function(idx, delta) {
@@ -455,12 +621,83 @@ function getStats(pers) {
     }
     return STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
 }
+
+function personagemCard(pers, idx, displayOrder) {
+    let tipoStr = pers.tipo;
+    let stats = getStats(pers);
+    let name = pers.nome || pers.tipoSoldado || "";
+    if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
+    else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
+    else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
+    else tipoStr = `<span class="soldado-elite">${pers.tipoSoldado||pers.tipo}</span>`;
+    let hpAtual = typeof pers.hpAtual === 'number' ? pers.hpAtual : stats.hp;
+
+    let nomeHtml;
+    if (editandoNome === idx) {
+        nomeHtml = `<form class="edit-name-form" onsubmit="return salvarNomePersonagem(${idx})">
+            <input class="edit-name-input" id="edit-name-input-${idx}" type="text" value="${name.replace(/"/g,'&quot;')}" maxlength="40">
+            <button class="edit-name-btn" type="submit" title="Salvar">💾</button>
+            <button class="edit-name-cancel" type="button" onclick="cancelarEditarNome()">✖</button>
+        </form>`;
+        setTimeout(() => {
+            let el = document.getElementById(`edit-name-input-${idx}`);
+            if (el) { el.focus(); el.select(); }
+        }, 0);
+    } else {
+        nomeHtml = `<span>${name ? ' - ' + name : ''}</span> <button class="edit-name-btn" type="button" onclick="editarNomePersonagem(${idx})" title="Editar nome">✎</button>`;
+    }
+
+    let moverBtns = "";
+    if (pers.tipo === "Soldado") {
+        let first = personagens.findIndex(p => p.tipo === "Soldado");
+        let last = personagens.length-1 - [...personagens].reverse().findIndex(p => p.tipo === "Soldado");
+        moverBtns = `
+            <button class="move-btn" type="button" onclick="moverSoldado(${idx}, -1)" title="Subir" ${idx===first?'disabled':''}>↑</button>
+            <button class="move-btn" type="button" onclick="moverSoldado(${idx}, 1)" title="Descer" ${idx===last?'disabled':''}>↓</button>
+        `;
+    }
+
+    return Object.assign(document.createElement('div'), {
+        className: 'person-card',
+        innerHTML: `
+        <div class="person-header">
+            ${tipoStr} ${nomeHtml}
+            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
+            ${moverBtns}
+        </div>
+        <div class="stats-line">
+            <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
+            <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
+            <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
+            <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
+            <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
+            <span class="stat-label">HP:</span>
+            <span class="hp-box">
+                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
+                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
+                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
+            </span>
+        </div>
+        <div class="magic-section">
+            <b>Magias:</b>
+            ${renderAddMagiaPersonagem(idx)}
+            ${renderMagiasPersonagem(idx)}
+        </div>
+        <div class="item-section">
+            <b>Itens:</b>
+            ${renderAddItemPersonagem(idx)}
+            ${renderItensPersonagem(idx)}
+        </div>
+        `
+    });
+}
+
 function renderPersonagens() {
+    renderGoldXP();
     renderMagoAprendizSection();
     renderSoldadosSection();
 }
 
-// --- Controle de abas ---
 document.getElementById('tabnav').addEventListener('click', function(e) {
     if(e.target.tagName === "BUTTON") {
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -476,7 +713,6 @@ document.getElementById('tabnav').addEventListener('click', function(e) {
     }
 });
 
-// --- Inicialização ---
 window.onload = function() {
     fetchConteudoFrostgrave().then(() => {
         renderPersonagens();
