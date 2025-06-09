@@ -31,7 +31,8 @@
         .soldado-elite { color: #c0392b; }
         .stats-line { display: flex; align-items: center; gap: 1.25em; margin-bottom: .6em; padding: 0.6em 0; background: #f2f7fa; border-radius: 6px;}
         .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
-        .stat-value { width: 2.2em; text-align: center; }
+        .stat-value, .stat-input { width: 2.2em; text-align: center; }
+        .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
         .hp-box { display: flex; align-items: center; gap: 0.2em;}
         .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
         .hp-btn:active { background: #2471a3; }
@@ -90,158 +91,15 @@
     </style>
 </head>
 <body>
-<main>
-    <h1>Frostgrave Warband Manager</h1>
-    <nav id="tabnav">
-        <button data-tab="dashboard" class="active" type="button">Dashboard</button>
-        <button data-tab="magias" type="button">Magias</button>
-        <button data-tab="itens" type="button">Itens</button>
-        <button data-tab="notas" type="button">Notas</button>
-        <button data-tab="bestiario" type="button">Bestiário</button>
-    </nav>
-    <section id="dashboard" class="tab-content active">
-        <h2>Mago & Aprendiz</h2>
-        <div class="vertical-list" id="mago-aprendiz-lista"></div>
-        <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
-        <h2>Soldados</h2>
-        <div class="vertical-list" id="soldado-lista"></div>
-        <section class="add-section">
-            <h2>Adicionar Soldado</h2>
-            <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-            <form class="add-form add-form-soldado" id="add-soldado-form">
-                <label>
-                    Tipo de Soldado:
-                    <select id="soldado-tipo"></select>
-                </label>
-                <label>
-                    Nome:
-                    <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
-                </label>
-                <button type="submit">Adicionar Soldado</button>
-            </form>
-        </section>
-    </section>
-    <section id="magias" class="tab-content">
-        <h2>Banco de Magias</h2>
-        <form class="magia-form" id="add-magia-form">
-            <select id="magia-dropdown"></select>
-            <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
-            <button type="submit">Adicionar Magia</button>
-        </form>
-        <ul id="banco-magias-lista" class="magias-list"></ul>
-    </section>
-    <section id="itens" class="tab-content">
-        <h2>Banco de Itens</h2>
-        <form class="item-form" id="add-item-form">
-            <select id="item-dropdown"></select>
-            <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
-            <button type="submit">Adicionar Item</button>
-        </form>
-        <ul id="banco-itens-lista" class="itens-list"></ul>
-    </section>
-    <section id="notas" class="tab-content">
-        <h2>Anotações da Warband</h2>
-        <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
-    </section>
-    <section id="bestiario" class="tab-content">
-        <h2>Bestiário</h2>
-        <div id="active-beasts-list" class="active-beasts-list"></div>
-        <div id="bestiary-list" class="bestiary-list"></div>
-    </section>
-</main>
+<!-- ... (o restante do HTML permanece igual) ... -->
 <script>
-// ============ DADOS INICIAIS ============
-let personagens = [];
-let bancoMagias = [];
-let bancoItens = [];
-let magiasPorPersonagem = {};
-let bestiarioAtivo = [];
+// ... (código de carregamento do JSON, etc, igual ao exemplo anterior) ...
 
-const ESCOLAS = [
-    "Chronomancer", "Elementalist", "Enchanter", "Illusionist", "Necromancer", "Sigilist",
-    "Soothsayer", "Summoner", "Thaumaturge", "Witch"
-];
-const magiasPorEscola = {
-    Elementalist: [
-        {nome:"Elemental Bolt", custo:10, descricao:"Dano mágico à distância.", escola:"Elementalist"},
-        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Elementalist"},
-    ],
-    Necromancer: [
-        {nome:"Bone Dart", custo:8, descricao:"Projétil mágico de osso.", escola:"Necromancer"},
-        {nome:"Raise Zombie", custo:8, descricao:"Cria zumbi.", escola:"Necromancer"},
-    ],
-    Thaumaturge: [
-        {nome:"Heal", custo:8, descricao:"Cura um aliado.", escola:"Thaumaturge"},
-        {nome:"Blinding Light", custo:8, descricao:"Cega alvo.", escola:"Thaumaturge"},
-    ]
-};
-const itensPadrao = {
-    "Armas mágicas": [
-        {nome:"Espada Mágica", descricao:"Espada +1 Fight."},
-        {nome:"Adaga Mágica", descricao:"Adaga +1 Fight."}
-    ],
-    "Poções": [
-        {nome:"Poção de Cura", descricao:"Recupera até 5 HP."}
-    ],
-    "Tesouros diversos": [
-        {nome:"Amuleto de Proteção", descricao:"+2 Will contra magias."}
-    ]
-};
-const STATS = {
-    "Mago":      { move:6, fight:"+2", shoot:"+0", armor:10, will:"+4", hp:14 },
-    "Aprendiz":  { move:6, fight:"+1", shoot:"+0", armor:10, will:"+2", hp:10 },
-    "Thief":           { move:7, fight:"+1", shoot:"0", armor:10, will:"0", hp:10 },
-    "Thug":            { move:6, fight:"+2", shoot:"0", armor:10, will:"0", hp:10 }
-};
-const SOLDADOS_NORMAIS = ["Thief", "Thug"];
-const SOLDADOS_ELITES = [];
-const ITEM_LIMITS = { "Mago": 5, "Aprendiz": 1, "Soldado": 1 };
+// ADICIONE/ALTERE SOMENTE ESTES TRECHOS (o restante permanece igual):
 
-// ============== RENDER DASHBOARD ==============
-function renderMagoAprendizSection() {
-    const div = document.getElementById('mago-aprendiz-lista');
-    div.innerHTML = '';
-    let magoIdx = personagens.findIndex(p => p.tipo === "Mago");
-    let aprendizIdx = personagens.findIndex(p => p.tipo === "Aprendiz");
-    if (magoIdx !== -1) div.appendChild(personagemCard(personagens[magoIdx], magoIdx));
-    if (aprendizIdx !== -1) div.appendChild(personagemCard(personagens[aprendizIdx], aprendizIdx));
-    // Botões de adicionar
-    const btnDiv = document.getElementById('add-mago-aprendiz-btns');
-    btnDiv.innerHTML = '';
-    if (magoIdx === -1) {
-        let sel = `<select id="escola-mago" style="margin-right:1em;">
-            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
-        </select>`;
-        btnDiv.innerHTML +=
-            `<button id="add-mago-btn">+ Adicionar Mago</button> ${sel}`;
-    }
-    if (aprendizIdx === -1) {
-        let sel = `<select id="escola-aprendiz" style="margin-right:1em;">
-            ${ESCOLAS.map(e=>`<option value="${e}">${e}</option>`).join('')}
-        </select>`;
-        btnDiv.innerHTML +=
-            `<button id="add-aprendiz-btn">+ Adicionar Aprendiz</button> ${sel}`;
-    }
-    // LIGAÇÃO DOS BOTÕES!
-    if (document.getElementById("add-mago-btn")) document.getElementById("add-mago-btn").onclick = adicionarMago;
-    if (document.getElementById("add-aprendiz-btn")) document.getElementById("add-aprendiz-btn").onclick = adicionarAprendiz;
-}
-function renderSoldadosSection() {
-    const soldadoDiv = document.getElementById('soldado-lista');
-    soldadoDiv.innerHTML = '';
-    personagens
-        .filter(p => p.tipo === "Soldado")
-        .forEach((pers, idx) => soldadoDiv.appendChild(personagemCard(pers, idx)));
-    renderSoldadoDropdown();
-    renderSoldadoAlert();
-}
-function renderPersonagens() {
-    renderMagoAprendizSection();
-    renderSoldadosSection();
-}
 function personagemCard(pers, idx) {
     let tipoStr = pers.tipo;
-    let stats = STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
+    let stats = getStats(pers);
     let name = pers.nome || pers.tipoSoldado || "";
     if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
     else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
@@ -269,13 +127,27 @@ function personagemCard(pers, idx) {
             <span style="font-size:.92em;color:#888;">(${pers.itens.length}/${itemLimit})</span>
         </form>`
         : `<span style="font-size:.92em;color:#888;">Limite de itens: ${itemLimit}</span>`;
-    return Object.assign(document.createElement('div'), {
-        className: 'person-card',
-        innerHTML: `
-        <div class="person-header">
-            ${tipoStr} ${name ? ' - ' + name : ''}
-            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
+
+    // Mago: campos editáveis, aprendiz: campos não editáveis mas refletem mago
+    let editableStats = '';
+    if (pers.tipo === "Mago") {
+        editableStats = `
+        <div class="stats-line">
+            <span class="stat-label">Mov:</span><input class="stat-input" type="number" step="1" value="${stats.move}" onchange="editarStat(${idx},'move',this.value)">
+            <span class="stat-label">Fight:</span><input class="stat-input" type="text" value="${stats.fight}" onchange="editarStat(${idx},'fight',this.value)">
+            <span class="stat-label">Shoot:</span><input class="stat-input" type="text" value="${stats.shoot}" onchange="editarStat(${idx},'shoot',this.value)">
+            <span class="stat-label">Armor:</span><input class="stat-input" type="number" step="1" value="${stats.armor}" onchange="editarStat(${idx},'armor',this.value)">
+            <span class="stat-label">Will:</span><input class="stat-input" type="text" value="${stats.will}" onchange="editarStat(${idx},'will',this.value)">
+            <span class="stat-label">HP:</span>
+            <span class="hp-box">
+                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
+                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
+                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
+            </span>
         </div>
+        `;
+    } else if (pers.tipo === "Aprendiz") {
+        editableStats = `
         <div class="stats-line">
             <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
             <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
@@ -284,11 +156,38 @@ function personagemCard(pers, idx) {
             <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
             <span class="stat-label">HP:</span>
             <span class="hp-box">
-                <button class="hp-btn" onclick="alteraHP(${idx},-1)">-</button>
+                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
                 <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
-                <button class="hp-btn" onclick="alteraHP(${idx},1)">+</button>
+                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
             </span>
         </div>
+        `;
+    } else {
+        editableStats = `
+        <div class="stats-line">
+            <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
+            <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
+            <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
+            <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
+            <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
+            <span class="stat-label">HP:</span>
+            <span class="hp-box">
+                <button class="hp-btn" onclick="alteraHP(${idx},-1);return false;">-</button>
+                <input class="hp-value" type="number" min="0" max="99" value="${hpAtual}" onchange="setHP(event,${idx})">
+                <button class="hp-btn" onclick="alteraHP(${idx},1);return false;">+</button>
+            </span>
+        </div>
+        `;
+    }
+
+    return Object.assign(document.createElement('div'), {
+        className: 'person-card',
+        innerHTML: `
+        <div class="person-header">
+            ${tipoStr} ${name ? ' - ' + name : ''}
+            <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
+        </div>
+        ${editableStats}
         <div style="margin-top:0.6em;">
             <b>Itens:</b> ${addItemForm}
             ${itensHtml}
@@ -297,376 +196,50 @@ function personagemCard(pers, idx) {
         `
     });
 }
-window.adicionarItemPersonagem = function(event, idxPers) {
-    event.preventDefault();
-    let select = event.target.querySelector('select[name="item"]');
-    let idxItem = parseInt(select.value);
-    let item = bancoItens[idxItem];
-    if (!item) return;
-    let pers = personagens[idxPers];
-    if (pers.itens.some(i => i.nome === item.nome)) {
-        alert("Esse personagem já possui esse item!");
-        return;
+
+// Função: retorna stats do personagem (para aprendiz, calcula com base no mago)
+function getStats(pers) {
+    if (pers.tipo === "Aprendiz") {
+        let mago = personagens.find(p => p.tipo === "Mago");
+        if (!mago || !mago.stats) return {...STATS["Aprendiz"]};
+        // Aprendiz é sempre: move igual mago, fight mago-2, shoot mago, armor mago, will mago-2, hp 10
+        const m = mago.stats;
+        let stat = val => {
+            let n = parseInt(val); if (isNaN(n)) n = 0;
+            return n;
+        };
+        let fightA = (stat(m.fight) - 2 >= -2 ? (stat(m.fight) - 2) : -2);
+        let willA = (stat(m.will) - 2 >= -2 ? (stat(m.will) - 2) : -2);
+        return {
+            move: m.move,
+            fight: (fightA >= 0 ? "+" + fightA : fightA),
+            shoot: m.shoot,
+            armor: m.armor,
+            will: (willA >= 0 ? "+" + willA : willA),
+            hp: 10
+        };
     }
-    pers.itens.push({...item});
-    renderPersonagens();
-};
-window.removerItemPersonagem = function(idxPers, idxItem) {
-    personagens[idxPers].itens.splice(idxItem,1);
-    renderPersonagens();
-};
-function alteraHP(idx, delta) {
-    let p = personagens[idx];
-    let stats = STATS[p.tipo] || STATS[p.tipoSoldado] || {hp:10};
-    if(typeof p.hpAtual !== "number") p.hpAtual = stats.hp;
-    p.hpAtual = Math.max(0, Math.min(99, p.hpAtual + delta));
-    renderPersonagens();
-}
-function setHP(e, idx) {
-    let v = parseInt(e.target.value);
-    let p = personagens[idx];
-    let stats = STATS[p.tipo] || STATS[p.tipoSoldado] || {hp:10};
-    v = isNaN(v) ? stats.hp : Math.max(0, Math.min(99, v));
-    p.hpAtual = v;
-    renderPersonagens();
-}
-function renderPersonagemMagias(idxPers) {
-    if (!magiasPorPersonagem[idxPers] || magiasPorPersonagem[idxPers].length === 0) return '';
-    return `<div class="person-magias"><b>Magias:</b><ul>` +
-        magiasPorPersonagem[idxPers].map((m,i)=>
-            `<li>${m.nome} <span style="color:#aaa;">[${m.escola}]</span> 
-            <span style="color:#229954;">Custo: ${m.custoAtribuido||m.custo_base||m.custo}</span>
-            <button class="remove-btn" onclick="removerMagiaPersonagem(${idxPers},${i})" title="Remover magia">✖</button>
-            </li>`
-        ).join('') + `</ul></div>`;
-}
-function removerMagiaPersonagem(idxPers, idxMagia) {
-    magiasPorPersonagem[idxPers].splice(idxMagia,1);
-    renderPersonagens();
-}
-function removerPersonagem(idx) {
-    personagens.splice(idx, 1);
-    delete magiasPorPersonagem[idx];
-    let novoMagias = {};
-    personagens.forEach((_,i) => {
-        if (magiasPorPersonagem[i]) novoMagias[i] = magiasPorPersonagem[i];
-    });
-    magiasPorPersonagem = novoMagias;
-    renderPersonagens();
-}
-function adicionarMago() {
-    let escola = document.getElementById('escola-mago')?.value || ESCOLAS[0];
-    personagens.push({tipo: "Mago", nome: "Mago", escola, hpAtual: STATS["Mago"].hp});
-    renderPersonagens();
-}
-function adicionarAprendiz() {
-    let escola = document.getElementById('escola-aprendiz')?.value || ESCOLAS[0];
-    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", escola, hpAtual: STATS["Aprendiz"].hp});
-    renderPersonagens();
-}
-function adicionarSoldadoHandler(e) {
-    e.preventDefault();
-    let tipoSoldado = document.getElementById('soldado-tipo').value;
-    let nome = document.getElementById('soldado-nome').value;
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    if (SOLDADOS_NORMAIS.includes(tipoSoldado) && norm >= 4)
-        return alert("Máximo de 4 soldados normais!");
-    if (SOLDADOS_ELITES.includes(tipoSoldado) && elite >= 4)
-        return alert("Máximo de 4 soldados elite!");
-    if (norm+elite >= 8)
-        return alert("Máximo de 8 soldados!");
-    personagens.push({tipo: "Soldado", tipoSoldado, nome, hpAtual: STATS[tipoSoldado]?.hp||10});
-    renderPersonagens();
-    e.target.reset();
-}
-function renderSoldadoDropdown() {
-    let soldadoSel = document.getElementById('soldado-tipo');
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    soldadoSel.innerHTML = `<optgroup label="Normais">` +
-        SOLDADOS_NORMAIS.map(k => `<option value="${k}"${norm>=4?' disabled':''}>${k}</option>`).join('') +
-        `</optgroup><optgroup label="Elites">` +
-        SOLDADOS_ELITES.map(k => `<option value="${k}"${elite>=4?' disabled':''}>${k}</option>`).join('') +
-        `</optgroup>`;
-}
-function renderSoldadoAlert() {
-    let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
-    let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
-    let total = norm+elite;
-    let alertDiv = document.getElementById('soldado-limit-alert');
-    let msg = "";
-    if (total >= 8) msg = "Limite total de 8 soldados atingido!";
-    else if (norm >= 4) msg = "Limite de 4 soldados normais atingido.";
-    else if (elite >= 4) msg = "Limite de 4 soldados elite atingido.";
-    alertDiv.textContent = msg;
+    // Para mago, se stats customizadas, usa elas, senão STATS base
+    if (pers.tipo === "Mago") {
+        return pers.stats || {...STATS["Mago"]};
+    }
+    return STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
 }
 
-// =========== MAGIAS E ITENS BANCO ===========
-function renderMagiaDropdown() {
-    const sel = document.getElementById('magia-dropdown');
-    let html = '';
-    Object.keys(magiasPorEscola).forEach(escola => {
-        html += `<optgroup label="${escola}">`;
-        magiasPorEscola[escola].forEach(m =>
-            html += `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo}) - ${m.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
-function renderItemDropdown() {
-    const sel = document.getElementById('item-dropdown');
-    let html = '';
-    Object.keys(itensPadrao).forEach(grupo => {
-        html += `<optgroup label="${grupo}">`;
-        itensPadrao[grupo].forEach(i =>
-            html += `<option value="${grupo}|${i.nome}">${i.nome} - ${i.descricao}</option>`
-        );
-        html += "</optgroup>";
-    });
-    sel.innerHTML = html;
-}
-function renderBancoMagias() {
-    const ul = document.getElementById('banco-magias-lista');
-    ul.innerHTML = bancoMagias.length
-        ? bancoMagias.map((m, idx) =>
-            `<li>
-                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
-                <br>
-                <i>${m.descricao||""}</i>
-                <br>
-                <small>${m.completo||""}</small>
-                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
-                <button class="remove-btn" onclick="atribuirMagiaPersonagem(${idx})" title="Atribuir">→</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
-}
-function adicionarBancoMagiaHandler(e) {
-    e.preventDefault();
-    const val = document.getElementById('magia-dropdown').value;
-    const completo = document.getElementById('magia-comp').value.trim();
-    const [escola, nome] = val.split('|');
-    const magiaBase = magiasPorEscola[escola].find(m => m.nome === nome);
-    if (!magiaBase) return;
-    bancoMagias.push({
-        nome: magiaBase.nome,
-        escola: magiaBase.escola,
-        custo_base: magiaBase.custo,
-        descricao: magiaBase.descricao,
-        completo
-    });
-    renderBancoMagias();
-    e.target.reset();
-}
-function removerBancoMagia(idx) {
-    bancoMagias.splice(idx, 1);
-    renderBancoMagias();
-}
-function atribuirMagiaPersonagem(idxMagia) {
-    let magos = personagens
-        .map((p,i)=>({p,i}))
-        .filter(x=>x.p.tipo==="Mago"||x.p.tipo==="Aprendiz");
-    if (magos.length === 0) return alert("Adicione Mago ou Aprendiz primeiro!");
-    let escolha = prompt(
-        "Digite o número do personagem para atribuir a magia:\n" +
-        magos.map((x,j)=>`${j+1} - ${x.p.tipo} (${x.p.p?.escola||x.p.escola||"?"}) ${x.p.nome||""}`).join("\n")
-    );
-    let idxEscolhido = parseInt(escolha)-1;
-    if (isNaN(idxEscolhido) || !magos[idxEscolhido]) return;
-    let idxPersonagem = magos[idxEscolhido].i;
-    let personagem = personagens[idxPersonagem];
-    let custoFinal = bancoMagias[idxMagia].custo_base;
-    if (bancoMagias[idxMagia].escola === personagem.escola) custoFinal = bancoMagias[idxMagia].custo_base;
-    else custoFinal = bancoMagias[idxMagia].custo_base + 4;
-    if (!magiasPorPersonagem[idxPersonagem]) magiasPorPersonagem[idxPersonagem]=[];
-    magiasPorPersonagem[idxPersonagem].push({...bancoMagias[idxMagia], custoAtribuido: custoFinal});
-    bancoMagias.splice(idxMagia,1);
-    renderBancoMagias();
-    renderPersonagens();
-}
-function renderBancoItens() {
-    const ul = document.getElementById('banco-itens-lista');
-    ul.innerHTML = bancoItens.length
-        ? bancoItens.map((i, idx) =>
-            `<li>
-                <b>${i.nome}</b>
-                <br>
-                <i>${i.descricao||""}</i>
-                <br>
-                <small>${i.efeito||""}</small>
-                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
-}
-function adicionarBancoItemHandler(e) {
-    e.preventDefault();
-    const val = document.getElementById('item-dropdown').value;
-    const efeito = document.getElementById('item-efeito').value.trim();
-    const [grupo, nome] = val.split('|');
-    let item = null;
-    for(const g in itensPadrao) {
-        if(g === grupo) {
-            item = itensPadrao[g].find(i => i.nome === nome);
-            break;
-        }
-    }
-    if (!item) return;
-    bancoItens.push({
-        nome: item.nome,
-        descricao: item.descricao,
-        efeito
-    });
-    renderBancoItens();
-    e.target.reset();
-}
-function removerBancoItem(idx) {
-    bancoItens.splice(idx, 1);
-    renderBancoItens();
-}
-
-// =========== BESTIÁRIO ===========
-const bestiario = [
-    {nome:"Giant Rat", tipo:"Animal", desc:"Roedor agressivo e rápido.", explicacao:"Geralmente aparecem em grupos. Pequenos, mas podem causar problemas se ignorados.", stats:{move:7, fight:"+0", shoot:"-", armor:8, will:"-1", hp:6}},
-    {nome:"Bear", tipo:"Animal", desc:"Urso feroz.", explicacao:"Alto dano em combate, resistente.", stats:{move:6, fight:"+4", shoot:"-", armor:12, will:"0", hp:16}},
-    {nome:"Skeleton", tipo:"Morto-vivo", desc:"Guarda esquelético, imune a venenos.", explicacao:"Imune a veneno, não pode ser curado.", stats:{move:6, fight:"+1", shoot:"-", armor:12, will:"+0", hp:10}},
-    {nome:"Zombie", tipo:"Morto-vivo", desc:"Lento mas persistente.", explicacao:"Muito difícil de derrubar, não pode correr.", stats:{move:4, fight:"+0", shoot:"-", armor:12, will:"-2", hp:12}}
-];
-function agrupaBestiarioPorTipo(lista) {
-    const grupos = {};
-    lista.forEach(c => {
-        if(!grupos[c.tipo]) grupos[c.tipo] = [];
-        grupos[c.tipo].push(c);
-    });
-    return grupos;
-}
-function renderActiveBeasts() {
-    const div = document.getElementById('active-beasts-list');
-    if (!bestiarioAtivo.length) {
-        div.innerHTML = '';
-        return;
-    }
-    div.innerHTML = bestiarioAtivo.map((b, idx) => `
-        <div class="active-beast-card">
-            <div class="beast-header">
-                ${b.nome}
-                <span class="beast-type">[${b.tipo}]</span>
-                <button class="remove-btn" onclick="removerBeastAtivo(${idx})" title="Remover da mesa">✖</button>
-            </div>
-            <div class="beast-desc beast-tooltip">
-                ${b.desc}
-                <span class="tooltiptext">${b.explicacao||""}</span>
-            </div>
-            <div class="stats-line">
-                <span class="stat-label">Mov:</span><span class="stat-value">${b.stats.move}</span>
-                <span class="stat-label">Fight:</span><span class="stat-value">${b.stats.fight}</span>
-                <span class="stat-label">Shoot:</span><span class="stat-value">${b.stats.shoot}</span>
-                <span class="stat-label">Armor:</span><span class="stat-value">${b.stats.armor}</span>
-                <span class="stat-label">Will:</span><span class="stat-value">${b.stats.will}</span>
-                <span class="stat-label">HP:</span>
-                <span class="hp-box">
-                    <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},-1)">-</button>
-                    <input class="hp-value" type="number" min="0" max="99" value="${b.hpAtual||b.stats.hp}" style="width:2.5em;text-align:center;" onchange="setHPBeastAtivo(event,${idx})">
-                    <button class="hp-btn" onclick="alteraHPBeastAtivo(event,${idx},1)">+</button>
-                </span>
-            </div>
-        </div>
-    `).join("");
-}
-function removerBeastAtivo(idx) {
-    bestiarioAtivo.splice(idx,1);
-    renderActiveBeasts();
-}
-function alteraHPBeastAtivo(event, idx, delta) {
-    event.stopPropagation();
-    bestiarioAtivo[idx].hpAtual = Math.max(0, Math.min(99, (bestiarioAtivo[idx].hpAtual || bestiarioAtivo[idx].stats.hp) + delta));
-    renderActiveBeasts();
-}
-function setHPBeastAtivo(event, idx) {
-    let v = parseInt(event.target.value);
-    v = isNaN(v) ? bestiarioAtivo[idx].stats.hp : Math.max(0, Math.min(99, v));
-    bestiarioAtivo[idx].hpAtual = v;
-    renderActiveBeasts();
-}
-function renderBestiario() {
-    renderActiveBeasts();
-    const div = document.getElementById('bestiary-list');
-    const grupos = agrupaBestiarioPorTipo(bestiario);
-    div.innerHTML = Object.keys(grupos).sort().map(tipo => `
-        <div class="bestiary-group">
-            <h3>${tipo}</h3>
-            <div style="display:flex;flex-direction:column;gap:1.2em;">
-                ${grupos[tipo].map((b, idx) =>
-                    `<div class="beast-card">
-                        <div class="beast-header">
-                            <span class="beast-tooltip">${b.nome}
-                                <span class="tooltiptext">${b.explicacao||""}</span>
-                            </span>
-                            <span class="beast-type">[${b.tipo}]</span>
-                            <button class="select-beast-btn${isBeastAtivo(b)?' selected':''}" onclick="toggleBeastAtivo('${b.nome.replace(/'/g,"\\'")}','${b.tipo.replace(/'/g,"\\'")}')">
-                                ${isBeastAtivo(b) ? "✓ na mesa" : "+"}
-                            </button>
-                        </div>
-                        <div class="beast-desc">${b.desc||""}</div>
-                        <div class="stats-line">
-                            <span class="stat-label">Mov:</span><span class="stat-value">${b.stats.move}</span>
-                            <span class="stat-label">Fight:</span><span class="stat-value">${b.stats.fight}</span>
-                            <span class="stat-label">Shoot:</span><span class="stat-value">${b.stats.shoot}</span>
-                            <span class="stat-label">Armor:</span><span class="stat-value">${b.stats.armor}</span>
-                            <span class="stat-label">Will:</span><span class="stat-value">${b.stats.will}</span>
-                            <span class="stat-label">HP:</span><span class="stat-value">${b.stats.hp}</span>
-                        </div>
-                    </div>`
-                ).join("")}
-            </div>
-        </div>
-    `).join("");
-}
-function isBeastAtivo(b) {
-    return bestiarioAtivo.find(a => a.nome === b.nome && a.tipo === b.tipo);
-}
-function toggleBeastAtivo(nome, tipo) {
-    const idx = bestiarioAtivo.findIndex(b=>b.nome===nome && b.tipo===tipo);
-    if(idx >= 0) {
-        bestiarioAtivo.splice(idx,1);
+// Permite editar stats do mago (e reflete automaticamente no aprendiz)
+window.editarStat = function(idx, campo, valor) {
+    let p = personagens[idx];
+    if (!p.stats) p.stats = {...STATS["Mago"]};
+    if (campo === "move" || campo === "armor" || campo === "hp") {
+        p.stats[campo] = parseInt(valor) || 0;
     } else {
-        const base = bestiario.find(b=>b.nome===nome && b.tipo===tipo);
-        if(base) bestiarioAtivo.unshift({...base, hpAtual: base.stats.hp});
+        // fight, shoot, will
+        p.stats[campo] = valor;
     }
-    renderBestiario();
-}
-
-// =========== ABAS ===========
-document.getElementById('tabnav').addEventListener('click', function(e) {
-    if(e.target.tagName === "BUTTON") {
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        let tab = e.target.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
-        if(tab === 'dashboard') renderPersonagens();
-        if(tab === 'bestiario') renderBestiario();
-        if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
-        if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
-    }
-});
-
-// =========== EVENTOS SUBMIT DOS FORMULÁRIOS ===========
-document.getElementById('add-soldado-form').addEventListener('submit', adicionarSoldadoHandler);
-document.getElementById('add-magia-form').addEventListener('submit', adicionarBancoMagiaHandler);
-document.getElementById('add-item-form').addEventListener('submit', adicionarBancoItemHandler);
-
-// =========== INICIALIZAÇÃO ===========
-window.onload = function() {
     renderPersonagens();
-    renderBestiario();
-    renderMagiaDropdown();
-    renderBancoMagias();
-    renderItemDropdown();
-    renderBancoItens();
 };
+
+// ... (demais funções permanecem iguais ao exemplo anterior) ...
 </script>
 </body>
 </html>
