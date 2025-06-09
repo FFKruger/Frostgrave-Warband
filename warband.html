@@ -223,6 +223,7 @@
       <textarea class="notes-box" id="notas-box" placeholder="Anote estratégias, progresso, tesouros, eventos..."></textarea>
     </div>
   </section>
+  <div id="edit-stats-btn-container"></div>
 </main>
 <script>
 let conteudo_frostgrave_json = { escolas:[], magias:[], itens:[], personagens:[], soldados:[], bestiario:[] };
@@ -805,6 +806,7 @@ document.getElementById('add-magia-form').onsubmit = function(e) {
   });
   renderBancoMagias();
   renderMagiaDropdown();
+  renderAprenderMagiaForm();
   this.reset();
 };
 document.getElementById('add-item-form').onsubmit = function(e) {
@@ -828,6 +830,7 @@ function renderAll() {
   renderMagiaDropdown();
   renderItemDropdown();
   renderAprenderMagiaForm();
+  renderGoldXPBoxes('dashboard');
   renderGoldXPBoxes('magias');
   renderGoldXPBoxes('itens');
 }
@@ -965,23 +968,26 @@ function renderAprenderMagiaForm() {
   }
   // Opções de magias não aprendidas
   function getMagiaOpts() {
-    return escolasOrd.map(escola =>
+    let opts = escolasOrd.map(escola =>
       `<optgroup label="${escola}">
         ${agrupadas[escola].sort((a,b)=>a.nome.localeCompare(b.nome)).filter(m => !magiasAprendidas.includes(m.nome)).map(m => `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}</option>`).join('')}
       </optgroup>`
     ).join('');
+    return opts;
   }
+  let magiaOpts = getMagiaOpts();
+  let hasMagias = magiaOpts.replace(/<[^>]+>/g, '').trim().length > 0;
   formDiv.innerHTML = `
     <div style="margin-bottom:0.7em;text-align:center;">
       <span style="font-size:1.08em;font-weight:600;color:var(--primary);">Aprender Magia</span>
     </div>
     <form class="aprender-magia-form" id="aprender-magia-form" autocomplete="off" style="margin-bottom:0.7em;display:flex;gap:0.7em;align-items:center;justify-content:center;flex-wrap:wrap;">
       <label style="font-size:1em;font-weight:500;color:var(--text-title);">Magia:
-        <select id="magia-aprender-dropdown" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;min-width:200px;">
-          ${getMagiaOpts()}
+        <select id="magia-aprender-dropdown" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;min-width:200px;" ${hasMagias ? '' : 'disabled'}>
+          ${hasMagias ? magiaOpts : '<option value="">Nenhuma magia disponível</option>'}
         </select>
       </label>
-      <button id="aprender-magia-btn" type="submit" style="font-size:1.08em;padding:0.3em 1.2em;border-radius:7px;background:var(--primary);color:#fff;border:none;font-weight:600;transition:background 0.2s;">Aprender Magia</button>
+      <button id="aprender-magia-btn" type="submit" style="font-size:1.08em;padding:0.3em 1.2em;border-radius:7px;background:var(--primary);color:#fff;border:none;font-weight:600;transition:background 0.2s;" ${hasMagias ? '' : 'disabled'}>Aprender Magia</button>
     </form>
     <div id="aprender-magia-desc" style="min-height:2em;font-size:0.98em;color:var(--text-main);text-align:center;margin-bottom:0.3em;"></div>
     <div id="aprender-magia-alert" style="color:#c0392b;font-size:0.95em;text-align:center;"></div>`;
@@ -993,7 +999,7 @@ function renderAprenderMagiaForm() {
     const nome = magiaSel.value;
     descDiv.textContent = nome ? getMagiaDescricao(nome) : '';
   }
-  magiaSel.onchange = updateDesc;
+  if (magiaSel) magiaSel.onchange = updateDesc;
   updateDesc();
   if (form) {
     form.onsubmit = function(e) {
@@ -1023,44 +1029,41 @@ function renderAprenderMagiaForm() {
 }
 
 function renderEditStatsBtn() {
-  const header = document.querySelector('.warband-header');
-  if (!header) return;
-  let btn = document.getElementById('edit-stats-btn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'edit-stats-btn';
-    btn.style.marginLeft = '1em';
-    btn.style.background = 'var(--primary)';
-    btn.style.color = '#fff';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '6px';
-    btn.style.fontSize = '0.98em';
-    btn.style.padding = '0.3em 1em';
-    btn.style.cursor = 'pointer';
-    header.appendChild(btn);
+  let container = document.getElementById('edit-stats-btn-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'edit-stats-btn-container';
+    // Inserir logo após o seletor de tema
+    const themeDiv = document.querySelector('label[for="theme-select"]')?.parentElement;
+    if (themeDiv && themeDiv.parentElement) {
+      themeDiv.parentElement.insertBefore(container, themeDiv.nextSibling);
+    } else {
+      document.body.appendChild(container);
+    }
   }
+  container.innerHTML = '';
+  let btn = document.createElement('button');
+  btn.id = 'edit-stats-btn';
+  btn.style.margin = '1em 0 0.5em 0';
+  btn.style.background = 'var(--primary)';
+  btn.style.color = '#fff';
+  btn.style.border = 'none';
+  btn.style.borderRadius = '6px';
+  btn.style.fontSize = '0.98em';
+  btn.style.padding = '0.3em 1em';
+  btn.style.cursor = 'pointer';
   btn.textContent = statsEditEnabled ? 'Desativar Edição de Características' : 'Ativar Edição de Características';
   btn.onclick = function() {
     statsEditEnabled = !statsEditEnabled;
     renderPersonagens();
     renderEditStatsBtn();
   };
+  container.appendChild(btn);
 }
 
 function renderGoldXPBoxes(targetId) {
-  const target = document.getElementById(targetId);
-  if (!target) return;
-  let box = document.getElementById(`gold-xp-box-${targetId}`);
-  if (!box) {
-    box = document.createElement('div');
-    box.className = 'gold-xp-box';
-    box.id = `gold-xp-box-${targetId}`;
-    box.style.display = 'flex';
-    box.style.justifyContent = 'flex-end';
-    box.style.gap = '0.7em';
-    box.style.marginBottom = '1em';
-    target.insertBefore(box, target.firstChild);
-  }
+  const box = document.getElementById(`gold-xp-box-${targetId}`);
+  if (!box) return;
   box.innerHTML = `
     <span class="gold-xp-label">Gold:
       <button class="gold-btn" onclick="alteraGold(-10)">-</button>
