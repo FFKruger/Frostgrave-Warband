@@ -571,4 +571,126 @@ function renderPersonagemCard(p, idx, isMago) {
         </select>
         <span class="${statusObj.css}">${statusObj.label}</span>
       </span>
-      <button class="remove-btn"
+      <button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>
+      ${!isMago ? `
+        <button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button>
+        <button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>
+      ` : ''}
+    </div>
+    <div class="stats-line">
+      ${statField('move', 'Mov')}
+      ${statField('fight', 'Fight')}
+      ${statField('shoot', 'Shoot')}
+      ${statField('armor', 'Armor')}
+      ${statField('will', 'Will')}
+      ${statField('hp', 'HP')}
+      <span class="stat-label" style="margin-left:1.5em;">HP atual:</span>
+      <span class="hp-control">
+        <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
+        <input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)">
+        <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
+        <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
+      </span>
+    </div>
+    <div class="person-itens">
+      <b>Itens:</b>
+      <ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul>
+      <form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})">
+        <select id="add-person-item-select-${idx}">
+          <option value="">Adicionar item...</option>
+          ${itemOpts}
+        </select>
+        <button type="submit">Adicionar</button>
+      </form>
+    </div>
+  </div>`;
+}
+function removerPersonagem(idx) {
+  warband.splice(idx, 1);
+  renderPersonagens();
+}
+
+function renderAddSoldadoForm() {
+  const form = document.getElementById('add-soldado-form');
+  const sel = document.getElementById('soldado-tipo');
+  const custoSpan = document.getElementById('soldado-custo-span');
+  if (!form || !sel || !custoSpan) return;
+
+  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
+    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
+  ).join('');
+  sel.onchange = function() {
+    const opt = sel.options[sel.selectedIndex];
+    custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
+  };
+  sel.onchange();
+
+  form.onsubmit = function(e) {
+    e.preventDefault();
+    const tipo = sel.value;
+    const nome = document.getElementById('soldado-nome').value.trim();
+    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
+    if (soldado) {
+      const novo = {
+        tipo: soldado.tipo,
+        nome: nome || soldado.tipo,
+        stats: {...soldado.stats},
+        currentHp: Number(soldado.stats.hp),
+        status: "normal",
+        personItens: []
+      };
+      warband.push(novo);
+      renderPersonagens();
+      form.reset();
+      sel.onchange();
+    }
+  };
+}
+
+document.getElementById('add-magia-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('magia-dropdown').value;
+  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
+  const comp = document.getElementById('magia-comp').value.trim();
+  if (!nome) return;
+  bancoMagias.push({
+    nome, escola, descricao: comp
+  });
+  renderBancoMagias();
+  renderMagiaDropdown();
+  this.reset();
+};
+document.getElementById('add-item-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('item-dropdown').value;
+  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
+  const efeito = document.getElementById('item-efeito').value.trim();
+  if (!nome) return;
+  bancoItens.push({
+    nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
+  });
+  renderBancoItens();
+  renderItemDropdown();
+  this.reset();
+};
+
+function renderAll() {
+  renderBestiario();
+  renderBancoMagias();
+  renderBancoItens();
+  renderPersonagens();
+  renderAddSoldadoForm();
+  renderMagiaDropdown();
+  renderItemDropdown();
+}
+
+window.onload = loadJSON;
+
+document.addEventListener('keydown', function(e){
+  if (document.querySelector(".tab-content.active")?.id === "dashboard" && e.key === "Escape") {
+    resetAllHP();
+  }
+});
+</script>
+</body>
+</html>
