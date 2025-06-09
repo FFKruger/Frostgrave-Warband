@@ -24,7 +24,7 @@
     .gold-btn:active, .xp-btn:active { background: #2471a3; }
     .section-title { font-size: 0.98em; margin-top: 0.7em; margin-bottom: 0.2em; font-weight: 500; }
     .character-group { display: flex; flex-direction: column; gap: 0.4em; margin-bottom: 1em; }
-    .person-card { background: #fafdff; border-radius: 6px; box-shadow: 0 1px 3px #bbb2; padding: 0.7em 0.6em 0.6em 0.6em; width: 100%; min-width: 220px; max-width: 500px; position: relative; border: 1px solid #eaf2f8; margin-bottom: 0.7em; }
+    .person-card { background: #fafdff; border-radius: 6px; box-shadow: 0 1px 3px #bbb2; padding: 0.7em 0.6em 0.6em 0.6em; width: 100%; min-width: 320px; max-width: 800px; position: relative; border: 1px solid #eaf2f8; margin-bottom: 0.7em; }
     .person-card:hover { box-shadow: 0 2px 8px #bbb5; border: 1px solid #3498db22; }
     .person-header { font-size: 0.98em; margin-bottom: 0.4em; display: flex; align-items: center; gap: 0.4em; }
     .tipo-mago { color: #1a5276; font-weight: bold; font-size: 0.95em; }
@@ -146,6 +146,7 @@
         <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
         <button id="add-magia-btn" type="submit">Adicionar Magia</button>
       </form>
+      <div id="aprender-magia-form-div"></div>
       <ul id="banco-magias-lista" class="magias-list"></ul>
     </div>
   </section>
@@ -401,15 +402,19 @@ function renderBancoItens() {
 function renderMagiaDropdown() {
   const sel = document.getElementById("magia-dropdown");
   if (!sel) return;
-  // Ordem por escola, depois nome
   let magias = (conteudo_frostgrave_json.magias || []).slice();
-  magias.sort((a, b) => {
-    let ea = a.escola || '', eb = b.escola || '';
-    if (ea !== eb) return ea.localeCompare(eb);
-    return a.nome.localeCompare(b.nome);
+  // Agrupar por escola
+  let agrupadas = {};
+  magias.forEach(m => {
+    let escola = m.escola || 'Outras';
+    if (!agrupadas[escola]) agrupadas[escola] = [];
+    agrupadas[escola].push(m);
   });
-  sel.innerHTML = magias.map(m =>
-    `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+  let escolasOrd = Object.keys(agrupadas).sort();
+  sel.innerHTML = escolasOrd.map(escola =>
+    `<optgroup label="${escola}">
+      ${agrupadas[escola].sort((a,b)=>a.nome.localeCompare(b.nome)).map(m => `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}</option>`).join('')}
+    </optgroup>`
   ).join('');
 }
 
@@ -430,15 +435,19 @@ function renderItemDropdown() {
     sel.onchange();
   }
   if (selItem) {
-    // Ordenar itens por grupo, depois nome
+    // Agrupar por grupo
     let todos = (conteudo_frostgrave_json.itens || []).slice();
-    todos.sort((a, b) => {
-      let ga = a.grupo || "", gb = b.grupo || "";
-      if(ga!==gb) return ga.localeCompare(gb);
-      return a.nome.localeCompare(b.nome);
+    let agrupados = {};
+    todos.forEach(item => {
+      let grupo = item.grupo || 'Outros';
+      if (!agrupados[grupo]) agrupados[grupo] = [];
+      agrupados[grupo].push(item);
     });
-    selItem.innerHTML = todos.map(item =>
-      `<option value="${item.nome}" title="${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}">${item.nome} [${item.grupo}]</option>`
+    let gruposOrd = Object.keys(agrupados).sort();
+    selItem.innerHTML = gruposOrd.map(grupo =>
+      `<optgroup label="${grupo}">
+        ${agrupados[grupo].sort((a,b)=>a.nome.localeCompare(b.nome)).map(item => `<option value="${item.nome}" title="${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}">${item.nome}</option>`).join('')}
+      </optgroup>`
     ).join('');
   }
 }
@@ -603,21 +612,9 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola) : '?';
     return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'><b>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
   }).join('');
-  let magiasDropdown = '';
-  if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
-    // Apenas magias do bancoMagias, agrupadas por escola
-    let agrupadas = {};
-    (bancoMagias || []).forEach(m => {
-      let escola = m.escola || 'Outras';
-      if (!agrupadas[escola]) agrupadas[escola] = [];
-      agrupadas[escola].push(m);
-    });
-    let escolasOrd = Object.keys(agrupadas).sort();
-    magiasDropdown = `<form class='add-item-person-form' onsubmit='event.preventDefault();addPersonMagia(${idx})' style='margin-top:0.6em;'><select id='add-person-magia-select-${idx}'><option value=''>Adicionar magia...</option>${escolasOrd.map(escola => `<optgroup label='${escola}'>${agrupadas[escola].map(m => `<option value='${m.nome}' title='${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}'>${m.nome}</option>`).join('')}</optgroup>`).join('')}</select><button type='submit'>Adicionar</button></form>`;
-  }
   let magiasSection = '';
   if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
-    magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul>${magiasDropdown}</div>`;
+    magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul></div>`;
   }
   let canEdit = (p.tipo !== "Aprendiz");
   let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}</select></div>`;
@@ -733,6 +730,7 @@ function renderAll() {
   renderAddSoldadoForm();
   renderMagiaDropdown();
   renderItemDropdown();
+  renderAprenderMagiaForm();
 }
 
 window.onload = loadJSON;
@@ -841,6 +839,61 @@ function getDificuldadeMagia(escolaMago, escolaMagia) {
   if (opostas[escolaMago] === escolaMagia) return 14;
   // Neutra
   return 12;
+}
+
+function renderAprenderMagiaForm() {
+  const formDiv = document.getElementById('aprender-magia-form-div');
+  if (!formDiv) return;
+  // Listar mago/aprendiz
+  let magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
+  let magoOpts = magos.map((p,i) => `<option value="${i}">${p.nome || p.tipo} (${p.tipo})</option>`).join('');
+  // Magias do banco, agrupadas por escola
+  let agrupadas = {};
+  (bancoMagias || []).forEach(m => {
+    let escola = m.escola || 'Outras';
+    if (!agrupadas[escola]) agrupadas[escola] = [];
+    agrupadas[escola].push(m);
+  });
+  let escolasOrd = Object.keys(agrupadas).sort();
+  let magiaOpts = escolasOrd.map(escola =>
+    `<optgroup label="${escola}">
+      ${agrupadas[escola].sort((a,b)=>a.nome.localeCompare(b.nome)).map(m => `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}</option>`).join('')}
+    </optgroup>`
+  ).join('');
+  formDiv.innerHTML = `<form class="aprender-magia-form" id="aprender-magia-form" autocomplete="off" style="margin-bottom:0.7em;display:flex;gap:0.5em;align-items:center;justify-content:center;">
+    <select id="personagem-aprender-magia">${magoOpts}</select>
+    <select id="magia-aprender-dropdown">${magiaOpts}</select>
+    <button id="aprender-magia-btn" type="submit">Aprender Magia</button>
+  </form>
+  <div id="aprender-magia-alert" style="color:#c0392b;font-size:0.95em;text-align:center;"></div>`;
+  const form = document.getElementById('aprender-magia-form');
+  if (form) {
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('personagem-aprender-magia').value);
+      const magiaNome = document.getElementById('magia-aprender-dropdown').value;
+      const alertDiv = document.getElementById('aprender-magia-alert');
+      alertDiv.textContent = '';
+      if (!warband[idx] || !magiaNome) return;
+      if (!warband[idx].escola) {
+        alertDiv.textContent = 'Defina a escola do personagem primeiro!';
+        return;
+      }
+      let xpInput = document.getElementById('xp-input');
+      let xpAtual = parseInt(xpInput.value) || 0;
+      if (xpAtual < 100) {
+        alertDiv.textContent = 'XP insuficiente para aprender uma nova magia! (100 XP)';
+        return;
+      }
+      if (!warband[idx].personMagias) warband[idx].personMagias = [];
+      if (!warband[idx].personMagias.includes(magiaNome)) {
+        warband[idx].personMagias.push(magiaNome);
+        xpInput.value = xpAtual - 100;
+      }
+      renderPersonagens();
+      renderAprenderMagiaForm();
+    };
+  }
 }
 </script>
 </body>
