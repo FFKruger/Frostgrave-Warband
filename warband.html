@@ -225,22 +225,21 @@
   </section>
 </main>
 <script>
-const conteudo_frostgrave_json = {
-  "magias": [],
-  "itens": [],
-  "personagens": [],
-  "soldados": [
-    { "tipo": "Thug", "stats": { "move": 6, "fight": "+0", "shoot": "+0", "armor": 10, "will": "-1", "hp": 10 }, "custo": 10 },
-    { "tipo": "Thief", "stats": { "move": 7, "fight": "+0", "shoot": "+0", "armor": 10, "will": "0", "hp": 10 }, "custo": 20 },
-    { "tipo": "War Hound", "stats": { "move": 8, "fight": "+1", "shoot": "-", "armor": 10, "will": "-2", "hp": 8 }, "custo": 10 },
-    { "tipo": "Archer", "stats": { "move": 6, "fight": "+1", "shoot": "+2", "armor": 10, "will": "0", "hp": 10 }, "custo": 50 },
-    { "tipo": "Infantryman", "stats": { "move": 6, "fight": "+3", "shoot": "+0", "armor": 11, "will": "0", "hp": 12 }, "custo": 50 }
-  ],
-  "bestiario": [
-    { "nome": "Giant Rat", "tipo": "Animal", "desc": "Roedor agressivo e rápido", "explicacao": "Aparecem em grupos.", "stats": { "move": 7, "fight": "+0", "shoot": "-", "armor": 8, "will": "-1", "hp": 6 } },
-    { "nome": "Zombie", "tipo": "Morto-vivo", "desc": "Lento mas persistente", "explicacao": "Não pode correr.", "stats": { "move": 4, "fight": "+0", "shoot": "-", "armor": 12, "will": "-2", "hp": 12 } }
-  ]
-};
+let conteudo_frostgrave_json = { escolas:[], magias:[], itens:[], personagens:[], soldados:[], bestiario:[] };
+let warband = [];
+
+// Carrega JSON automaticamente ao abrir a página
+async function loadJSON() {
+  try {
+    const resp = await fetch('conteudo_frostgrave.json');
+    if (!resp.ok) throw new Error("Arquivo não encontrado!");
+    conteudo_frostgrave_json = await resp.json();
+    warband = (conteudo_frostgrave_json.personagens || []).map(p => ({...p}));
+    renderAll();
+  } catch (err) {
+    alert("Falha ao carregar conteudo_frostgrave.json: " + err.message);
+  }
+}
 
 /* --- Troca de abas --- */
 document.getElementById('tabnav').addEventListener('click', function(e) {
@@ -325,8 +324,6 @@ function renderBancoMagias() {
   (conteudo_frostgrave_json.magias || []).forEach(m => {
     ul.innerHTML += `<li>
       <b title="${m.descricao || ''}">${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
-      ${m.alcance ? `<span style="color:#229954; margin-left:1em;">Alcance: ${m.alcance}</span>` : ''}
-      ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
     </li>`;
   });
 }
@@ -359,8 +356,6 @@ function renderItemDropdown() {
 }
 
 /* --- Renderização de Personagens --- */
-let warband = []; // começa vazio
-
 function renderPersonagens() {
   // Mago & Aprendiz
   const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
@@ -399,12 +394,12 @@ function renderAddSoldadoForm() {
   const custoSpan = document.getElementById('soldado-custo-span');
   if (!form || !sel || !custoSpan) return;
 
-  sel.innerHTML = conteudo_frostgrave_json.soldados.map(
+  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
     s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
   ).join('');
   sel.onchange = function() {
     const opt = sel.options[sel.selectedIndex];
-    custoSpan.textContent = `Custo: ${opt.getAttribute('data-custo')}g`;
+    custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
   };
   sel.onchange();
 
@@ -412,7 +407,7 @@ function renderAddSoldadoForm() {
     e.preventDefault();
     const tipo = sel.value;
     const nome = document.getElementById('soldado-nome').value.trim();
-    const soldado = conteudo_frostgrave_json.soldados.find(s => s.tipo === tipo);
+    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
     if (soldado) {
       warband.push({
         tipo: soldado.tipo,
@@ -452,8 +447,7 @@ document.getElementById('add-item-form').onsubmit = function(e) {
   this.reset();
 };
 
-/* --- Inicialização --- */
-window.onload = function() {
+function renderAll() {
   renderBestiario();
   renderBancoMagias();
   renderBancoItens();
@@ -461,7 +455,9 @@ window.onload = function() {
   renderAddSoldadoForm();
   renderMagiaDropdown();
   renderItemDropdown();
-};
+}
+
+window.onload = loadJSON;
 </script>
 </body>
 </html>
