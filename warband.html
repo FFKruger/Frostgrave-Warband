@@ -69,7 +69,7 @@
     .stat-edit-btn:active { background: #14507c; }
     .stat-edit-cancel { background: #e67e22; color: #fff; border: none; border-radius: 5px; font-size: 0.91em; padding: 0.1em 0.7em; cursor: pointer; margin-left: 2px;}
     .stat-edit-cancel:active { background: #b04a02; }
-    .add-mago-btn {
+    .add-mago-btn, .add-aprendiz-btn {
       background: #229954;
       color: #fff;
       border: none;
@@ -78,8 +78,9 @@
       padding: 0.5em 1.1em;
       margin: 0.5em 0 1em 0;
       cursor: pointer;
+      display: inline-block;
     }
-    .add-mago-btn:active { background: #157347; }
+    .add-mago-btn:active, .add-aprendiz-btn:active { background: #157347; }
     .bestiary-list {margin:0;}
     .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
     .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
@@ -169,13 +170,14 @@
     </div>
     <div class="section-title">Mago & Aprendiz</div>
     <button class="add-mago-btn" onclick="adicionarMago()">Adicionar Mago</button>
+    <button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>
     <div class="character-group" id="mago-aprendiz-lista"></div>
     <div class="section-title">Soldados</div>
     <div class="character-group" id="soldado-lista"></div>
     <section class="add-section">
       <h2 style="color:#229954">Adicionar Soldado</h2>
       <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
-      <form class="add-form add-form-soldado" id="add-soldado-form">
+      <form class="add-form add-form-soldado" id="add-soldado-form" autocomplete="off">
         <label>
           Tipo de Soldado:
           <select id="soldado-tipo"></select>
@@ -191,7 +193,7 @@
   </section>
   <section id="magias" class="tab-content">
     <h2>Banco de Magias</h2>
-    <form class="magia-form" id="add-magia-form">
+    <form class="magia-form" id="add-magia-form" autocomplete="off">
       <select id="magia-dropdown"></select>
       <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
       <button id="add-magia-btn" type="submit">Adicionar Magia</button>
@@ -200,7 +202,7 @@
   </section>
   <section id="itens" class="tab-content">
     <h2>Banco de Itens</h2>
-    <form class="item-form" id="add-item-form">
+    <form class="item-form" id="add-item-form" autocomplete="off">
       <select id="item-dropdown"></select>
       <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
       <button id="add-item-btn" type="submit">Adicionar Item</button>
@@ -221,6 +223,8 @@ let conteudo_frostgrave_json = { escolas:[], magias:[], itens:[], personagens:[]
 let warband = [];
 let editingIdx = null;
 let editingStat = null;
+let bancoMagias = [];
+let bancoItens = [];
 
 async function loadJSON() {
   try {
@@ -228,6 +232,8 @@ async function loadJSON() {
     if (!resp.ok) throw new Error("Arquivo não encontrado!");
     conteudo_frostgrave_json = await resp.json();
     warband = [];
+    bancoMagias = [];
+    bancoItens = [];
     renderAll();
     enableTabs();
   } catch (err) {
@@ -271,14 +277,24 @@ function setXP(val) {
 
 function adicionarMago() {
   const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
-  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
   if (warband.some(p => p.tipo === 'Mago')) {
     alert('Já existe um Mago na warband!');
     return;
   }
   if (mago) warband.unshift({ ...mago, nome: mago.tipo });
-  if (aprendiz && !warband.some(p => p.tipo === 'Aprendiz')) {
-    warband.splice(1, 0, { ...aprendiz, nome: aprendiz.tipo });
+  renderPersonagens();
+}
+function adicionarAprendiz() {
+  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
+  if (warband.some(p => p.tipo === 'Aprendiz')) {
+    alert('Já existe um Aprendiz na warband!');
+    return;
+  }
+  // Se já tiver mago, insere na posição 1, senão na frente
+  let idx = warband.findIndex(p => p.tipo === 'Mago');
+  if (aprendiz) {
+    if (idx === -1) warband.unshift({ ...aprendiz, nome: aprendiz.tipo });
+    else warband.splice(idx + 1, 0, { ...aprendiz, nome: aprendiz.tipo });
   }
   renderPersonagens();
 }
@@ -330,11 +346,12 @@ function renderBancoMagias() {
   const ul = document.getElementById('banco-magias-lista');
   if (!ul) return;
   ul.innerHTML = '';
-  (conteudo_frostgrave_json.magias || []).forEach(m => {
+  (bancoMagias || []).forEach(m => {
     let desc = m.escola ? `Escola: ${m.escola}` : '';
     ul.innerHTML += `<li>
       <b title="${desc}">${m.nome}</b>
       <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
+      ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
     </li>`;
   });
 }
@@ -350,7 +367,7 @@ function renderBancoItens() {
   const ul = document.getElementById('banco-itens-lista');
   if (!ul) return;
   ul.innerHTML = '';
-  (conteudo_frostgrave_json.itens || []).forEach(item => {
+  (bancoItens || []).forEach(item => {
     let desc = item.descricao ? item.descricao : '';
     ul.innerHTML += `<li>
       <b title="${desc}">${item.nome}</b>
@@ -360,23 +377,31 @@ function renderBancoItens() {
   });
 }
 function renderItemDropdown() {
-  const sel = document.getElementById("item-dropdown");
-  if (!sel) return;
-  sel.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
-    `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
-  ).join('');
+  const sel = document.getElementById("soldado-tipo");
+  const selItem = document.getElementById("item-dropdown");
+  if (sel) {
+    sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(s =>
+      `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
+    ).join('');
+    // Atualiza custo ao trocar de opção
+    sel.onchange = function() {
+      const opt = sel.options[sel.selectedIndex];
+      const custoSpan = document.getElementById('soldado-custo-span');
+      custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
+    };
+    sel.onchange();
+  }
+  if (selItem) {
+    selItem.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
+      `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
+    ).join('');
+  }
 }
 
-// Permite mover soldados para cima/baixo
 function moveSoldado(idx, dir) {
-  // soldados só começam depois dos mago/aprendiz, então apenas soldados são reordenáveis
-  // mago/aprendiz estão nos índices 0 e 1 se presentes
-  // idx = índice real em warband
-  // dir = -1 (para cima), 1 (para baixo)
   const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz').length;
   const soldStart = magos;
   const soldEnd = warband.length - 1;
-  // só permite mover dentro dos soldados
   if (idx < soldStart || idx > soldEnd) return;
   let dest = idx + dir;
   if (dest < soldStart || dest > soldEnd) return;
@@ -488,6 +513,7 @@ function renderAddSoldadoForm() {
   sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
     s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
   ).join('');
+  // Força sempre atualizar custo ao abrir o form
   sel.onchange = function() {
     const opt = sel.options[sel.selectedIndex];
     custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
@@ -518,7 +544,7 @@ document.getElementById('add-magia-form').onsubmit = function(e) {
   const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
   const comp = document.getElementById('magia-comp').value.trim();
   if (!nome) return;
-  conteudo_frostgrave_json.magias.push({
+  bancoMagias.push({
     nome, escola, descricao: comp
   });
   renderBancoMagias();
@@ -531,7 +557,7 @@ document.getElementById('add-item-form').onsubmit = function(e) {
   const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
   const efeito = document.getElementById('item-efeito').value.trim();
   if (!nome) return;
-  conteudo_frostgrave_json.itens.push({
+  bancoItens.push({
     nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
   });
   renderBancoItens();
