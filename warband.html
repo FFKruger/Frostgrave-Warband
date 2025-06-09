@@ -22,7 +22,7 @@
       font-family: 'Segoe UI', Arial, sans-serif;
       background: var(--main-bg);
       margin: 0;
-      font-size: 17px;
+      font-size: 14px;
     }
     main {
       max-width: 1200px;
@@ -32,8 +32,8 @@
       padding: 1.2em 2em;
       box-shadow: 0 2px 8px var(--shadow);
     }
-    h1 { text-align: center; margin-bottom: 0.7em; color: var(--text-title); letter-spacing: 0.5px; font-size: 2em; font-weight: 700; }
-    h2, .tab-panel-title { color: var(--text-title); font-size: 1.3em; margin-bottom: 0.6em; font-weight: 700; }
+    h1 { text-align: center; margin-bottom: 0.7em; color: var(--text-title); letter-spacing: 0.5px; font-size: 1.25em; font-weight: 700; }
+    h2, .tab-panel-title { color: var(--text-title); font-size: 1em; margin-bottom: 0.6em; font-weight: 700; }
     nav { text-align: center; margin-bottom: 1em; }
     nav button { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px 6px 0 0; padding: 0.3em 1em; font-size: 0.95em; margin-right: 0.1em; cursor: pointer; }
     nav button.active, nav button:hover { background: var(--primary); color: #fff; }
@@ -53,22 +53,22 @@
       background: var(--card-bg);
       border-radius: 8px;
       box-shadow: 0 1px 4px var(--shadow);
-      padding: 1.2em 1em 1em 1em;
+      padding: 0.8em 0.7em 0.7em 0.7em;
       width: 100%;
-      min-width: 350px;
+      min-width: 320px;
       max-width: 900px;
       position: relative;
       border: 1px solid var(--border);
-      margin-bottom: 1.2em;
-      font-size: 1.08em;
+      margin-bottom: 0.8em;
+      font-size: 0.97em;
     }
     .person-card:hover { box-shadow: 0 2px 8px var(--shadow); border: 1px solid var(--primary); }
-    .person-header { font-size: 1.15em; margin-bottom: 0.7em; }
+    .person-header { font-size: 1em; margin-bottom: 0.5em; }
     .tipo-mago { color: var(--primary); font-weight: bold; font-size: 0.95em; }
     .tipo-aprendiz { color: var(--accent); font-weight: bold; font-size: 0.95em; }
     .tipo-soldado { color: var(--accent); font-weight: bold; font-size: 0.95em; }
     .soldado-elite { color: var(--danger); }
-    .stats-line { font-size: 1.13em; display: flex; align-items: center; gap: 0.7em; margin-bottom: .4em; padding: 0.3em 0; background: var(--panel-bg); border-radius: 5px; }
+    .stats-line { font-size: 0.97em; display: flex; align-items: center; gap: 0.7em; margin-bottom: .4em; padding: 0.3em 0; background: var(--panel-bg); border-radius: 5px; }
     .stat-label { font-weight: 500; margin-right: 0.1em; color: var(--text-main);}
     .stat-value, .stat-input { width: 1.5em; text-align: center; }
     .stat-input { border: 1px solid var(--border); border-radius: 3px; font-size: 0.95em; padding: 0.05em 0.1em;}
@@ -82,10 +82,10 @@
     .edit-name-form { display: inline; }
     .add-mago-btn, .add-aprendiz-btn { background: var(--accent); color: #fff; border: none; border-radius: 4px; font-size: 0.9em; padding: 0.2em 0.6em; margin: 0.2em 0 0.5em 0; cursor: pointer; display: inline-block; }
     .add-mago-btn:active, .add-aprendiz-btn:active { background: var(--primary-dark); }
-    .hp-control { display: flex; align-items: center; gap: 0.3em; margin-left: 0.5em; }
-    .hp-btn { font-size: 1.3em; width: 2.2em; height: 2.2em; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+    .hp-control { display: flex; align-items: center; gap: 0.2em; margin-left: 0.4em; }
+    .hp-btn { font-size: 1em; width: 1.6em; height: 1.6em; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
     .hp-btn:active { background: var(--primary-dark); }
-    .hp-value { width: 3.2em; text-align: center; font-size: 1.13em; border: 1.5px solid var(--primary); border-radius: 7px; margin: 0 0.2em; height: 2.2em; }
+    .hp-value { width: 2.2em; text-align: center; font-size: 0.97em; border: 1.5px solid var(--primary); border-radius: 7px; margin: 0 0.1em; height: 1.6em; }
     .person-status { margin-left: 0.3em; }
     .person-itens { margin-top: 0.4em; background: var(--panel-bg); border-radius: 4px; padding: 0.2em 0.5em 0.3em 0.5em; }
     .person-itens-list { margin: 0.2em 0 0 0.5em; font-size: 0.95em; }
@@ -116,20 +116,20 @@
       background: var(--panel-bg);
       border-radius: 12px;
       box-shadow: 0 2px 8px var(--shadow);
-      padding: 2em 2em 1.5em 2em;
-      margin: 1.5em auto 2em auto;
+      padding: 1.2em 1.2em 1em 1.2em;
+      margin: 1.2em auto 1.2em auto;
       max-width: 900px;
       min-width: 350px;
-      font-size: 1.1em;
+      font-size: 0.98em;
     }
-    .magia-form, .item-form, .aprender-magia-form { font-size: 1.08em; }
-    .magia-form select, .item-form select, .magia-form input, .item-form input { font-size: 0.95em; padding: 0.2em 0.4em; border-radius: 4px; border: 1px solid var(--border); min-width: 90px; background: #fff; }
+    .magia-form, .item-form, .aprender-magia-form { font-size: 0.97em; }
+    .magia-form select, .item-form select, .magia-form input, .item-form input { font-size: 0.97em; padding: 0.2em 0.4em; border-radius: 4px; border: 1px solid var(--border); min-width: 90px; background: #fff; }
     .magia-form button, .item-form button { background: var(--primary); color: #fff; border: none; border-radius: 4px; font-size: 0.95em; padding: 0.2em 0.7em; cursor: pointer; transition: background 0.2s; }
     .magia-form button:active, .item-form button:active { background: var(--primary-dark); }
-    .magias-list, .itens-list { font-size: 1.08em; }
+    .magias-list, .itens-list { font-size: 0.97em; }
     .magias-list > li, .itens-list > li { margin-bottom: 0.3em; padding: 0.3em 0.5em; background: #fff; border-radius: 4px; font-size: 0.95em; }
     .magias-list > li[style*='font-weight:bold'], .itens-list > li[style*='font-weight:bold'] { background: var(--panel-bg); box-shadow: none; margin-top: 0.5em; margin-bottom: 0.1em; font-size: 1em; border-left: 3px solid var(--primary); padding-left: 0.4em; }
-    .notes-box { font-size: 1.08em; width: 100%; min-height: 80px; font-size: 0.95em; border-radius: 4px; border: 1px solid var(--border); padding: 0.5em 0.7em; background: #fff; margin-top: 0.5em; resize: vertical; }
+    .notes-box { font-size: 0.97em; width: 100%; min-height: 80px; font-size: 0.95em; border-radius: 4px; border: 1px solid var(--border); padding: 0.5em 0.7em; background: #fff; margin-top: 0.5em; resize: vertical; }
     .magias-compartilhadas-box { background: var(--card-bg); border-radius: 6px; box-shadow: 0 1px 4px var(--shadow); padding: 0.7em 0.8em; margin: 0.7em 0 1em 0; }
   </style>
 </head>
@@ -355,11 +355,14 @@ function vincularAprendizStats() {
   if (magoIdx === -1 || aprIdx === -1) return;
   const magoStats = warband[magoIdx].stats;
   const aprStats = warband[aprIdx].stats;
-  // Move, armor, hp não são vinculados (devem ser iguais ao padrão do aprendiz!)
+  // Move, armor não são vinculados (devem ser iguais ao padrão do aprendiz!)
   // Fight, Shoot, Will são vinculados (-2 do mago)
   aprStats.fight = ajusteStat(magoStats.fight, -2);
   aprStats.shoot = ajusteStat(magoStats.shoot, -2);
   aprStats.will = ajusteStat(magoStats.will, -2);
+  // HP do aprendiz = HP do mago - 4
+  let magoHp = Number(magoStats.hp) || 0;
+  aprStats.hp = Math.max(1, magoHp - 4);
   warband[aprIdx].currentHp = Math.min(getCurrentHP(warband[aprIdx]), Number(aprStats.hp));
 }
 function ajusteStat(stat, delta) {
@@ -425,8 +428,8 @@ function renderBancoMagias() {
     agrupadas[tipo].push(m);
   });
   let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
-  tiposOrd.forEach(tipo => {
-    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
+  tiposOrd.forEach((tipo, idx) => {
+    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:${idx === 0 ? '0.7em' : '1.7em'};margin-bottom:0.3em;letter-spacing:0.5px;">${tipo}</li>`;
     agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(m => {
       let desc = m.escola ? `Escola: ${m.escola}` : '';
       ul.innerHTML += `<li title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}"><b>${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}</li>`;
@@ -445,8 +448,8 @@ function renderBancoItens() {
     agrupadas[tipo].push(item);
   });
   let tiposOrd = Object.keys(agrupadas).sort((a,b)=>a.localeCompare(b));
-  tiposOrd.forEach(tipo => {
-    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
+  tiposOrd.forEach((tipo, idx) => {
+    ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:${idx === 0 ? '0.7em' : '1.7em'};margin-bottom:0.3em;letter-spacing:0.5px;">${tipo}</li>`;
     agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(item => {
       let desc = item.descricao ? item.descricao : '';
       ul.innerHTML += `<li title="${desc.replace(/'/g, '&apos;')}"><b>${item.nome}</b> <span style="color:#888">[${item.grupo}]</span> <span style="color:#229954; margin-left:1em;">${desc}</span></li>`;
@@ -544,15 +547,17 @@ function renderPersonagens() {
     if (aprendiz && aprendiz.personMagias) magias = magias.concat(aprendiz.personMagias);
     magias = [...new Set(magias)];
     if (magias.length) {
-      let html = `<div class="magias-compartilhadas-box" style="background:#fafdff;border-radius:10px;padding:1.2em 1.5em;margin:1.2em 0 2em 0;box-shadow:0 1px 8px #bbb2;max-width:700px;">
-        <b style='color:#21618c;font-size:1.18em;'>Magias Aprendidas (compartilhadas):</b>
+      let html = `<div class="magias-compartilhadas-box" style="background:var(--card-bg);border-radius:10px;padding:1.2em 1.5em;margin:1.2em 0 2em 0;box-shadow:0 1px 8px var(--shadow);max-width:700px;">
+        <b style='color:var(--text-title);font-size:1.18em;'>Magias Aprendidas (compartilhadas):</b>
         <ul class='person-itens-list' style='margin-top:0.7em;'>`;
       html += magias.map(magia => {
         let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
         let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
         let escola = magiaObj && magiaObj.escola ? magiaObj.escola : '';
-        let dif = mago ? getDificuldadeMagia(mago.escola, escola) : '?';
-        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${dif}</span></li>`;
+        let difMago = mago ? getDificuldadeMagia(mago.escola, escola, 'Mago') : '?';
+        let difApr = aprendiz ? getDificuldadeMagia(aprendiz.escola, escola, 'Aprendiz') : '?';
+        let difStr = (mago && aprendiz) ? `Mago: ${difMago} / Aprendiz: ${difApr}` : (mago ? `Mago: ${difMago}` : `Aprendiz: ${difApr}`);
+        return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + difStr : 'Dificuldade: ' + difStr}'><b>${magia}</b> <span style='color:#888'>${escola ? '('+escola+')' : ''} | Dif: ${difStr}</span></li>`;
       }).join('');
       html += '</ul></div>';
       magiasDiv.innerHTML = html;
@@ -659,15 +664,15 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     }
     return `<li title='${desc ? desc.replace(/'/g, '&apos;') : ''}'><b>${item.nome}</b> <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span> <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button></li>`;
   }).join('');
-  // HP control ao lado do nome
-  let hpControl = `<div class="hp-control" style="margin-left:0.5em; display:inline-flex;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
+  // HP control ao lado do nome, alinhado à direita
+  let hpControl = `<div class="hp-control" style="margin-left:auto; display:inline-flex; float:right;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
   // Magias do personagem (apenas para mago/aprendiz)
   let magiasPersonagem = p.personMagias || [];
   let magiasList = magiasPersonagem.map((magia, i) => {
     let magiaObj = (bancoMagias || []).find(m => m.nome === magia);
     let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
     let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
-    let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola) : '?';
+    let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola, p.tipo) : '?';
     return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'><b>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
   }).join('');
   let magiasSection = '';
@@ -675,8 +680,8 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul></div>`;
   }
   let canEdit = (p.tipo !== "Aprendiz");
-  let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}</select></div>`;
-  return `<div class="person-card"><div class="person-header"><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
+  let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":''}>${opt.label}</option>`).join('')}</select></div>`;
+  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   warband.splice(idx, 1);
@@ -905,8 +910,8 @@ function renderAprenderMagiaForm() {
   // Listar mago/aprendiz
   let magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
   let magoOpts = magos.map((p,i) => `<option value="${i}">${p.nome || p.tipo} (${p.tipo})</option>`).join('');
-  // Magias do JSON, agrupadas por escola, e filtrar as já aprendidas
-  let allMagias = (conteudo_frostgrave_json.magias || []).slice();
+  // Magias do banco, agrupadas por escola, e filtrar as já aprendidas
+  let allMagias = (bancoMagias || []).slice();
   let agrupadas = {};
   allMagias.forEach(m => {
     let escola = m.escola || 'Outras';
@@ -925,18 +930,45 @@ function renderAprenderMagiaForm() {
       </optgroup>`
     ).join('');
   }
-  formDiv.innerHTML = `<form class="aprender-magia-form" id="aprender-magia-form" autocomplete="off" style="margin-bottom:0.7em;display:flex;gap:0.5em;align-items:center;justify-content:center;">
-    <select id="personagem-aprender-magia">${magoOpts}</select>
-    <select id="magia-aprender-dropdown">${getMagiaOpts(0)}</select>
-    <button id="aprender-magia-btn" type="submit">Aprender Magia</button>
-  </form>
-  <div id="aprender-magia-alert" style="color:#c0392b;font-size:0.95em;text-align:center;"></div>`;
+  // Função para mostrar descrição da magia selecionada
+  function getMagiaDescricao(nome) {
+    let magia = (bancoMagias || []).find(m => m.nome === nome);
+    return magia && magia.descricao ? magia.descricao : '';
+  }
+  formDiv.innerHTML = `
+    <div style="margin-bottom:0.7em;text-align:center;">
+      <span style="font-size:1.08em;font-weight:600;color:var(--primary);">Aprender Magia</span>
+    </div>
+    <form class="aprender-magia-form" id="aprender-magia-form" autocomplete="off" style="margin-bottom:0.7em;display:flex;gap:0.7em;align-items:center;justify-content:center;flex-wrap:wrap;">
+      <label style="font-size:1em;font-weight:500;color:var(--text-title);">Personagem:
+        <select id="personagem-aprender-magia" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;">
+          ${magoOpts}
+        </select>
+      </label>
+      <label style="font-size:1em;font-weight:500;color:var(--text-title);">Magia:
+        <select id="magia-aprender-dropdown" style="font-size:1.08em;padding:0.3em 1em;border-radius:7px;border:1.5px solid var(--primary);margin-left:0.5em;min-width:160px;">
+          ${getMagiaOpts(0)}
+        </select>
+      </label>
+      <button id="aprender-magia-btn" type="submit" style="font-size:1.08em;padding:0.3em 1.2em;border-radius:7px;background:var(--primary);color:#fff;border:none;font-weight:600;transition:background 0.2s;">Aprender Magia</button>
+    </form>
+    <div id="aprender-magia-desc" style="min-height:2em;font-size:0.98em;color:var(--text-main);text-align:center;margin-bottom:0.3em;"></div>
+    <div id="aprender-magia-alert" style="color:#c0392b;font-size:0.95em;text-align:center;"></div>`;
   const form = document.getElementById('aprender-magia-form');
   const magoSel = document.getElementById('personagem-aprender-magia');
   const magiaSel = document.getElementById('magia-aprender-dropdown');
+  const descDiv = document.getElementById('aprender-magia-desc');
+  // Atualizar descrição ao trocar magia
+  function updateDesc() {
+    const nome = magiaSel.value;
+    descDiv.textContent = nome ? getMagiaDescricao(nome) : '';
+  }
   magoSel.onchange = function() {
     magiaSel.innerHTML = getMagiaOpts(magoSel.value);
+    updateDesc();
   };
+  magiaSel.onchange = updateDesc;
+  updateDesc();
   if (form) {
     form.onsubmit = function(e) {
       e.preventDefault();
@@ -955,11 +987,14 @@ function renderAprenderMagiaForm() {
         alertDiv.textContent = 'XP insuficiente para aprender uma nova magia! (100 XP)';
         return;
       }
-      if (!warband[idx].personMagias) warband[idx].personMagias = [];
-      if (!warband[idx].personMagias.includes(magiaNome)) {
-        warband[idx].personMagias.push(magiaNome);
-        xpInput.value = xpAtual - 100;
-      }
+      // Vincular magia ao mago e aprendiz
+      let mago = warband.find(p => p.tipo === 'Mago');
+      let aprendiz = warband.find(p => p.tipo === 'Aprendiz');
+      if (mago && !mago.personMagias) mago.personMagias = [];
+      if (aprendiz && !aprendiz.personMagias) aprendiz.personMagias = [];
+      if (mago && !mago.personMagias.includes(magiaNome)) mago.personMagias.push(magiaNome);
+      if (aprendiz && !aprendiz.personMagias.includes(magiaNome)) aprendiz.personMagias.push(magiaNome);
+      xpInput.value = xpAtual - 100;
       renderPersonagens();
       renderAprenderMagiaForm();
     };
