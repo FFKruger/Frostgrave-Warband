@@ -60,6 +60,7 @@
         .magia-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
         .actions-row { margin-top: 1.2em; }
         .notes-box { width: 100%; min-height: 80px; border-radius:6px; border: 1px solid #bbb; padding: .7em; font-size: 1.07em; margin-bottom: 1em;}
+        .add-form select { min-width: 160px; }
         @media (max-width: 1100px) { .flex-wrap { flex-direction: column; } .person-card { min-width: unset; width: 100%; } }
     </style>
 </head>
@@ -140,6 +141,12 @@
         <h2>Banco de Magias</h2>
         <form class="add-form" id="add-magia-form">
             <label>
+                Selecionar do Livro:
+                <select id="dropdown-magias-livro">
+                    <option value="">-- Escolha uma magia --</option>
+                </select>
+            </label>
+            <label>
                 Magia:
                 <input id="nova-magia-nome" type="text" maxlength="32" placeholder="Nome da Magia">
             </label>
@@ -188,6 +195,16 @@
     </section>
 </main>
 <script>
+// --- Magias do livro base (exemplo, adicione todas do livro) ---
+const magiasLivro = [
+    {nome: "Elemental Bolt", escola: "Elementalist", custo_base: 10, descricao: "Projétil elemental poderoso: causa dano à distância."},
+    {nome: "Teleport", escola: "Chronomancer", custo_base: 12, descricao: "Teleporta o mago para qualquer local visível."},
+    {nome: "Bone Dart", escola: "Necromancer", custo_base: 8, descricao: "Dispara um dardo ósseo mágico de dano razoável."},
+    {nome: "Grenade", escola: "Elementalist", custo_base: 10, descricao: "Arremessa uma bola de fogo em área."},
+    {nome: "Bridge", escola: "Sigilist", custo_base: 8, descricao: "Cria uma ponte mágica temporária."},
+    {nome: "Push", escola: "Thaumaturge", custo_base: 8, descricao: "Empurra um alvo para trás."}
+    // ...adicione todas as magias do livro aqui!
+];
 const ESCOLAS = ["Chronomancer","Elementalist","Enchanter","Illusionist","Necromancer","Sigilist","Soothsayer","Summoner","Thaumaturge","Witch"];
 const ALINHADAS = {
   "Elementalist": ["Chronomancer","Enchanter"],
@@ -455,6 +472,34 @@ notas.oninput = function() { salvarLS(); }
 renderPersonagens();
 renderBancoMagias();
 renderBancoItens();
+
+// ------ Magias do livro no dropdown ------
+function renderDropdownMagiasLivro() {
+    const sel = document.getElementById('dropdown-magias-livro');
+    sel.innerHTML = `<option value="">-- Escolha uma magia --</option>` +
+        magiasLivro.map((m, idx) =>
+            `<option value="${idx}">
+                ${m.nome} [${m.escola}] - ${m.descricao ? m.descricao.substring(0,40) : ""}
+            </option>`
+        ).join("");
+}
+renderDropdownMagiasLivro();
+
+document.getElementById('dropdown-magias-livro').onchange = function() {
+    const idx = this.value;
+    if (idx === "") {
+        document.getElementById('nova-magia-nome').value = "";
+        document.getElementById('nova-magia-escola').value = ESCOLAS[0];
+        document.getElementById('nova-magia-custo').value = "";
+        document.getElementById('nova-magia-desc').value = "";
+        return;
+    }
+    const magia = magiasLivro[idx];
+    document.getElementById('nova-magia-nome').value = magia.nome;
+    document.getElementById('nova-magia-escola').value = magia.escola;
+    document.getElementById('nova-magia-custo').value = magia.custo_base;
+    document.getElementById('nova-magia-desc').value = magia.descricao || "";
+}
 </script>
 </body>
 </html>
