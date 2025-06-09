@@ -853,17 +853,39 @@ function rebindFormEvents() {
   if (addMagiaForm) {
     addMagiaForm.onsubmit = function(e) {
       e.preventDefault();
-      const nome = document.getElementById('magia-dropdown').value;
+      const sel = document.getElementById('magia-dropdown');
+      const nome = sel.value;
       const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
       if (!nome) return;
       bancoMagias.push({ nome, escola });
       renderBancoMagias();
       renderMagiaDropdown();
       renderAprenderMagiaForm();
-      this.reset();
+      // Manter seleção anterior se possível
+      setTimeout(() => {
+        if (sel && sel.options.length) sel.selectedIndex = 0;
+      }, 0);
     };
   }
-  // Adicionar Soldado
+  // Adicionar Item
+  const addItemForm = document.getElementById('add-item-form');
+  if (addItemForm) {
+    addItemForm.onsubmit = function(e) {
+      e.preventDefault();
+      const sel = document.getElementById('item-dropdown');
+      const nome = sel.value;
+      const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
+      if (!nome) return;
+      addItemToBanco(nome, item?.grupo || 'Personalizado', item?.descricao || '');
+      renderBancoItens();
+      renderItemDropdown();
+      // Manter seleção anterior se possível
+      setTimeout(() => {
+        if (sel && sel.options.length) sel.selectedIndex = 0;
+      }, 0);
+    };
+  }
+  // Adicionar Soldado (mantém igual)
   const addSoldadoForm = document.getElementById('add-soldado-form');
   if (addSoldadoForm) {
     addSoldadoForm.onsubmit = function(e) {
@@ -892,7 +914,7 @@ function rebindFormEvents() {
         return;
       }
       // GOLD: checar gold suficiente
-      let goldInput = document.getElementById('gold-input');
+      let goldInput = document.getElementById('gold-input-dashboard');
       let goldAtual = parseInt(goldInput.value) || 0;
       if (goldAtual < soldado.custo) {
         alertDiv.textContent = 'Ouro insuficiente para contratar este soldado!';
