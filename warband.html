@@ -5,7 +5,6 @@
   <title>Frostgrave Warband Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* Tema Azul Frostgrave */
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
     main { max-width: 1100px; margin: 2em auto; background: #fff; border-radius: 10px; padding: 2em 2.5em; box-shadow: 0 6px 28px #bbb8; }
     h1 { text-align: center; margin-bottom: 0.7em; color: #154360; letter-spacing: 1px;}
@@ -178,15 +177,42 @@
     </div>
     <div class="section-title">Mago & Aprendiz</div>
     <div class="character-group" id="mago-aprendiz-lista"></div>
+    <div class="add-mago-aprendiz-btns" id="add-mago-aprendiz-btns"></div>
     <div class="section-title">Soldados</div>
     <div class="character-group" id="soldado-lista"></div>
+    <section class="add-section">
+      <h2 style="color:#229954">Adicionar Soldado</h2>
+      <div class="soldado-limit-alert" id="soldado-limit-alert"></div>
+      <form class="add-form add-form-soldado" id="add-soldado-form">
+        <label>
+          Tipo de Soldado:
+          <select id="soldado-tipo"></select>
+        </label>
+        <label>
+          Nome:
+          <input id="soldado-nome" type="text" maxlength="40" placeholder="Opcional">
+        </label>
+        <span id="soldado-custo-span" style="margin-left:1em;color:#229954;font-weight:bold;"></span>
+        <button type="submit">Adicionar Soldado</button>
+      </form>
+    </section>
   </section>
   <section id="magias" class="tab-content">
     <h2>Banco de Magias</h2>
+    <form class="magia-form" id="add-magia-form">
+      <select id="magia-dropdown"></select>
+      <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
+      <button id="add-magia-btn" type="submit">Adicionar Magia</button>
+    </form>
     <ul id="banco-magias-lista" class="magias-list"></ul>
   </section>
   <section id="itens" class="tab-content">
     <h2>Banco de Itens</h2>
+    <form class="item-form" id="add-item-form">
+      <select id="item-dropdown"></select>
+      <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
+      <button id="add-item-btn" type="submit">Adicionar Item</button>
+    </form>
     <ul id="banco-itens-lista" class="itens-list"></ul>
   </section>
   <section id="notas" class="tab-content">
@@ -199,6 +225,34 @@
   </section>
 </main>
 <script>
+// Dados-base (exemplo reduzido, insira o JSON completo de magias, itens, personagens, bestiário conforme sua necessidade)
+const conteudo_frostgrave_json = {
+  "magias": [
+    {"nome": "Elemental Bolt", "escola": "Elementalist", "descricao": "Projétil elemental de energia pura.", "alcance": "24\""},
+    {"nome": "Bone Dart", "escola": "Necromancer", "descricao": "Projétil de osso negro conjurado magicamente.", "alcance": "12\""}
+  ],
+  "itens": [
+    {"nome":"Potion of Healing","grupo":"Poção","descricao":"+5 HP. Pode ser usada uma vez para restaurar 5 pontos de vida."},
+    {"nome":"Magic Sword","grupo":"Arma","descricao":"+2 Fight. Apenas arma principal."}
+  ],
+  "personagens": [
+    {"tipo":"Mago","nome":"Mestre da Neve","stats":{"move":6,"fight":"+2","shoot":"+0","armor":10,"will":"+4","hp":14}},
+    {"tipo":"Aprendiz","nome":"Aprendiz","stats":{"move":6,"fight":"+0","shoot":"+0","armor":10,"will":"+2","hp":10}},
+    {"tipo":"Infantryman","nome":"Infantaria","stats":{"move":6,"fight":"+3","shoot":"+0","armor":11,"will":"0","hp":12}}
+  ],
+  "soldados": [
+    {"tipo":"Thug","stats":{"move":6,"fight":"+0","shoot":"+0","armor":10,"will":"-1","hp":10},"custo":10},
+    {"tipo":"Thief","stats":{"move":7,"fight":"+0","shoot":"+0","armor":10,"will":"0","hp":10},"custo":20},
+    {"tipo":"War Hound","stats":{"move":8,"fight":"+1","shoot":"-","armor":10,"will":"-2","hp":8},"custo":10},
+    {"tipo":"Archer","stats":{"move":6,"fight":"+1","shoot":"+2","armor":10,"will":"0","hp":10},"custo":50},
+    {"tipo":"Infantryman","stats":{"move":6,"fight":"+3","shoot":"+0","armor":11,"will":"0","hp":12},"custo":50}
+  ],
+  "bestiario": [
+    {"nome":"Giant Rat","tipo":"Animal","desc":"Roedor agressivo e rápido","explicacao":"Aparecem em grupos.","stats":{"move":7,"fight":"+0","shoot":"-","armor":8,"will":"-1","hp":6}},
+    {"nome":"Zombie","tipo":"Morto-vivo","desc":"Lento mas persistente","explicacao":"Não pode correr.","stats":{"move":4,"fight":"+0","shoot":"-","armor":12,"will":"-2","hp":12}}
+  ]
+};
+
 /* --- Troca de abas --- */
 document.getElementById('tabnav').addEventListener('click', function(e) {
   if (e.target.tagName === "BUTTON") {
@@ -209,12 +263,13 @@ document.getElementById('tabnav').addEventListener('click', function(e) {
     let tabSection = document.getElementById(tab);
     if (tabSection) tabSection.classList.add('active');
     if (tab === 'bestiario') renderBestiario();
-    if (tab === 'magias') renderBancoMagias();
-    if (tab === 'itens') renderBancoItens();
-    if (tab === 'dashboard') renderPersonagens();
+    if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
+    if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
+    if (tab === 'dashboard') { renderPersonagens(); renderAddSoldadoForm(); }
   }
 });
 
+/* --- Gold/XP --- */
 function alteraGold(delta) {
   let input = document.getElementById("gold-input");
   if (input) input.value = Math.max(0, parseInt(input.value) + delta);
@@ -231,27 +286,6 @@ function setXP(val) {
   let input = document.getElementById("xp-input");
   if (input) input.value = Math.max(0, parseInt(val) || 0);
 }
-
-/* --- JSON EXEMPLO PARA TODAS AS ABAS --- */
-const conteudo_frostgrave_json = {
-  "magias": [
-    {"nome": "Elemental Bolt", "escola": "Elementalist", "descricao": "Projétil elemental de energia pura.", "alcance": "24\""},
-    {"nome": "Bone Dart", "escola": "Necromancer", "descricao": "Projétil de osso negro conjurado magicamente.", "alcance": "12\""}
-  ],
-  "itens": [
-    {"nome":"Potion of Healing","grupo":"Poção","descricao":"+5 HP. Pode ser usada uma vez para restaurar 5 pontos de vida."},
-    {"nome":"Magic Sword","grupo":"Arma","descricao":"+2 Fight. Apenas arma principal."}
-  ],
-  "personagens": [
-    {"tipo":"Mago","nome":"Mestre da Neve","stats":{"move":6,"fight":"+2","shoot":"+0","armor":10,"will":"+4","hp":14}},
-    {"tipo":"Aprendiz","nome":"Aprendiz","stats":{"move":6,"fight":"+0","shoot":"+0","armor":10,"will":"+2","hp":10}},
-    {"tipo":"Infantryman","nome":"Infantaria","stats":{"move":6,"fight":"+3","shoot":"+0","armor":11,"will":"0","hp":12}}
-  ],
-  "bestiario": [
-    {"nome":"Giant Rat","tipo":"Animal","desc":"Roedor agressivo e rápido","explicacao":"Aparecem em grupos.","stats":{"move":7,"fight":"+0","shoot":"-","armor":8,"will":"-1","hp":6}},
-    {"nome":"Zombie","tipo":"Morto-vivo","desc":"Lento mas persistente","explicacao":"Não pode correr.","stats":{"move":4,"fight":"+0","shoot":"-","armor":12,"will":"-2","hp":12}}
-  ]
-};
 
 /* --- Renderização do Bestiário --- */
 function renderBestiario() {
@@ -307,6 +341,13 @@ function renderBancoMagias() {
     </li>`;
   });
 }
+function renderMagiaDropdown() {
+  const sel = document.getElementById("magia-dropdown");
+  if (!sel) return;
+  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
+    `<option value="${m.nome}">${m.nome} (${m.escola})</option>`
+  ).join('');
+}
 
 /* --- Renderização de Itens --- */
 function renderBancoItens() {
@@ -320,22 +361,32 @@ function renderBancoItens() {
     </li>`;
   });
 }
+function renderItemDropdown() {
+  const sel = document.getElementById("item-dropdown");
+  if (!sel) return;
+  sel.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
+    `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
+  ).join('');
+}
 
 /* --- Renderização de Personagens --- */
+let warband = [...conteudo_frostgrave_json.personagens]; // para edição dinâmica
+
 function renderPersonagens() {
   // Mago & Aprendiz
-  const magos = conteudo_frostgrave_json.personagens.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
-  const soldados = conteudo_frostgrave_json.personagens.filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+  const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
+  const soldados = warband.filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
   const magoDiv = document.getElementById('mago-aprendiz-lista');
   const soldDiv = document.getElementById('soldado-lista');
-  if (magoDiv) magoDiv.innerHTML = magos.map(p => renderPersonagemCard(p)).join('');
-  if (soldDiv) soldDiv.innerHTML = soldados.map(p => renderPersonagemCard(p)).join('');
+  if (magoDiv) magoDiv.innerHTML = magos.map((p, idx) => renderPersonagemCard(p, idx, true)).join('');
+  if (soldDiv) soldDiv.innerHTML = soldados.map((p, idx) => renderPersonagemCard(p, idx, false)).join('');
 }
-function renderPersonagemCard(p) {
+function renderPersonagemCard(p, idx, isMago) {
   return `<div class="person-card">
     <div class="person-header">
       <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
       <b>${p.nome || ''}</b>
+      ${!isMago ? `<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover">&times;</button>` : ''}
     </div>
     <div class="stats-line">
       <span class="stat-label">Mov:</span> <span>${p.stats.move}</span>
@@ -347,6 +398,67 @@ function renderPersonagemCard(p) {
     </div>
   </div>`;
 }
+function removerPersonagem(idx) {
+  warband.splice(idx + 2, 1); // +2 porque mago e aprendiz são fixos no topo
+  renderPersonagens();
+}
+
+/* --- Formulário de Adicionar Soldado --- */
+function renderAddSoldadoForm() {
+  const form = document.getElementById('add-soldado-form');
+  const sel = document.getElementById('soldado-tipo');
+  const custoSpan = document.getElementById('soldado-custo-span');
+  if (!form || !sel || !custoSpan) return;
+
+  sel.innerHTML = conteudo_frostgrave_json.soldados.map(
+    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
+  ).join('');
+  sel.onchange = function() {
+    const opt = sel.options[sel.selectedIndex];
+    custoSpan.textContent = `Custo: ${opt.getAttribute('data-custo')}g`;
+  };
+  sel.onchange();
+
+  form.onsubmit = function(e) {
+    e.preventDefault();
+    const tipo = sel.value;
+    const nome = document.getElementById('soldado-nome').value.trim();
+    const soldado = conteudo_frostgrave_json.soldados.find(s => s.tipo === tipo);
+    if (soldado) {
+      warband.push({
+        tipo: soldado.tipo,
+        nome: nome || soldado.tipo,
+        stats: {...soldado.stats}
+      });
+      renderPersonagens();
+      form.reset();
+      sel.onchange();
+    }
+  };
+}
+
+/* --- Adição de magias/itens ao banco (exemplo simples) --- */
+document.getElementById('add-magia-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('magia-dropdown').value;
+  const comp = document.getElementById('magia-comp').value.trim();
+  // Aqui só exemplo: não duplica, mas pode implementar verificação se quiser
+  conteudo_frostgrave_json.magias.push({
+    nome, escola: 'Personalizada', descricao: comp
+  });
+  renderBancoMagias();
+  this.reset();
+};
+document.getElementById('add-item-form').onsubmit = function(e) {
+  e.preventDefault();
+  const nome = document.getElementById('item-dropdown').value;
+  const efeito = document.getElementById('item-efeito').value.trim();
+  conteudo_frostgrave_json.itens.push({
+    nome, grupo: 'Personalizado', descricao: efeito
+  });
+  renderBancoItens();
+  this.reset();
+};
 
 /* --- Inicialização --- */
 window.onload = function() {
@@ -354,6 +466,9 @@ window.onload = function() {
   renderBancoMagias();
   renderBancoItens();
   renderPersonagens();
+  renderAddSoldadoForm();
+  renderMagiaDropdown();
+  renderItemDropdown();
 };
 </script>
 </body>
