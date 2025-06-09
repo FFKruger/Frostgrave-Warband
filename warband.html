@@ -45,8 +45,9 @@
         .badge-norm { background: #3498db;}
         .soldado-limit-alert {color:#c0392b;font-weight:bold; margin-bottom:1em;}
         .magias-list, .itens-list { margin: 0.4em 0 0 1.2em; font-size: 0.97em; }
+        .person-magias { margin-top: 0.5em; padding-left: 1.1em; color: #1a5276; font-size: 0.98em; }
         .magia-form, .item-form { margin-bottom: 1.2em; }
-        .magia-form input, .item-form input, .magia-form select, .item-form select { margin-right: 1em; }
+        .magia-form select, .item-form select { min-width: 200px; margin-right: 1em;}
         .edit-btn { background: #f7ca18; color: #222; border: none; border-radius: 3px; padding: 0.13em 0.7em; font-size: 0.97em; cursor: pointer;}
         .edit-btn:active { background: #e67e22;}
         @media (max-width: 1100px) { .flex-wrap { flex-direction: column; } .person-card { min-width: unset; width: 100%; } }
@@ -91,11 +92,8 @@
     <section id="magias" class="tab-content">
         <h2>Banco de Magias</h2>
         <form class="magia-form" onsubmit="adicionarBancoMagia(event)">
-            <input id="magia-nome" type="text" required placeholder="Nome">
-            <input id="magia-escola" type="text" required placeholder="Escola">
-            <input id="magia-custo" type="number" min="1" required placeholder="Custo">
-            <input id="magia-desc" type="text" required placeholder="Descrição rápida">
-            <input id="magia-comp" type="text" placeholder="Descrição completa">
+            <select id="magia-dropdown"></select>
+            <input id="magia-comp" type="text" placeholder="Descrição completa (opcional)">
             <button type="submit">Adicionar Magia</button>
         </form>
         <ul id="banco-magias-lista" class="magias-list"></ul>
@@ -104,9 +102,8 @@
     <section id="itens" class="tab-content">
         <h2>Banco de Itens</h2>
         <form class="item-form" onsubmit="adicionarBancoItem(event)">
-            <input id="item-nome" type="text" required placeholder="Nome">
-            <input id="item-desc" type="text" required placeholder="Descrição rápida">
-            <input id="item-efeito" type="text" placeholder="Efeito">
+            <select id="item-dropdown"></select>
+            <input id="item-efeito" type="text" placeholder="Efeito extra (opcional)">
             <button type="submit">Adicionar Item</button>
         </form>
         <ul id="banco-itens-lista" class="itens-list"></ul>
@@ -120,15 +117,159 @@
 <script>
 // ------------------- Dados Iniciais -------------------------
 let personagens = [];
-let bancoMagias = [
-    {nome: "Absorb Knowledge", escola: "Sigilist", custo_base: 8, descricao: "Permite ao mago ganhar XP extra lendo grimórios.", completo: "O mago pode gastar uma ação para ler um grimório não usado, ganhando 50 XP. O grimório é removido após o uso."},
-    {nome: "Bone Dart", escola: "Necromancer", custo_base: 8, descricao: "Projétil mágico de osso que causa dano.", completo: "Alcance 24\". Causa dano igual a um ataque de força +5."},
-];
-let bancoItens = [
-    {nome: "Magic Sword", descricao: "Espada encantada (+1 Fight)", efeito: "O portador recebe +1 no atributo Fight enquanto empunhar."},
-    {nome: "Potion of Healing", descricao: "Recupera até 5 HP ao ser consumida.", efeito: "Recupere até 5 pontos de vida ao usar esta poção."}
-];
+let bancoMagias = [];
+let bancoItens = [];
+// Atribuição de magias aos personagens (por ID de personagem)
+let magiasPorPersonagem = {}; // { idxPersonagem: [ {nome, escola, custo_base, descricao, completo} ] }
 
+// Frostgrave 2ª edição - Magias por escola
+const magiasPorEscola = {
+    Chronomancer: [
+        {nome:"Crumble", custo:8, descricao:"Destrói construções.", escola:"Chronomancer"},
+        {nome:"Decay", custo:8, descricao:"Enfraquece armaduras.", escola:"Chronomancer"},
+        {nome:"Fleet Feet", custo:8, descricao:"Aumenta movimento.", escola:"Chronomancer"},
+        {nome:"Slow", custo:8, descricao:"Diminui movimento.", escola:"Chronomancer"},
+        {nome:"Time Control", custo:12, descricao:"Duas ativações seguidas.", escola:"Chronomancer"},
+        {nome:"Time Walk", custo:10, descricao:"Permite agir duas vezes.", escola:"Chronomancer"},
+        {nome:"Petrify", custo:14, descricao:"Petrifica alvo.", escola:"Chronomancer"},
+        {nome:"Reveal Secret", custo:8, descricao:"Revela segredo.", escola:"Chronomancer"}
+    ],
+    Elementalist: [
+        {nome:"Call Storm", custo:10, descricao:"Dificulta ataques à distância.", escola:"Elementalist"},
+        {nome:"Elemental Bolt", custo:10, descricao:"Dano mágico à distância.", escola:"Elementalist"},
+        {nome:"Elemental Hammer", custo:8, descricao:"Arma mágica temporária.", escola:"Elementalist"},
+        {nome:"Elemental Shield", custo:8, descricao:"Reduz dano recebido.", escola:"Elementalist"},
+        {nome:"Grenade", custo:10, descricao:"Explosão à distância.", escola:"Elementalist"},
+        {nome:"Scatter Shot", custo:10, descricao:"Projéteis mágicos múltiplos.", escola:"Elementalist"},
+        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Elementalist"},
+        {nome:"Leap", custo:8, descricao:"Move rapidamente um aliado.", escola:"Elementalist"}
+    ],
+    Enchanter: [
+        {nome:"Animate Construct", custo:8, descricao:"Cria construto.", escola:"Enchanter"},
+        {nome:"Control Construct", custo:8, descricao:"Controla construto.", escola:"Enchanter"},
+        {nome:"Enchant Weapon", custo:8, descricao:"Arma mágica temporária.", escola:"Enchanter"},
+        {nome:"Grenade", custo:12, descricao:"Explosão à distância.", escola:"Enchanter"},
+        {nome:"Strength", custo:8, descricao:"Aumenta força.", escola:"Enchanter"},
+        {nome:"Telekinesis", custo:8, descricao:"Move objetos à distância.", escola:"Enchanter"},
+        {nome:"Transmute Rock", custo:12, descricao:"Transforma pedra em lama.", escola:"Enchanter"},
+        {nome:"Will Power", custo:8, descricao:"Aumenta vontade.", escola:"Enchanter"}
+    ],
+    Illusionist: [
+        {nome:"Blur", custo:8, descricao:"Dificulta ser atingido.", escola:"Illusionist"},
+        {nome:"Color Spray", custo:8, descricao:"Atordoa inimigos.", escola:"Illusionist"},
+        {nome:"Dispel", custo:10, descricao:"Dissipa magia.", escola:"Illusionist"},
+        {nome:"Fool's Gold", custo:8, descricao:"Cria tesouro falso.", escola:"Illusionist"},
+        {nome:"Glow", custo:8, descricao:"Faz alvo brilhar.", escola:"Illusionist"},
+        {nome:"Invisibility", custo:10, descricao:"Fica invisível.", escola:"Illusionist"},
+        {nome:"Mirage", custo:12, descricao:"Cria ilusão de terreno.", escola:"Illusionist"},
+        {nome:"Transpose", custo:10, descricao:"Troca posições.", escola:"Illusionist"}
+    ],
+    Necromancer: [
+        {nome:"Bone Dart", custo:8, descricao:"Projétil mágico de osso.", escola:"Necromancer"},
+        {nome:"Control Undead", custo:12, descricao:"Controla morto-vivo.", escola:"Necromancer"},
+        {nome:"Raise Zombie", custo:8, descricao:"Cria zumbi.", escola:"Necromancer"},
+        {nome:"Reveal Death", custo:8, descricao:"Revela cadáveres.", escola:"Necromancer"},
+        {nome:"Strike Dead", custo:14, descricao:"Mata instantaneamente.", escola:"Necromancer"},
+        {nome:"Steal Health", custo:10, descricao:"Rouba vida do alvo.", escola:"Necromancer"},
+        {nome:"Poison Dart", custo:8, descricao:"Projétil envenenado.", escola:"Necromancer"},
+        {nome:"Summon Demon", custo:12, descricao:"Invoca demônio.", escola:"Necromancer"}
+    ],
+    Sigilist: [
+        {nome:"Absorb Knowledge", custo:8, descricao:"Ganha XP extra.", escola:"Sigilist"},
+        {nome:"Create Grimoire", custo:10, descricao:"Cria grimório.", escola:"Sigilist"},
+        {nome:"Draining Word", custo:10, descricao:"Dificulta magia específica.", escola:"Sigilist"},
+        {nome:"Explosive Rune", custo:8, descricao:"Armadilha mágica.", escola:"Sigilist"},
+        {nome:"Power Word", custo:8, descricao:"Facilita magia específica.", escola:"Sigilist"},
+        {nome:"Push", custo:8, descricao:"Empurra alvo.", escola:"Sigilist"},
+        {nome:"Write Scroll", custo:8, descricao:"Cria pergaminho.", escola:"Sigilist"},
+        {nome:"Ward", custo:8, descricao:"Protege contra magias.", escola:"Sigilist"}
+    ],
+    Soothsayer: [
+        {nome:"Awareness", custo:8, descricao:"Aumenta percepção.", escola:"Soothsayer"},
+        {nome:"Combat Awareness", custo:8, descricao:"Aumenta combate.", escola:"Soothsayer"},
+        {nome:"Fate", custo:8, descricao:"Melhora rolagem.", escola:"Soothsayer"},
+        {nome:"Mind Control", custo:12, descricao:"Controla mente do alvo.", escola:"Soothsayer"},
+        {nome:"Reveal Secret", custo:8, descricao:"Revela segredo.", escola:"Soothsayer"},
+        {nome:"Telekinesis", custo:8, descricao:"Move objetos à distância.", escola:"Soothsayer"},
+        {nome:"True Sight", custo:8, descricao:"Vê através de ilusões.", escola:"Soothsayer"},
+        {nome:"View Future", custo:8, descricao:"Prevê eventos.", escola:"Soothsayer"}
+    ],
+    Summoner: [
+        {nome:"Bind Demon", custo:10, descricao:"Controla demônio invocado.", escola:"Summoner"},
+        {nome:"Create Demon", custo:12, descricao:"Cria demônio.", escola:"Summoner"},
+        {nome:"Familiar", custo:8, descricao:"Ganha familiar.", escola:"Summoner"},
+        {nome:"Imp", custo:8, descricao:"Invoca imp.", escola:"Summoner"},
+        {nome:"Plane Walk", custo:12, descricao:"Move entre planos.", escola:"Summoner"},
+        {nome:"Plague of Insects", custo:10, descricao:"Invoca enxame.", escola:"Summoner"},
+        {nome:"Summon Demon", custo:12, descricao:"Invoca demônio.", escola:"Summoner"},
+        {nome:"Will Power", custo:8, descricao:"Aumenta vontade.", escola:"Summoner"}
+    ],
+    Thaumaturge: [
+        {nome:"Blinding Light", custo:8, descricao:"Cega alvo.", escola:"Thaumaturge"},
+        {nome:"Circle of Protection", custo:8, descricao:"Protege contra mortos-vivos.", escola:"Thaumaturge"},
+        {nome:"Heal", custo:8, descricao:"Cura aliado.", escola:"Thaumaturge"},
+        {nome:"Miraculous Cure", custo:12, descricao:"Cura doença/ferida.", escola:"Thaumaturge"},
+        {nome:"Shield", custo:8, descricao:"Aumenta armadura.", escola:"Thaumaturge"},
+        {nome:"Slow", custo:8, descricao:"Diminui movimento.", escola:"Thaumaturge"},
+        {nome:"Spell Eater", custo:10, descricao:"Anula magia.", escola:"Thaumaturge"},
+        {nome:"Wrath of God", custo:14, descricao:"Dano em área.", escola:"Thaumaturge"}
+    ],
+    Witch: [
+        {nome:"Animal Companion", custo:8, descricao:"Ganha animal aliado.", escola:"Witch"},
+        {nome:"Brew Potion", custo:8, descricao:"Cria poção.", escola:"Witch"},
+        {nome:"Control Animal", custo:10, descricao:"Controla animal.", escola:"Witch"},
+        {nome:"Curse", custo:8, descricao:"Penaliza alvo.", escola:"Witch"},
+        {nome:"Poison Dart", custo:8, descricao:"Projétil envenenado.", escola:"Witch"},
+        {nome:"Spell Eater", custo:10, descricao:"Anula magia.", escola:"Witch"},
+        {nome:"Summon Animal", custo:10, descricao:"Invoca animal.", escola:"Witch"},
+        {nome:"Wall", custo:8, descricao:"Cria parede temporária.", escola:"Witch"}
+    ]
+};
+// Frostgrave 2ª edição - Itens padrão
+const itensPadrao = {
+    "Armas mágicas": [
+        {nome:"Espada Mágica", descricao:"Espada +1 Fight."},
+        {nome:"Arco Mágico", descricao:"Arco +1 Shoot."},
+        {nome:"Adaga Mágica", descricao:"Adaga +1 Fight."}
+    ],
+    "Poções": [
+        {nome:"Poção de Cura", descricao:"Recupera até 5 HP."},
+        {nome:"Poção de Invisibilidade", descricao:"Fica invisível por um turno."},
+        {nome:"Poção de Força", descricao:"+2 Fight até o fim do jogo."}
+    ],
+    "Pergaminhos": [
+        {nome:"Pergaminho de Elemental Bolt", descricao:"Usa Elemental Bolt uma vez."},
+        {nome:"Pergaminho de Heal", descricao:"Usa Heal uma vez."}
+    ],
+    "Tesouros diversos": [
+        {nome:"Amuleto de Proteção", descricao:"+2 Will contra magias."},
+        {nome:"Anel de Poder", descricao:"+5 XP ao final do jogo."}
+    ]
+};
+// Estatísticas padrão dos personagens
+const STATS = {
+    "Mago":      { move:6, fight:"+2", shoot:"+0", armor:10, will:"+4", hp:14 },
+    "Aprendiz":  { move:6, fight:"+1", shoot:"+0", armor:10, will:"+2", hp:10 },
+    "Thief":           { move:7, fight:"+1", shoot:"0", armor:10, will:"0", hp:10 },
+    "Thug":            { move:6, fight:"+2", shoot:"0", armor:10, will:"0", hp:10 },
+    "War Dog":         { move:8, fight:"+1", shoot:"0", armor:10, will:"0", hp:8 },
+    "Infantryman":     { move:6, fight:"+2", shoot:"0", armor:12, will:"0", hp:12 },
+    "Man-at-Arms":     { move:6, fight:"+3", shoot:"0", armor:13, will:"0", hp:12 },
+    "Archer":          { move:6, fight:"0", shoot:"+2", armor:11, will:"0", hp:10 },
+    "Barbarian":       { move:6, fight:"+4", shoot:"0", armor:10, will:"0", hp:12 },
+    "Crossbowman":     { move:6, fight:"0", shoot:"+2", armor:11, will:"0", hp:10 },
+    "Knight":          { move:6, fight:"+3", shoot:"0", armor:14, will:"0", hp:12 },
+    "Marksman":        { move:6, fight:"0", shoot:"+3", armor:11, will:"0", hp:10 },
+    "Ranger":          { move:7, fight:"+2", shoot:"+2", armor:11, will:"0", hp:12 },
+    "Templar":         { move:6, fight:"+4", shoot:"0", armor:12, will:"0", hp:12 },
+    "Tracker":         { move:7, fight:"+1", shoot:"+2", armor:11, will:"0", hp:10 },
+    "Treasure Hunter": { move:7, fight:"+3", shoot:"0", armor:12, will:"0", hp:12 },
+    "Apothecary":      { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
+    "Crowmaster":      { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
+    "Pack Mule":       { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
+    "Trap Expert":     { move:7, fight:"0", shoot:"0", armor:10, will:"0", hp:10 },
+    "Witch Doctor":    { move:6, fight:"0", shoot:"0", armor:10, will:"0", hp:10 }
+};
 // Soldados Frostgrave 2ª edição
 const SOLDADOS_NORMAIS = [
     "Thief", "Thug", "War Dog", "Infantryman", "Man-at-Arms"
@@ -137,7 +278,133 @@ const SOLDADOS_ELITES = [
     "Archer", "Barbarian", "Crossbowman", "Knight", "Marksman", "Ranger", "Templar", "Tracker", "Treasure Hunter", "Apothecary", "Crowmaster", "Pack Mule", "Trap Expert", "Witch Doctor"
 ];
 
-// ------------------- Renderização ---------------------------
+// ------------------- Renderização de dropdowns ------------------------
+function renderMagiaDropdown() {
+    const sel = document.getElementById('magia-dropdown');
+    let html = '';
+    Object.keys(magiasPorEscola).forEach(escola => {
+        html += `<optgroup label="${escola}">`;
+        magiasPorEscola[escola].forEach(m =>
+            html += `<option value="${escola}|${m.nome}">${m.nome} (Custo ${m.custo}) - ${m.descricao}</option>`
+        );
+        html += "</optgroup>";
+    });
+    sel.innerHTML = html;
+}
+function renderItemDropdown() {
+    const sel = document.getElementById('item-dropdown');
+    let html = '';
+    Object.keys(itensPadrao).forEach(grupo => {
+        html += `<optgroup label="${grupo}">`;
+        itensPadrao[grupo].forEach(i =>
+            html += `<option value="${grupo}|${i.nome}">${i.nome} - ${i.descricao}</option>`
+        );
+        html += "</optgroup>";
+    });
+    sel.innerHTML = html;
+}
+
+// ------------------- Banco Magias/Itens -------------------------
+function renderBancoMagias() {
+    const ul = document.getElementById('banco-magias-lista');
+    ul.innerHTML = bancoMagias.length
+        ? bancoMagias.map((m, idx) =>
+            `<li>
+                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
+                <br>
+                <i>${m.descricao||""}</i>
+                <br>
+                <small>${m.completo||""}</small>
+                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
+                <button class="edit-btn" onclick="atribuirMagiaPersonagem(${idx})" title="Atribuir">→</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
+}
+function adicionarBancoMagia(e) {
+    e.preventDefault();
+    const val = document.getElementById('magia-dropdown').value;
+    const completo = document.getElementById('magia-comp').value.trim();
+    const [escola, nome] = val.split('|');
+    const magiaBase = magiasPorEscola[escola].find(m => m.nome === nome);
+    if (!magiaBase) return;
+    bancoMagias.push({
+        nome: magiaBase.nome,
+        escola: magiaBase.escola,
+        custo_base: magiaBase.custo,
+        descricao: magiaBase.descricao,
+        completo
+    });
+    renderBancoMagias();
+    e.target.reset();
+}
+function removerBancoMagia(idx) {
+    bancoMagias.splice(idx, 1);
+    renderBancoMagias();
+}
+function atribuirMagiaPersonagem(idxMagia) {
+    // Abre prompt para escolher personagem mago/aprendiz
+    let magos = personagens
+        .map((p,i)=>({p,i}))
+        .filter(x=>x.p.tipo==="Mago"||x.p.tipo==="Aprendiz");
+    if (magos.length === 0) return alert("Adicione Mago ou Aprendiz primeiro!");
+    let escolha = prompt(
+        "Digite o número do personagem para atribuir a magia:\n" +
+        magos.map((x,j)=>`${j+1} - ${x.p.tipo} ${x.p.nome||""}`).join("\n")
+    );
+    let idxEscolhido = parseInt(escolha)-1;
+    if (isNaN(idxEscolhido) || !magos[idxEscolhido]) return;
+    let idxPersonagem = magos[idxEscolhido].i;
+    if (!magiasPorPersonagem[idxPersonagem]) magiasPorPersonagem[idxPersonagem]=[];
+    magiasPorPersonagem[idxPersonagem].push(bancoMagias[idxMagia]);
+    bancoMagias.splice(idxMagia,1);
+    renderBancoMagias();
+    renderPersonagens();
+}
+
+// ---------- Banco de Itens ----------
+function renderBancoItens() {
+    const ul = document.getElementById('banco-itens-lista');
+    ul.innerHTML = bancoItens.length
+        ? bancoItens.map((i, idx) =>
+            `<li>
+                <b>${i.nome}</b>
+                <br>
+                <i>${i.descricao||""}</i>
+                <br>
+                <small>${i.efeito||""}</small>
+                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
+            </li>`
+        ).join("")
+        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
+}
+function adicionarBancoItem(e) {
+    e.preventDefault();
+    const val = document.getElementById('item-dropdown').value;
+    const efeito = document.getElementById('item-efeito').value.trim();
+    const [grupo, nome] = val.split('|');
+    let item = null;
+    for(const g in itensPadrao) {
+        if(g === grupo) {
+            item = itensPadrao[g].find(i => i.nome === nome);
+            break;
+        }
+    }
+    if (!item) return;
+    bancoItens.push({
+        nome: item.nome,
+        descricao: item.descricao,
+        efeito
+    });
+    renderBancoItens();
+    e.target.reset();
+}
+function removerBancoItem(idx) {
+    bancoItens.splice(idx, 1);
+    renderBancoItens();
+}
+
+// ------------------- Dashboard e soldados ----------------------
 function renderPersonagens() {
     const magoAprendizLista = document.getElementById('mago-aprendiz-lista');
     const soldadoLista = document.getElementById('soldado-lista');
@@ -147,6 +414,7 @@ function renderPersonagens() {
         const card = document.createElement('li');
         card.className = 'person-card';
         let tipoStr = pers.tipo;
+        let stats = STATS[pers.tipo] || STATS[pers.tipoSoldado] || {move:"-",fight:"-",shoot:"-",armor:"-",will:"-",hp:"-"};
         if (pers.tipo === "Mago") tipoStr = `<span class="tipo-mago">Mago</span>`;
         else if (pers.tipo === "Aprendiz") tipoStr = `<span class="tipo-aprendiz">Aprendiz</span>`;
         else if (SOLDADOS_NORMAIS.includes(pers.tipoSoldado)) tipoStr = `<span class="tipo-soldado">${pers.tipoSoldado}</span>`;
@@ -157,7 +425,15 @@ function renderPersonagens() {
                 ${tipoStr} ${pers.nome ? ' - ' + pers.nome : ''}
                 <button class="remove-btn" title="Remover" onclick="removerPersonagem(${idx})">✖</button>
             </div>
-            HP: <span>${pers.hp}</span>
+            <div class="stats-line">
+                <span class="stat-label">Mov:</span><span class="stat-value">${stats.move}</span>
+                <span class="stat-label">Fight:</span><span class="stat-value">${stats.fight}</span>
+                <span class="stat-label">Shoot:</span><span class="stat-value">${stats.shoot}</span>
+                <span class="stat-label">Armor:</span><span class="stat-value">${stats.armor}</span>
+                <span class="stat-label">Will:</span><span class="stat-value">${stats.will}</span>
+                <span class="stat-label">HP:</span><span class="stat-value">${stats.hp}</span>
+            </div>
+            ${renderPersonagemMagias(idx)}
         `;
         if (pers.tipo === "Mago" || pers.tipo === "Aprendiz") magoAprendizLista.appendChild(card);
         else soldadoLista.appendChild(card);
@@ -165,27 +441,45 @@ function renderPersonagens() {
     renderSoldadoDropdown();
     renderSoldadoAlert();
 }
-function removerPersonagem(idx) {
-    personagens.splice(idx, 1);
+function renderPersonagemMagias(idxPers) {
+    if (!magiasPorPersonagem[idxPers] || magiasPorPersonagem[idxPers].length === 0) return '';
+    return `<div class="person-magias"><b>Magias:</b><ul>` +
+        magiasPorPersonagem[idxPers].map((m,i)=>
+            `<li>${m.nome} <span style="color:#aaa;">[${m.escola}]</span> 
+            <button class="remove-btn" onclick="removerMagiaPersonagem(${idxPers},${i})" title="Remover magia">✖</button>
+            </li>`
+        ).join('') + `</ul></div>`;
+}
+function removerMagiaPersonagem(idxPers, idxMagia) {
+    magiasPorPersonagem[idxPers].splice(idxMagia,1);
     renderPersonagens();
 }
-
-// ------------------- Formulários Dashboard ------------------
+function removerPersonagem(idx) {
+    personagens.splice(idx, 1);
+    // Remove magias associadas
+    delete magiasPorPersonagem[idx];
+    // Realoca índices das magias
+    let novoMagias = {};
+    personagens.forEach((_,i) => {
+        if (magiasPorPersonagem[i]) novoMagias[i] = magiasPorPersonagem[i];
+    });
+    magiasPorPersonagem = novoMagias;
+    renderPersonagens();
+}
 function adicionarMago() {
     if (personagens.find(p => p.tipo === "Mago")) return alert("Só pode haver um mago!");
-    personagens.push({tipo: "Mago", nome: "Mago", hp: 14});
+    personagens.push({tipo: "Mago", nome: "Mago"});
     renderPersonagens();
 }
 function adicionarAprendiz() {
     if (personagens.find(p => p.tipo === "Aprendiz")) return alert("Só pode haver um aprendiz!");
-    personagens.push({tipo: "Aprendiz", nome: "Aprendiz", hp: 10});
+    personagens.push({tipo: "Aprendiz", nome: "Aprendiz"});
     renderPersonagens();
 }
 function adicionarSoldado(e) {
     e.preventDefault();
     let tipoSoldado = document.getElementById('soldado-tipo').value;
     let nome = document.getElementById('soldado-nome').value;
-    // Limite por tipo
     let norm = personagens.filter(p => SOLDADOS_NORMAIS.includes(p.tipoSoldado)).length;
     let elite = personagens.filter(p => SOLDADOS_ELITES.includes(p.tipoSoldado)).length;
     if (SOLDADOS_NORMAIS.includes(tipoSoldado) && norm >= 4)
@@ -194,7 +488,7 @@ function adicionarSoldado(e) {
         return alert("Máximo de 4 soldados elite!");
     if (norm+elite >= 8)
         return alert("Máximo de 8 soldados!");
-    personagens.push({tipo: "Soldado", tipoSoldado, nome, hp: 10});
+    personagens.push({tipo: "Soldado", tipoSoldado, nome});
     renderPersonagens();
     e.target.reset();
 }
@@ -220,68 +514,6 @@ function renderSoldadoAlert() {
     alertDiv.textContent = msg;
 }
 
-// ------------------- Magias e Itens editáveis -----------------
-function renderBancoMagias() {
-    const ul = document.getElementById('banco-magias-lista');
-    ul.innerHTML = bancoMagias.length
-        ? bancoMagias.map((m, idx) =>
-            `<li>
-                <b>${m.nome}</b> <span style="color:#aaa;">[${m.escola}]</span>
-                <br>
-                <i>${m.descricao}</i>
-                <br>
-                <small>${m.completo||""}</small>
-                <button class="remove-btn" onclick="removerBancoMagia(${idx})" title="Remover">✖</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhuma magia cadastrada.</li>";
-}
-function adicionarBancoMagia(e) {
-    e.preventDefault();
-    const nome = document.getElementById('magia-nome').value.trim();
-    const escola = document.getElementById('magia-escola').value.trim();
-    const custo_base = +document.getElementById('magia-custo').value;
-    const descricao = document.getElementById('magia-desc').value.trim();
-    const completo = document.getElementById('magia-comp').value.trim();
-    if (!nome || !escola || !descricao) return;
-    bancoMagias.push({nome, escola, custo_base, descricao, completo});
-    renderBancoMagias();
-    e.target.reset();
-}
-function removerBancoMagia(idx) {
-    bancoMagias.splice(idx, 1);
-    renderBancoMagias();
-}
-function renderBancoItens() {
-    const ul = document.getElementById('banco-itens-lista');
-    ul.innerHTML = bancoItens.length
-        ? bancoItens.map((i, idx) =>
-            `<li>
-                <b>${i.nome}</b>
-                <br>
-                <i>${i.descricao||""}</i>
-                <br>
-                <small>${i.efeito||""}</small>
-                <button class="remove-btn" onclick="removerBancoItem(${idx})" title="Remover">✖</button>
-            </li>`
-        ).join("")
-        : "<li style='color:#aaa;'>Nenhum item cadastrado.</li>";
-}
-function adicionarBancoItem(e) {
-    e.preventDefault();
-    const nome = document.getElementById('item-nome').value.trim();
-    const descricao = document.getElementById('item-desc').value.trim();
-    const efeito = document.getElementById('item-efeito').value.trim();
-    if (!nome || !descricao) return;
-    bancoItens.push({nome, descricao, efeito});
-    renderBancoItens();
-    e.target.reset();
-}
-function removerBancoItem(idx) {
-    bancoItens.splice(idx, 1);
-    renderBancoItens();
-}
-
 // ------------------- Abas -------------------------
 document.querySelectorAll('nav button').forEach((btn) => {
     btn.onclick = function() {
@@ -290,8 +522,8 @@ document.querySelectorAll('nav button').forEach((btn) => {
         document.querySelectorAll('.tab-content').forEach(tabEl => tabEl.classList.remove('active'));
         const tab = btn.getAttribute('data-tab');
         document.getElementById(tab).classList.add('active');
-        if (tab === 'magias') renderBancoMagias();
-        if (tab === 'itens') renderBancoItens();
+        if (tab === 'magias') { renderMagiaDropdown(); renderBancoMagias(); }
+        if (tab === 'itens') { renderItemDropdown(); renderBancoItens(); }
         if (tab === 'dashboard') renderPersonagens();
     }
 });
@@ -299,6 +531,8 @@ document.querySelectorAll('nav button').forEach((btn) => {
 // ---------- Inicialização ---------------
 window.onload = function() {
     renderPersonagens();
+    renderMagiaDropdown();
+    renderItemDropdown();
     renderBancoMagias();
     renderBancoItens();
 };
