@@ -411,13 +411,15 @@ function adicionarAprendiz() {
     alert('Adicione um mago primeiro!');
     return;
   }
-  // Descontar 200 gold corretamente e sincronizar
+  // Cálculo do custo do aprendiz conforme o nível do mago (baseado no XP gasto)
+  let nivelMago = getNivelPorXpGasto();
+  let custoAprendiz = 160 + 10 * (nivelMago - 6);
   let goldVal = parseInt(document.getElementById('gold-input-dashboard').value) || 0;
-  if (goldVal < 200) {
-    alert('Ouro insuficiente para contratar um Aprendiz! (200g)');
+  if (goldVal < custoAprendiz) {
+    alert(`Ouro insuficiente para contratar um Aprendiz! (Custo: ${custoAprendiz}g)`);
     return;
   }
-  setGold(goldVal - 200); // Usa setGold para garantir sincronização
+  setGold(goldVal - custoAprendiz); // Usa setGold para garantir sincronização
   if (aprendizModelo) {
     let novo = { ...aprendizModelo, nome: aprendizModelo.tipo, escola, personMagias: warbandMagias.slice(), stats: { ...aprendizModelo.stats }, currentHp: Number(aprendizModelo.stats.hp) };
     if (idx === -1) warband.unshift(novo);
@@ -435,13 +437,12 @@ function vincularAprendizStats() {
   const magoStats = warband[magoIdx].stats;
   const aprStats = warband[aprIdx].stats;
   // Move, armor não são vinculados (devem ser iguais ao padrão do aprendiz!)
-  // Fight, Shoot, Will são vinculados (-2 do mago)
+  // Fight, Will são vinculados (-2 do mago)
   aprStats.fight = ajusteStat(magoStats.fight, -2);
-  aprStats.shoot = ajusteStat(magoStats.shoot, -2);
   aprStats.will = ajusteStat(magoStats.will, -2);
-  // HP do aprendiz = HP do mago - 4
+  // HP do aprendiz = HP do mago - 2
   let magoHp = Number(magoStats.hp) || 0;
-  aprStats.hp = Math.max(1, magoHp - 4);
+  aprStats.hp = Math.max(1, magoHp - 2);
   warband[aprIdx].currentHp = Math.min(getCurrentHP(warband[aprIdx]), Number(aprStats.hp));
 }
 function ajusteStat(stat, delta) {
@@ -510,8 +511,12 @@ function renderBancoMagias() {
   tiposOrd.forEach((tipo, idx) => {
     ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:${idx === 0 ? '0.7em' : '1.7em'};margin-bottom:0.3em;letter-spacing:0.5px;">${tipo}</li>`;
     agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach((m, i) => {
-      let desc = m.escola ? `Escola: ${m.escola}` : '';
-      ul.innerHTML += `<li title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}"><b>${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''} <button onclick="removerBancoMagia('${m.nome.replace(/'/g, '\'')}', '${m.escola.replace(/'/g, '\'')}')" style="margin-left:1em;font-size:0.95em;background:var(--danger);color:#fff;border:none;border-radius:4px;padding:0.1em 0.5em;cursor:pointer;">Remover</button></li>`;
+      let magiaObj = (conteudo_frostgrave_json.magias || []).find(x => x.nome === m.nome && x.escola === m.escola);
+      let desc = magiaObj?.descricao || '';
+      let alcance = magiaObj?.alcance ? ` | Alcance: ${magiaObj.alcance}` : '';
+      let dif = magiaObj?.dificuldade !== undefined ? ` | Dificuldade: ${magiaObj.dificuldade}` : '';
+      let tipoM = magiaObj?.tipo ? ` | Tipo: ${magiaObj.tipo}` : '';
+      ul.innerHTML += `<li title="${desc.replace(/'/g, '&apos;')}"><b>${m.nome}</b> <span style="color:#888">(${m.escola})${alcance}${dif}${tipoM}</span>${desc ? `<br><span style="font-size:0.98em;color:#555">${desc}</span>` : ''} <button onclick="removerBancoMagia('${m.nome.replace(/'/g, '\'')}', '${m.escola.replace(/'/g, '\'')}')" style="margin-left:1em;font-size:0.95em;background:var(--danger);color:#fff;border:none;border-radius:4px;padding:0.1em 0.5em;cursor:pointer;">Remover</button></li>`;
     });
   });
 }
@@ -593,7 +598,6 @@ function renderItemDropdown() {
   const sel = document.getElementById("soldado-tipo");
   const selItem = document.getElementById("item-dropdown");
   if (sel) {
-    // Ordenar soldados por tipo
     let soldados = (conteudo_frostgrave_json.soldados || []).slice().sort((a, b) => a.tipo.localeCompare(b.tipo));
     sel.innerHTML = soldados.map(s =>
       `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
@@ -606,7 +610,6 @@ function renderItemDropdown() {
     sel.onchange();
   }
   if (selItem) {
-    // Agrupar por grupo
     let todos = (conteudo_frostgrave_json.itens || []).slice();
     let agrupados = {};
     todos.forEach(item => {
@@ -783,11 +786,6 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') {
     levelHtml = `<span style='margin-left:1em;font-size:0.97em;color:#888;'>Nível: <b>${nivel}</b></span>`;
   }
-  // Custo do Aprendiz
-  let aprendizCustoHtml = '';
-  if (p.tipo === 'Aprendiz') {
-    aprendizCustoHtml = `<span style='margin-left:1em;font-size:0.97em;color:#888;'>Custo: <b>200g</b></span>`;
-  }
   // Botão de promoção
   let promoHtml = '';
   if (p.tipo === 'Aprendiz' && !warband.some(x => x.tipo === 'Mago')) {
@@ -840,7 +838,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
   }
   let canEdit = (p.tipo !== "Aprendiz");
   let statusFooter = `<div style='font-size:0.92em; color:#888; text-align:right; margin-top:0.7em;'>Status: <select class='status-selector ${statusObj.css}' onchange='setStatus(${idx},this.value)' style='font-size:1em;'>${statusOptions.map(opt => `<option value='${opt.value}'${opt.value===statusVal?" selected":''}>${opt.label}</option>`).join('')}</select></div>`;
-  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${levelHtml}${aprendizCustoHtml}${promoHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
+  return `<div class="person-card"><div class="person-header" style="display:flex;align-items:center;justify-content:space-between;"><span><span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>${escolaHtml}${levelHtml}${promoHtml}${isEditingNome ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})"><input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}"><button type="submit" class="edit-name-btn">&#10003;</button><button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button></form>` : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`}</span>${hpControl}<button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover personagem">&times;</button>${!isMagoOuAprendiz ? `<button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button><button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>` : ''}</div>${magiasSection}<div class="stats-line">${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'shoot', 'Shoot', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}</div><div class="person-itens"><b>Itens:</b><ul class="person-itens-list">${personItensList || "<li style='color:#888'>Sem itens</li>"}</ul><form class="add-item-person-form" onsubmit="event.preventDefault();addPersonItem(${idx})"><select id="add-person-item-select-${idx}"><option value="">Adicionar item...</option>${itemOpts}</select><button type="submit">Adicionar</button></form></div>${statusFooter}</div>`;
 }
 function removerPersonagem(idx) {
   // Adicionar confirmação antes de remover
@@ -864,13 +862,10 @@ function renderAddSoldadoForm() {
   const alertDiv = document.getElementById('soldado-limit-alert');
   if (!form || !sel || !custoSpan || !alertDiv) return;
 
-  const especiaisLista = ["Knight","Templar","Barbarian","Treasure Hunter","Tracker","Ranger","Man-at-Arms","Apothecary"];
-  let soldados = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
-    ? conteudo_frostgrave_json.soldados.slice()
-    : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+  let soldados = (conteudo_frostgrave_json.soldados || []).slice();
   soldados = soldados.sort((a, b) => a.tipo.localeCompare(b.tipo));
-  let normais = soldados.filter(s => (s.custo <= 50 && !especiaisLista.includes(s.tipo)));
-  let especiais = soldados.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
+  let normais = soldados.filter(s => s.categoria === 'normal');
+  let especiais = soldados.filter(s => s.categoria === 'especialista');
 
   sel.innerHTML =
     (normais.length ? `<optgroup label="Normais">${normais.map(s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`).join('')}</optgroup>` : '') +
@@ -887,9 +882,7 @@ function renderAddSoldadoForm() {
     alertDiv.textContent = '';
     const tipo = sel.value;
     const nome = document.getElementById('soldado-nome').value.trim();
-    let soldadosOrig = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
-      ? conteudo_frostgrave_json.soldados.slice()
-      : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+    let soldadosOrig = (conteudo_frostgrave_json.soldados || []).slice();
     const soldado = soldadosOrig.find(s => s.tipo === tipo);
     if (!soldado) return;
     // Limites
@@ -898,8 +891,8 @@ function renderAddSoldadoForm() {
       alertDiv.textContent = 'Limite de 8 soldados atingido!';
       return;
     }
-    const especiaisAtuais = soldadosAtuais.filter(s => (s.custo > 50 || especiaisLista.includes(s.tipo)));
-    const isEspecial = (soldado.custo > 50 || especiaisLista.includes(soldado.tipo));
+    const especiaisAtuais = soldadosAtuais.filter(s => s.categoria === 'especialista');
+    const isEspecial = soldado.categoria === 'especialista';
     if (isEspecial && especiaisAtuais.length >= 4) {
       alertDiv.textContent = 'Limite de 4 soldados elite atingido!';
       return;
@@ -975,9 +968,7 @@ function rebindFormEvents() {
       const alertDiv = document.getElementById('soldado-limit-alert');
       alertDiv.textContent = '';
       const tipo = sel.value;
-      let soldadosOrig = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
-        ? conteudo_frostgrave_json.soldados.slice()
-        : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+      let soldadosOrig = (conteudo_frostgrave_json.soldados || []).slice();
       const soldado = soldadosOrig.find(s => s.tipo === tipo);
       if (!soldado) return;
       // Limites
@@ -1085,8 +1076,11 @@ function renderAddMagoAprendizBtns() {
     html += '<button type="submit" class="add-mago-btn" style="margin-left:0.7em;">Adicionar Mago</button>';
     html += '</form>';
   }
-  if (!warband.some(p => p.tipo === 'Aprendiz')) {
-    html += '<button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button>';
+  // Botão de aprendiz só aparece se já houver mago
+  if (warband.some(p => p.tipo === 'Mago') && !warband.some(p => p.tipo === 'Aprendiz')) {
+    let nivelMago = getNivelPorXpGasto();
+    let custoAprendiz = 160 + 10 * (nivelMago - 6);
+    html += `<div style='text-align:center;margin-top:1.2em;'><button class="add-aprendiz-btn" onclick="adicionarAprendiz()">Adicionar Aprendiz</button> <span style='color:#888;font-size:0.98em;margin-left:0.5em;'>Custo: ${custoAprendiz}g</span></div>`;
   }
   div.innerHTML = html;
   // Lógica do form de mago
@@ -1266,8 +1260,8 @@ function renderGoldXPBoxes(targetId) {
   if (!box) return;
   const goldVal = document.getElementById('gold-input-dashboard')?.value || 500;
   const xpVal = document.getElementById('xp-input-dashboard')?.value || 0;
-  // Calcular nível
-  const nivel = Math.max(1, Math.floor(xpVal/100) + 1);
+  // Calcular nível pelo XP gasto
+  const nivel = getNivelPorXpGasto();
   box.innerHTML = `
     <span class="gold-xp-label">Gold:
       <button class="gold-btn" onclick="alteraGold(-10)">-</button>
@@ -1427,6 +1421,20 @@ function promoverAprendiz(idx) {
   aprendiz.stats = { ...aprendiz.stats };
   // Não mais afetado por vincularAprendizStats
   renderPersonagens();
+}
+
+// Função para calcular XP gasto
+function getXpGasto() {
+  // XP inicial é 600, então XP gasto = 600 - XP atual
+  let xpInput = document.getElementById('xp-input-dashboard');
+  let xpAtual = xpInput ? parseInt(xpInput.value) || 0 : 0;
+  let xpGasto = 600 - xpAtual;
+  return xpGasto > 0 ? xpGasto : 0;
+}
+// Função para calcular nível baseado no XP gasto
+function getNivelPorXpGasto() {
+  let xpGasto = getXpGasto();
+  return Math.max(1, Math.floor(xpGasto/100) + 1);
 }
 </script>
 </body>
