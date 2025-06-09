@@ -81,6 +81,23 @@
       display: inline-block;
     }
     .add-mago-btn:active, .add-aprendiz-btn:active { background: #157347; }
+    .hp-control { display: flex; align-items: center; gap: 0.2em; margin-left: 0.5em;}
+    .hp-btn { background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; width: 2em; height: 2em; cursor: pointer;}
+    .hp-btn:active { background: #2471a3; }
+    .hp-value { width: 2.3em; text-align: center; font-size: 1.09em; border: 1px solid #bbb; border-radius: 5px; margin: 0 0.2em;}
+    .person-status { margin-left: 0.7em; }
+    .person-itens { margin-top: 0.7em; background: #eaf6fb; border-radius: 7px; padding: 0.5em 0.9em 0.7em 0.9em; }
+    .person-itens-list { margin: 0.4em 0 0 1.2em; font-size: 0.97em; }
+    .remove-item-btn { background: #c0392b; color: #fff; border:none; border-radius:4px; margin-left:5px; cursor:pointer; font-size:0.9em;}
+    .add-item-person-form { margin-top: 0.6em; }
+    .add-item-person-form select, .add-item-person-form input { font-size:1em; }
+    .add-item-person-form button { margin-left:0.5em; font-size:1em;}
+    .status-wounded { color: #f39c12; font-weight: bold;}
+    .status-missing { color: #2980b9; font-weight: bold;}
+    .status-dead { color: #c0392b; font-weight: bold;}
+    .status-normal { color: #229954; font-weight: bold;}
+    .status-none { color: #999; }
+    .status-selector { font-size: 0.96em; margin-left:0.2em; }
     .bestiary-list {margin:0;}
     .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
     .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
@@ -225,6 +242,31 @@ let editingIdx = null;
 let editingStat = null;
 let bancoMagias = [];
 let bancoItens = [];
+const statusOptions = [
+  { value: "normal", label: "Normal", css: "status-normal" },
+  { value: "wounded", label: "Ferido", css: "status-wounded" },
+  { value: "missing", label: "Desaparecido", css: "status-missing" },
+  { value: "dead", label: "Morto", css: "status-dead" }
+];
+
+// HP control: store current HP in a property separate from stats.hp (max HP)
+function getCurrentHP(p) {
+  return p.currentHp !== undefined ? p.currentHp : Number(p.stats.hp) || 0;
+}
+function setCurrentHP(idx, val) {
+  warband[idx].currentHp = Math.max(0, Math.min(Number(val), Number(warband[idx].stats.hp)));
+  renderPersonagens();
+}
+function alteraHP(idx, delta) {
+  let max = Number(warband[idx].stats.hp) || 0;
+  if (warband[idx].currentHp === undefined) warband[idx].currentHp = max;
+  warband[idx].currentHp = Math.max(0, Math.min((warband[idx].currentHp || 0) + delta, max));
+  renderPersonagens();
+}
+function resetAllHP() {
+  warband.forEach(p => { p.currentHp = Number(p.stats.hp) || 0 });
+  renderPersonagens();
+}
 
 async function loadJSON() {
   try {
@@ -260,322 +302,4 @@ function enableTabs() {
 
 function alteraGold(delta) {
   let input = document.getElementById("gold-input");
-  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
-}
-function setGold(val) {
-  let input = document.getElementById("gold-input");
-  if (input) input.value = Math.max(0, parseInt(val) || 0);
-}
-function alteraXP(delta) {
-  let input = document.getElementById("xp-input");
-  if (input) input.value = Math.max(0, parseInt(input.value) + delta);
-}
-function setXP(val) {
-  let input = document.getElementById("xp-input");
-  if (input) input.value = Math.max(0, parseInt(val) || 0);
-}
-
-function adicionarMago() {
-  const mago = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Mago');
-  if (warband.some(p => p.tipo === 'Mago')) {
-    alert('Já existe um Mago na warband!');
-    return;
-  }
-  if (mago) warband.unshift({ ...mago, nome: mago.tipo });
-  renderPersonagens();
-}
-function adicionarAprendiz() {
-  const aprendiz = (conteudo_frostgrave_json.personagens || []).find(p => p.tipo === 'Aprendiz');
-  if (warband.some(p => p.tipo === 'Aprendiz')) {
-    alert('Já existe um Aprendiz na warband!');
-    return;
-  }
-  // Se já tiver mago, insere na posição 1, senão na frente
-  let idx = warband.findIndex(p => p.tipo === 'Mago');
-  if (aprendiz) {
-    if (idx === -1) warband.unshift({ ...aprendiz, nome: aprendiz.tipo });
-    else warband.splice(idx + 1, 0, { ...aprendiz, nome: aprendiz.tipo });
-  }
-  renderPersonagens();
-}
-
-function renderBestiario() {
-  const bestDiv = document.getElementById('bestiary-list');
-  if (!bestDiv) return;
-  bestDiv.innerHTML = "";
-  const bestiario = conteudo_frostgrave_json.bestiario || [];
-  if (!bestiario.length) {
-    bestDiv.innerHTML = "<div style='color:#888'>Nenhuma criatura cadastrada.</div>";
-    return;
-  }
-  let cats = {};
-  bestiario.forEach(b => {
-    cats[b.tipo] = cats[b.tipo] || [];
-    cats[b.tipo].push(b);
-  });
-  bestDiv.innerHTML = `<div class="beastiary-cats">${
-    Object.keys(cats).sort().map(cat =>
-      `<div class="beast-cat">
-        <h3>${cat}</h3>
-        ${cats[cat]
-          .slice()
-          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
-          .map(b => `
-          <div class="beast-card">
-            <div class="beast-header">
-              <span style="font-weight:bold">${b.nome}</span>
-            </div>
-            <div class="beast-desc">${b.desc || ''}</div>
-            ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
-            <div class="beast-stats">
-              <span><b>Mov:</b> ${b.stats.move}</span>
-              <span><b>Fight:</b> ${b.stats.fight}</span>
-              <span><b>Shoot:</b> ${b.stats.shoot}</span>
-              <span><b>Armor:</b> ${b.stats.armor}</span>
-              <span><b>Will:</b> ${b.stats.will}</span>
-              <span><b>HP:</b> ${b.stats.hp}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>`
-    ).join('')}
-    </div>`;
-}
-
-function renderBancoMagias() {
-  const ul = document.getElementById('banco-magias-lista');
-  if (!ul) return;
-  ul.innerHTML = '';
-  (bancoMagias || []).forEach(m => {
-    let desc = m.escola ? `Escola: ${m.escola}` : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${m.nome}</b>
-      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
-      ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
-    </li>`;
-  });
-}
-function renderMagiaDropdown() {
-  const sel = document.getElementById("magia-dropdown");
-  if (!sel) return;
-  sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
-    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
-  ).join('');
-}
-
-function renderBancoItens() {
-  const ul = document.getElementById('banco-itens-lista');
-  if (!ul) return;
-  ul.innerHTML = '';
-  (bancoItens || []).forEach(item => {
-    let desc = item.descricao ? item.descricao : '';
-    ul.innerHTML += `<li>
-      <b title="${desc}">${item.nome}</b>
-      <span style="color:#888">[${item.grupo}]</span>
-      <span style="color:#229954; margin-left:1em;">${desc}</span>
-    </li>`;
-  });
-}
-function renderItemDropdown() {
-  const sel = document.getElementById("soldado-tipo");
-  const selItem = document.getElementById("item-dropdown");
-  if (sel) {
-    sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(s =>
-      `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
-    ).join('');
-    // Atualiza custo ao trocar de opção
-    sel.onchange = function() {
-      const opt = sel.options[sel.selectedIndex];
-      const custoSpan = document.getElementById('soldado-custo-span');
-      custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
-    };
-    sel.onchange();
-  }
-  if (selItem) {
-    selItem.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
-      `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
-    ).join('');
-  }
-}
-
-function moveSoldado(idx, dir) {
-  const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz').length;
-  const soldStart = magos;
-  const soldEnd = warband.length - 1;
-  if (idx < soldStart || idx > soldEnd) return;
-  let dest = idx + dir;
-  if (dest < soldStart || dest > soldEnd) return;
-  const temp = warband[idx];
-  warband[idx] = warband[dest];
-  warband[dest] = temp;
-  renderPersonagens();
-}
-
-function renderPersonagens() {
-  const magoDiv = document.getElementById('mago-aprendiz-lista');
-  const soldDiv = document.getElementById('soldado-lista');
-  if (magoDiv) magoDiv.innerHTML = '';
-  if (soldDiv) soldDiv.innerHTML = '';
-  warband.forEach((p, idx) => {
-    let el = renderPersonagemCard(p, idx, (p.tipo === 'Mago' || p.tipo === 'Aprendiz'));
-    if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
-    else soldDiv.innerHTML += el;
-  });
-}
-
-function editPersonagemNome(idx) {
-  editingIdx = idx;
-  renderPersonagens();
-}
-function savePersonagemNome(idx) {
-  const input = document.getElementById('input-nome-'+idx);
-  if (input) {
-    warband[idx].nome = input.value.trim();
-    editingIdx = null;
-    renderPersonagens();
-  }
-}
-function cancelEditNome() {
-  editingIdx = null;
-  renderPersonagens();
-}
-function editStat(idx, stat) {
-  editingStat = { idx, stat };
-  renderPersonagens();
-}
-function saveStat(idx, stat) {
-  const input = document.getElementById(`input-stat-${stat}-${idx}`);
-  if (input) {
-    warband[idx].stats[stat] = input.value;
-    editingStat = null;
-    renderPersonagens();
-  }
-}
-function cancelEditStat() {
-  editingStat = null;
-  renderPersonagens();
-}
-
-function renderPersonagemCard(p, idx, isMago) {
-  const isEditingNome = editingIdx === idx;
-  function statField(stat, label) {
-    const isEditingThis = editingStat && editingStat.idx === idx && editingStat.stat === stat;
-    if (isEditingThis) {
-      return `<span class="stat-label">${label}:</span>
-        <form class="stat-edit-form" onsubmit="event.preventDefault();saveStat(${idx},'${stat}')">
-          <input id="input-stat-${stat}-${idx}" class="stat-edit-input" value="${p.stats[stat]}">
-          <button type="submit" class="stat-edit-btn" title="Salvar">&#10003;</button>
-          <button type="button" class="stat-edit-cancel" onclick="cancelEditStat()" title="Cancelar">&#10006;</button>
-        </form>`;
-    }
-    return `<span class="stat-label">${label}:</span>
-      <span ondblclick="editStat(${idx},'${stat}')" title="Duplo clique para editar">${p.stats[stat]}</span>`;
-  }
-  return `<div class="person-card">
-    <div class="person-header">
-      <span class="tipo-${p.tipo.toLowerCase()}">${p.tipo}</span>
-      ${
-        isEditingNome
-        ? `<form class="edit-name-form" onsubmit="event.preventDefault();savePersonagemNome(${idx})">
-            <input id="input-nome-${idx}" class="edit-name-input" value="${p.nome || ''}">
-            <button type="submit" class="edit-name-btn">&#10003;</button>
-            <button type="button" class="edit-name-cancel" onclick="cancelEditNome()">&#10006;</button>
-          </form>`
-        : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`
-      }
-      ${!isMago ? `
-        <button class="remove-btn" onclick="removerPersonagem(${idx})" title="Remover">&times;</button>
-        <button class="move-btn" title="Mover para cima" onclick="moveSoldado(${idx},-1)">&#8593;</button>
-        <button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>
-      ` : ''}
-    </div>
-    <div class="stats-line">
-      ${statField('move', 'Mov')}
-      ${statField('fight', 'Fight')}
-      ${statField('shoot', 'Shoot')}
-      ${statField('armor', 'Armor')}
-      ${statField('will', 'Will')}
-      ${statField('hp', 'HP')}
-    </div>
-  </div>`;
-}
-function removerPersonagem(idx) {
-  warband.splice(idx, 1);
-  renderPersonagens();
-}
-
-function renderAddSoldadoForm() {
-  const form = document.getElementById('add-soldado-form');
-  const sel = document.getElementById('soldado-tipo');
-  const custoSpan = document.getElementById('soldado-custo-span');
-  if (!form || !sel || !custoSpan) return;
-
-  sel.innerHTML = (conteudo_frostgrave_json.soldados || []).map(
-    s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
-  ).join('');
-  // Força sempre atualizar custo ao abrir o form
-  sel.onchange = function() {
-    const opt = sel.options[sel.selectedIndex];
-    custoSpan.textContent = opt ? `Custo: ${opt.getAttribute('data-custo')}g` : '';
-  };
-  sel.onchange();
-
-  form.onsubmit = function(e) {
-    e.preventDefault();
-    const tipo = sel.value;
-    const nome = document.getElementById('soldado-nome').value.trim();
-    const soldado = (conteudo_frostgrave_json.soldados || []).find(s => s.tipo === tipo);
-    if (soldado) {
-      warband.push({
-        tipo: soldado.tipo,
-        nome: nome || soldado.tipo,
-        stats: {...soldado.stats}
-      });
-      renderPersonagens();
-      form.reset();
-      sel.onchange();
-    }
-  };
-}
-
-document.getElementById('add-magia-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('magia-dropdown').value;
-  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
-  const comp = document.getElementById('magia-comp').value.trim();
-  if (!nome) return;
-  bancoMagias.push({
-    nome, escola, descricao: comp
-  });
-  renderBancoMagias();
-  renderMagiaDropdown();
-  this.reset();
-};
-document.getElementById('add-item-form').onsubmit = function(e) {
-  e.preventDefault();
-  const nome = document.getElementById('item-dropdown').value;
-  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
-  const efeito = document.getElementById('item-efeito').value.trim();
-  if (!nome) return;
-  bancoItens.push({
-    nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
-  });
-  renderBancoItens();
-  renderItemDropdown();
-  this.reset();
-};
-
-function renderAll() {
-  renderBestiario();
-  renderBancoMagias();
-  renderBancoItens();
-  renderPersonagens();
-  renderAddSoldadoForm();
-  renderMagiaDropdown();
-  renderItemDropdown();
-}
-
-window.onload = loadJSON;
-</script>
-</body>
-</html>
+  if (input) input.value = Math.max(0, parseInt
