@@ -5,223 +5,86 @@
   <title>Frostgrave Warband Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #eaf2f8; margin: 0; }
-    main { max-width: 1100px; margin: 2em auto; background: #fff; border-radius: 10px; padding: 1.2em 1.5em; box-shadow: 0 2px 10px #bbb5; }
-    h1 { text-align: center; margin-bottom: 0.7em; color: #154360; letter-spacing: 1px;}
-    h2 { color: #21618c; }
-    nav { text-align: center; margin-bottom: 1.5em; }
-    nav button { background: #eaf2f8; border: 1px solid #bbb; border-radius: 8px 8px 0 0; padding: 0.7em 2em; font-size: 1.1em; margin-right: 0.2em; cursor: pointer; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7fafd; margin: 0; font-size: 13px; }
+    main { max-width: 900px; margin: 1em auto; background: #fff; border-radius: 6px; padding: 0.7em 0.8em; box-shadow: 0 1px 4px #bbb3; }
+    h1 { text-align: center; margin-bottom: 0.4em; color: #154360; letter-spacing: 0.5px; font-size: 1.2em; font-weight: 600; }
+    h2, .tab-panel-title { color: #21618c; font-size: 1em; margin-bottom: 0.4em; font-weight: 600; }
+    nav { text-align: center; margin-bottom: 1em; }
+    nav button { background: #f7fafd; border: 1px solid #bbb; border-radius: 6px 6px 0 0; padding: 0.3em 1em; font-size: 0.95em; margin-right: 0.1em; cursor: pointer; }
     nav button.active, nav button:hover { background: #3498db; color: #fff; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .vertical-list { display: flex; flex-direction: column; gap: 1.5em; margin-bottom: 2em; }
-    .warband-header {
-      display: flex; align-items: center; justify-content: space-between; gap: 1em;
-      border-bottom: 2px solid #eaf2f8; margin-bottom: 1.2em;
-    }
-    .warband-header h2 { margin: 0; color: #154360; letter-spacing: 1px; font-size: 2em; }
-    .gold-xp-box { display: flex; gap: 1.2em; align-items: center; }
-    .gold-xp-label { font-weight: bold; color: #2e4053; font-size: 1em; }
-    .gold-xp-input { width: 6em; font-size:1.1em; padding: 0.19em 0.5em; border-radius: 6px; border: 1px solid #bbb; text-align: right;}
-    .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
+    .vertical-list { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 1em; }
+    .warband-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5em; border-bottom: 1px solid #eaf2f8; margin-bottom: 0.7em; }
+    .warband-header h2 { margin: 0; color: #154360; letter-spacing: 0.5px; font-size: 1.1em; }
+    .gold-xp-box { display: flex; gap: 0.7em; align-items: center; }
+    .gold-xp-label { font-weight: 500; color: #2e4053; font-size: 0.95em; }
+    .gold-xp-input { width: 4em; font-size:0.95em; padding: 0.1em 0.3em; border-radius: 4px; border: 1px solid #bbb; text-align: right;}
+    .gold-btn, .xp-btn { margin-left: 0.1em; background: #3498db; color: #fff; border: none; border-radius: 4px; font-size: 0.9em; width: 1.3em; height: 1.3em; cursor: pointer;}
     .gold-btn:active, .xp-btn:active { background: #2471a3; }
-    .section-title { font-size: 1.18em; margin-top: 1.2em; margin-bottom: 0.3em; }
-    .character-group { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 2em; }
-    .person-card {
-      background: #fafdff;
-      border-radius: 12px;
-      box-shadow: 0 1px 6px #bbb2;
-      padding: 1.2em 1em 1em 1em;
-      width: 100%;
-      min-width: 320px;
-      max-width: 700px;
-      position: relative;
-      border: 1px solid #eaf2f8;
-      transition: box-shadow .2s;
-      margin-bottom: 1.5em;
-    }
-    .person-card:hover {
-      box-shadow: 0 5px 24px #bbb7;
-      border: 2px solid #3498db22;
-    }
-    .person-header { font-size: 1.12em; margin-bottom: 0.7em; display: flex; align-items: center; gap: 0.7em; }
-    .tipo-mago { color: #1a5276; font-weight: bold; }
-    .tipo-aprendiz { color: #8e44ad; font-weight: bold; }
-    .tipo-soldado { color: #16a085; font-weight: bold; }
+    .section-title { font-size: 0.98em; margin-top: 0.7em; margin-bottom: 0.2em; font-weight: 500; }
+    .character-group { display: flex; flex-direction: column; gap: 0.4em; margin-bottom: 1em; }
+    .person-card { background: #fafdff; border-radius: 6px; box-shadow: 0 1px 3px #bbb2; padding: 0.7em 0.6em 0.6em 0.6em; width: 100%; min-width: 220px; max-width: 500px; position: relative; border: 1px solid #eaf2f8; margin-bottom: 0.7em; }
+    .person-card:hover { box-shadow: 0 2px 8px #bbb5; border: 1px solid #3498db22; }
+    .person-header { font-size: 0.98em; margin-bottom: 0.4em; display: flex; align-items: center; gap: 0.4em; }
+    .tipo-mago { color: #1a5276; font-weight: bold; font-size: 0.95em; }
+    .tipo-aprendiz { color: #8e44ad; font-weight: bold; font-size: 0.95em; }
+    .tipo-soldado { color: #16a085; font-weight: bold; font-size: 0.95em; }
     .soldado-elite { color: #c0392b; }
-    .stats-line { font-size: 1.13em; display: flex; align-items: center; gap: 1.5em; margin-bottom: .8em; padding: 0.8em 0; background: #f2f7fa; border-radius: 8px; }
-    .stat-label { font-weight: 600; margin-right: 0.2em; color: #2c3e50;}
-    .stat-value, .stat-input { width: 2.2em; text-align: center; }
-    .stat-input { border: 1px solid #bbb; border-radius: 5px; font-size: 1em; padding: 0.1em 0.2em;}
-    .stat-edit-arrows { display:inline-flex; flex-direction:column; font-size:1.22em; vertical-align:middle; margin-left:0.1em; opacity:0; transition:opacity 0.2s;}
+    .stats-line { font-size: 0.95em; display: flex; align-items: center; gap: 0.7em; margin-bottom: .4em; padding: 0.3em 0; background: #f2f7fa; border-radius: 5px; }
+    .stat-label { font-weight: 500; margin-right: 0.1em; color: #2c3e50;}
+    .stat-value, .stat-input { width: 1.5em; text-align: center; }
+    .stat-input { border: 1px solid #bbb; border-radius: 3px; font-size: 0.95em; padding: 0.05em 0.1em;}
+    .stat-edit-arrows { display:inline-flex; flex-direction:column; font-size:0.95em; vertical-align:middle; margin-left:0.05em; opacity:0; transition:opacity 0.2s;}
     .stat-hover:hover .stat-edit-arrows { opacity: 1; }
-    .stat-arrow-btn { background:transparent; border:none; color:#2980b9; cursor:pointer; padding:0; line-height:0.8em; font-size:1.05em; }
+    .stat-arrow-btn { background:transparent; border:none; color:#2980b9; cursor:pointer; padding:0; line-height:0.8em; font-size:0.9em; }
     .stat-arrow-btn:active { color:#21618c; }
-    .remove-btn, .move-btn { font-size: 1.08em; padding: 0.22em 0.8em; }
-    .edit-name-input { font-size: 1.08em; border-radius: 6px; border: 1px solid #bbb; padding: 0.15em 0.4em; width: 12em; }
-    .edit-name-btn, .edit-name-cancel { font-size: 1.01em; padding: 0.19em 0.8em; }
+    .remove-btn, .move-btn { font-size: 0.9em; padding: 0.1em 0.5em; }
+    .edit-name-input { font-size: 0.95em; border-radius: 4px; border: 1px solid #bbb; padding: 0.08em 0.2em; width: 8em; }
+    .edit-name-btn, .edit-name-cancel { font-size: 0.9em; padding: 0.08em 0.5em; }
     .edit-name-form { display: inline; }
-    .add-mago-btn, .add-aprendiz-btn {
-      background: #229954;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.98em;
-      padding: 0.4em 0.9em;
-      margin: 0.5em 0 1em 0;
-      cursor: pointer;
-      display: inline-block;
-    }
+    .add-mago-btn, .add-aprendiz-btn { background: #229954; color: #fff; border: none; border-radius: 4px; font-size: 0.9em; padding: 0.2em 0.6em; margin: 0.2em 0 0.5em 0; cursor: pointer; display: inline-block; }
     .add-mago-btn:active, .add-aprendiz-btn:active { background: #157347; }
-    .hp-control { display: flex; align-items: center; gap: 0.2em; margin-left: 0.5em;}
-    .hp-btn { font-size: 1.18em; width: 2.2em; height: 2.2em; }
+    .hp-control { display: flex; align-items: center; gap: 0.1em; margin-left: 0.2em;}
+    .hp-btn { font-size: 0.95em; width: 1.3em; height: 1.3em; }
     .hp-btn:active { background: #2471a3; }
-    .hp-value { width: 2.7em; text-align: center; font-size: 1.13em; border: 1px solid #bbb; border-radius: 6px; margin: 0 0.2em; }
-    .person-status { margin-left: 0.7em; }
-    .person-itens { margin-top: 1em; background: #f6fbff; border-radius: 7px; padding: 0.5em 1em 0.7em 1em; }
-    .person-itens-list { margin: 0.5em 0 0 1.3em; font-size: 1.01em; }
-    .remove-item-btn { background: #c0392b; color: #fff; border:none; border-radius:4px; margin-left:5px; cursor:pointer; font-size:0.9em;}
-    .add-item-person-form { margin-top: 0.6em; }
-    .add-item-person-form select, .add-item-person-form input { font-size:1.08em; }
-    .add-item-person-form button { font-size:1.08em; }
+    .hp-value { width: 1.7em; text-align: center; font-size: 0.95em; border: 1px solid #bbb; border-radius: 4px; margin: 0 0.1em; }
+    .person-status { margin-left: 0.3em; }
+    .person-itens { margin-top: 0.4em; background: #f6fbff; border-radius: 4px; padding: 0.2em 0.5em 0.3em 0.5em; }
+    .person-itens-list { margin: 0.2em 0 0 0.5em; font-size: 0.95em; }
+    .remove-item-btn { background: #c0392b; color: #fff; border:none; border-radius:3px; margin-left:3px; cursor:pointer; font-size:0.8em;}
+    .add-item-person-form { margin-top: 0.2em; }
+    .add-item-person-form select, .add-item-person-form input { font-size:0.95em; }
+    .add-item-person-form button { font-size:0.95em; }
     .status-wounded { color: #f39c12; font-weight: bold;}
     .status-missing { color: #2980b9; font-weight: bold;}
     .status-dead { color: #c0392b; font-weight: bold;}
     .status-normal { color: #229954; font-weight: bold;}
     .status-none { color: #999; }
-    .status-selector { font-size: 1.01em; margin-left:0.2em; }
+    .status-selector { font-size: 0.95em; margin-left:0.1em; }
     .bestiary-list {margin:0;}
-    .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
-    .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
-    .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
-    .beast-card {
-      width: 100%;
-      background: #f8fafc;
-      border: 1px solid #ccd;
-      border-radius: 10px;
-      box-shadow: 0 1px 8px #bbb3;
-      padding: 1.1em 1em 0.9em 1em;
-      position: relative;
-      margin-bottom: 0.6em;
-    }
-    .beast-header {
-      font-size: 1.13em;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
-    }
-    .beast-type {
-      font-size: 0.98em;
-      background: #dbeafe;
-      color: #21618c;
-      padding: 0.16em 0.55em;
-      border-radius: 5px;
-    }
-    .beast-desc {
-      margin: 0.3em 0 0.7em 0;
-      color: #555;
-      font-style: italic;
-    }
-    .beast-expl {
-      margin-bottom: .7em;
-      color: #555;
-      background: #eaf2f8;
-      padding: 0.5em 0.8em;
-      border-radius: 7px;
-      font-size: 0.97em;
-    }
-    .beast-stats {
-      margin-bottom: .4em;
-      margin-top: .4em;
-    }
-    .beast-stats span {
-      display: inline-block;
-      margin-right: 0.8em;
-    }
-    @media (max-width: 950px) {
-      .character-group { flex-direction: column; gap: 1em;}
-      .person-card { max-width: 98vw; min-width: 0; }
-      .beastiary-cats { flex-direction: column; }
-      .beast-cat { max-width: 100%; }
-    }
-    @media (max-width: 700px) {
-      main { padding: 0.5em 0.3em; }
-      .bestiary-list { flex-direction: column; gap: 1em;}
-      .beast-card { min-width: 0; max-width: 100%; }
-    }
-    .tab-panel-box {
-      background: #f2f7fa;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px #bbb3;
-      padding: 2em 2em 1.5em 2em;
-      margin: 1.5em auto 2em auto;
-      max-width: 700px;
-      min-width: 280px;
-    }
-    .tab-panel-title, h2 { font-size: 1.35em; margin-bottom: 0.7em; }
-    .magia-form, .item-form {
-      display: flex;
-      gap: 1em;
-      flex-wrap: wrap;
-      margin-bottom: 1.5em;
-      align-items: center;
-      justify-content: center;
-    }
-    .magia-form select, .item-form select, .magia-form input, .item-form input {
-      font-size: 1.08em;
-      padding: 0.4em 0.7em;
-      border-radius: 7px;
-      border: 1px solid #bbb;
-      min-width: 160px;
-      background: #fff;
-    }
-    .magia-form button, .item-form button {
-      background: #3498db;
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      font-size: 1.08em;
-      padding: 0.5em 1.2em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .magia-form button:active, .item-form button:active {
-      background: #2471a3;
-    }
-    .magias-list, .itens-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .magias-list > li, .itens-list > li {
-      margin-bottom: 0.7em;
-      padding: 0.7em 1em;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 1px 6px #bbb2;
-      font-size: 1.08em;
-    }
-    .magias-list > li[style*='font-weight:bold'], .itens-list > li[style*='font-weight:bold'] {
-      background: #eaf2f8;
-      box-shadow: none;
-      margin-top: 1.2em;
-      margin-bottom: 0.3em;
-      font-size: 1.13em;
-      border-left: 4px solid #3498db;
-      padding-left: 0.7em;
-    }
-    .notes-box {
-      width: 100%;
-      min-height: 120px;
-      font-size: 1.13em;
-      border-radius: 8px;
-      border: 1px solid #bbb;
-      padding: 1em 1.2em;
-      background: #fff;
-      margin-top: 1em;
-      resize: vertical;
-    }
-    .magias-compartilhadas-box { background: #fafdff; border-radius: 10px; box-shadow: 0 1px 8px #bbb2; padding: 1.2em 1.5em; margin: 1.2em 0 2em 0; }
+    .beastiary-cats { display: flex; flex-direction: column; gap: 1em; margin-bottom:1em;}
+    .beast-cat { min-width: 150px; max-width:400px; flex:1 1 200px; margin-bottom: 0.7em;}
+    .beast-cat h3 { color: #154360; margin-bottom:0.2em; border-bottom:1px solid #eaf2f8; font-size: 0.98em; }
+    .beast-card { width: 100%; background: #f8fafc; border: 1px solid #ccd; border-radius: 6px; box-shadow: 0 1px 3px #bbb3; padding: 0.5em 0.5em 0.4em 0.5em; position: relative; margin-bottom: 0.2em; }
+    .beast-header { font-size: 0.95em; display: flex; align-items: center; gap: 0.2em; }
+    .beast-type { font-size: 0.9em; background: #dbeafe; color: #21618c; padding: 0.08em 0.3em; border-radius: 3px; }
+    .beast-desc { margin: 0.1em 0 0.2em 0; color: #555; font-style: italic; font-size: 0.9em; }
+    .beast-expl { margin-bottom: .2em; color: #555; background: #eaf2f8; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+    .beast-stats { margin-bottom: .1em; margin-top: .1em; font-size: 0.9em; }
+    .beast-stats span { display: inline-block; margin-right: 0.3em; }
+    @media (max-width: 950px) { .character-group { flex-direction: column; gap: 0.5em;} .person-card { max-width: 98vw; min-width: 0; } .beastiary-cats { flex-direction: column; } .beast-cat { max-width: 100%; } }
+    @media (max-width: 700px) { main { padding: 0.2em 0.1em; } .bestiary-list { flex-direction: column; gap: 0.5em;} .beast-card { min-width: 0; max-width: 100%; } }
+    .tab-panel-box { background: #f2f7fa; border-radius: 7px; box-shadow: 0 1px 4px #bbb3; padding: 1em 1em 0.7em 1em; margin: 0.7em auto 1em auto; max-width: 500px; min-width: 180px; }
+    .magia-form, .item-form { display: flex; gap: 0.5em; flex-wrap: wrap; margin-bottom: 0.7em; align-items: center; justify-content: center; }
+    .magia-form select, .item-form select, .magia-form input, .item-form input { font-size: 0.95em; padding: 0.2em 0.4em; border-radius: 4px; border: 1px solid #bbb; min-width: 90px; background: #fff; }
+    .magia-form button, .item-form button { background: #3498db; color: #fff; border: none; border-radius: 4px; font-size: 0.95em; padding: 0.2em 0.7em; cursor: pointer; transition: background 0.2s; }
+    .magia-form button:active, .item-form button:active { background: #2471a3; }
+    .magias-list, .itens-list { list-style: none; padding: 0; margin: 0; }
+    .magias-list > li, .itens-list > li { margin-bottom: 0.3em; padding: 0.3em 0.5em; background: #fff; border-radius: 4px; font-size: 0.95em; }
+    .magias-list > li[style*='font-weight:bold'], .itens-list > li[style*='font-weight:bold'] { background: #eaf2f8; box-shadow: none; margin-top: 0.5em; margin-bottom: 0.1em; font-size: 1em; border-left: 3px solid #3498db; padding-left: 0.4em; }
+    .notes-box { width: 100%; min-height: 80px; font-size: 0.95em; border-radius: 4px; border: 1px solid #bbb; padding: 0.5em 0.7em; background: #fff; margin-top: 0.5em; resize: vertical; }
+    .magias-compartilhadas-box { background: #fafdff; border-radius: 6px; box-shadow: 0 1px 4px #bbb2; padding: 0.7em 0.8em; margin: 0.7em 0 1em 0; }
   </style>
 </head>
 <body>
@@ -510,11 +373,7 @@ function renderBancoMagias() {
     ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
     agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(m => {
       let desc = m.escola ? `Escola: ${m.escola}` : '';
-      ul.innerHTML += `<li>
-        <b title="${desc}">${m.nome}</b>
-        <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
-        ${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}
-      </li>`;
+      ul.innerHTML += `<li title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}"><b>${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>${m.descricao ? `<br><span style="font-size:0.98em;color:#555">${m.descricao}</span>` : ''}</li>`;
     });
   });
 }
@@ -534,11 +393,7 @@ function renderBancoItens() {
     ul.innerHTML += `<li style="font-weight:bold;font-size:1.06em;margin-top:0.4em;">${tipo}</li>`;
     agrupadas[tipo].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(item => {
       let desc = item.descricao ? item.descricao : '';
-      ul.innerHTML += `<li>
-        <b title="${desc}">${item.nome}</b>
-        <span style="color:#888">[${item.grupo}]</span>
-        <span style="color:#229954; margin-left:1em;">${desc}</span>
-      </li>`;
+      ul.innerHTML += `<li title="${desc.replace(/'/g, '&apos;')}"><b>${item.nome}</b> <span style="color:#888">[${item.grupo}]</span> <span style="color:#229954; margin-left:1em;">${desc}</span></li>`;
     });
   });
 }
@@ -554,7 +409,7 @@ function renderMagiaDropdown() {
     return a.nome.localeCompare(b.nome);
   });
   sel.innerHTML = magias.map(m =>
-    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+    `<option value="${m.nome}" title="${m.descricao ? m.descricao.replace(/'/g, '&apos;') : ''}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
   ).join('');
 }
 
@@ -583,7 +438,7 @@ function renderItemDropdown() {
       return a.nome.localeCompare(b.nome);
     });
     selItem.innerHTML = todos.map(item =>
-      `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
+      `<option value="${item.nome}" title="${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}">${item.nome} [${item.grupo}]</option>`
     ).join('');
   }
 }
@@ -728,9 +583,15 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       ${agrupadosItens[grupo].map(item => `<option value='${item.nome}' title='${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}'>${item.nome}</option>`).join('')}
     </optgroup>`
   ).join('');
-  let personItensList = (p.personItens || []).map((item, i) =>
-    `<li><b title='${item.descricao ? item.descricao.replace(/'/g, '&apos;') : ''}'>${item.nome}</b> <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span> <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button></li>`
-  ).join('');
+  let personItensList = (p.personItens || []).map((item, i) => {
+    // Buscar descrição do bancoItens se não houver
+    let desc = item.descricao;
+    if (!desc) {
+      let found = (bancoItens || []).find(it => it.nome === item.nome);
+      desc = found ? found.descricao : '';
+    }
+    return `<li title='${desc ? desc.replace(/'/g, '&apos;') : ''}'><b>${item.nome}</b> <span style="color:#888">${item.grupo ? '['+item.grupo+']' : ''}</span> <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button></li>`;
+  }).join('');
   // HP control ao lado do nome
   let hpControl = `<div class="hp-control" style="margin-left:0.5em; display:inline-flex;"><button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button><input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)"><button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button><span style="font-size:0.97em; color:#999">(máx ${maxHp})</span></div>`;
   // Magias do personagem (apenas para mago/aprendiz)
@@ -740,7 +601,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
     let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
     let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
     let dif = magiaObj ? getDificuldadeMagia(p.escola, magiaObj.escola) : '?';
-    return `<li><b title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
+    return `<li title='${tooltip ? tooltip.replace(/'/g, '&apos;') + ' | Dificuldade: ' + dif : 'Dificuldade: ' + dif}'><b>${magia}</b> <span style='color:#888'>${desc} | Dif: ${dif}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
   }).join('');
   let magiasDropdown = '';
   if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
