@@ -597,13 +597,46 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       <button class="remove-item-btn" onclick="removePersonItem(${idx},${i})" title="Remover">&times;</button>
     </li>`
   ).join('');
+
+  // HP control ao lado do nome
   let hpControl = `
-    <div class="hp-control" style="margin-left:0.5em;">
+    <div class="hp-control" style="margin-left:0.5em; display:inline-flex;">
       <button class="hp-btn" title="HP -" onclick="alteraHP(${idx},-1)">-</button>
       <input type="number" class="hp-value" min="0" max="${maxHp}" value="${curHp}" onchange="setCurrentHP(${idx},this.value)">
       <button class="hp-btn" title="HP +" onclick="alteraHP(${idx},1)">+</button>
       <span style="font-size:0.97em; color:#999">(máx ${maxHp})</span>
     </div>`;
+
+  // Magias do personagem (apenas para mago/aprendiz)
+  let magiasPersonagem = p.personMagias || [];
+  let magiasList = magiasPersonagem.map((magia, i) => {
+    let magiaObj = (conteudo_frostgrave_json.magias || []).find(m => m.nome === magia);
+    let desc = magiaObj && magiaObj.escola ? `Escola: ${magiaObj.escola}` : '';
+    let tooltip = magiaObj && magiaObj.descricao ? magiaObj.descricao : '';
+    return `<li title="${tooltip}"><b>${magia}</b> <span style='color:#888'>${desc}</span> <button class='remove-item-btn' onclick='removePersonMagia(${idx},${i})' title='Remover'>&times;</button></li>`;
+  }).join('');
+  let magiasDropdown = '';
+  if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
+    let magias = (conteudo_frostgrave_json.magias || []).slice();
+    magias.sort((a, b) => {
+      let ea = a.escola || '', eb = b.escola || '';
+      if (ea !== eb) return ea.localeCompare(eb);
+      return a.nome.localeCompare(b.nome);
+    });
+    magiasDropdown = `
+      <form class='add-item-person-form' onsubmit='event.preventDefault();addPersonMagia(${idx})' style='margin-top:0.6em;'>
+        <select id='add-person-magia-select-${idx}'>
+          <option value=''>Adicionar magia...</option>
+          ${magias.map(m => `<option value='${m.nome}' title='${m.descricao || ''}'>${m.nome} (${m.escola})</option>`).join('')}
+        </select>
+        <button type='submit'>Adicionar</button>
+      </form>`;
+  }
+  let magiasSection = '';
+  if (p.tipo === "Mago" || p.tipo === "Aprendiz") {
+    magiasSection = `<div class='person-magias'><b>Magias:</b><ul class='person-itens-list'>${magiasList || "<li style='color:#888'>Sem magias</li>"}</ul>${magiasDropdown}</div>`;
+  }
+
   let canEdit = (p.tipo !== "Aprendiz");
   return `<div class="person-card">
     <div class="person-header">
@@ -617,6 +650,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
           </form>`
         : `<b ondblclick="editPersonagemNome(${idx})" title="Duplo clique para editar nome">${p.nome || ''}</b>`
       }
+      ${hpControl}
       <span class="person-status">
         <select class="status-selector ${statusObj.css}" onchange="setStatus(${idx},this.value)">
           ${statusOptions.map(opt => `<option value="${opt.value}"${opt.value===statusVal?" selected":""}>${opt.label}</option>`).join('')}
@@ -629,6 +663,7 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
         <button class="move-btn" title="Mover para baixo" onclick="moveSoldado(${idx},1)">&#8595;</button>
       ` : ''}
     </div>
+    ${magiasSection}
     <div class="stats-line">
       ${renderStatWithArrows(idx, 'move', 'Mov', canEdit)}
       ${renderStatWithArrows(idx, 'fight', 'Fight', canEdit && p.tipo !== "Aprendiz")}
@@ -636,8 +671,6 @@ function renderPersonagemCard(p, idx, isMagoOuAprendiz) {
       ${renderStatWithArrows(idx, 'armor', 'Armor', canEdit)}
       ${renderStatWithArrows(idx, 'will', 'Will', canEdit && p.tipo !== "Aprendiz")}
       ${renderStatWithArrows(idx, 'hp', 'HP', canEdit)}
-      <span class="stat-label" style="margin-left:1.5em;">HP atual:</span>
-      ${hpControl}
     </div>
     <div class="person-itens">
       <b>Itens:</b>
@@ -663,8 +696,11 @@ function renderAddSoldadoForm() {
   const custoSpan = document.getElementById('soldado-custo-span');
   if (!form || !sel || !custoSpan) return;
 
-  // Ordena soldados por tipo
-  let soldados = (conteudo_frostgrave_json.soldados || []).slice().sort((a, b) => a.tipo.localeCompare(b.tipo));
+  // Tenta pegar soldados de personagens se soldados não existir
+  let soldados = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
+    ? conteudo_frostgrave_json.soldados.slice()
+    : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+  soldados = soldados.sort((a, b) => a.tipo.localeCompare(b.tipo));
   sel.innerHTML = soldados.map(
     s => `<option value="${s.tipo}" data-custo="${s.custo}">${s.tipo} (custo ${s.custo}g)</option>`
   ).join('');
@@ -679,8 +715,10 @@ function renderAddSoldadoForm() {
     e.preventDefault();
     const tipo = sel.value;
     const nome = document.getElementById('soldado-nome').value.trim();
-    const soldados = (conteudo_frostgrave_json.soldados || []).slice();
-    const soldado = soldados.find(s => s.tipo === tipo);
+    let soldadosOrig = (conteudo_frostgrave_json.soldados && conteudo_frostgrave_json.soldados.length > 0)
+      ? conteudo_frostgrave_json.soldados.slice()
+      : (conteudo_frostgrave_json.personagens || []).filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
+    const soldado = soldadosOrig.find(s => s.tipo === tipo);
     if (soldado) {
       const novo = {
         tipo: soldado.tipo,
@@ -742,6 +780,24 @@ document.addEventListener('keydown', function(e){
     resetAllHP();
   }
 });
+
+// Funções para magias do personagem
+function addPersonMagia(idx) {
+  const sel = document.getElementById(`add-person-magia-select-${idx}`);
+  if (!sel) return;
+  const magiaNome = sel.value;
+  if (!magiaNome) return;
+  if (!warband[idx].personMagias) warband[idx].personMagias = [];
+  if (!warband[idx].personMagias.includes(magiaNome)) {
+    warband[idx].personMagias.push(magiaNome);
+  }
+  renderPersonagens();
+}
+function removePersonMagia(idx, magiaIdx) {
+  if (!warband[idx].personMagias) return;
+  warband[idx].personMagias.splice(magiaIdx, 1);
+  renderPersonagens();
+}
 </script>
 </body>
 </html>
