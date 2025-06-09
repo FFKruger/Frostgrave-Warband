@@ -26,18 +26,19 @@
     .gold-btn, .xp-btn { margin-left: 0.2em; background: #3498db; color: #fff; border: none; border-radius: 5px; font-size: 1em; width: 2em; height: 2em; cursor: pointer;}
     .gold-btn:active, .xp-btn:active { background: #2471a3; }
     .section-title { margin-top: 1.5em; color: #21618c; margin-bottom: 0.5em; }
-    .character-group { display: flex; gap: 2em; margin-bottom: 2em; flex-wrap: wrap; }
+    .character-group { display: flex; flex-direction: column; gap: 1em; margin-bottom: 2em; }
     .person-card {
       background: #fafdff;
       border-radius: 10px;
       box-shadow: 0 1px 8px #bbb3;
       padding: 1.3em 1.1em 1em 1.1em;
-      width: 350px;
+      width: 100%;
       min-width: 270px;
-      max-width: 99vw;
+      max-width: 600px;
       position: relative;
       border: 2px solid #eaf2f8;
       transition: box-shadow .2s;
+      margin-bottom: 1em;
     }
     .person-card:hover {
       box-shadow: 0 5px 24px #bbb7;
@@ -88,14 +89,12 @@
     }
     .item-select-disabled { background: #f8d7da !important; color: #721c24 !important; }
     .no-items-available { color: #c0392b; padding: 0.6em 0 0.2em 0; font-weight: bold; }
-    .beastiary-cats { display: flex; gap: 2em; flex-wrap: wrap; margin-bottom:2em;}
-    .beast-cat { min-width: 250px; max-width:380px; flex:1 1 300px;}
-    .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
     .bestiary-list {margin:0;}
+    .beastiary-cats { display: flex; flex-direction: column; gap: 2em; margin-bottom:2em;}
+    .beast-cat { min-width: 250px; max-width:600px; flex:1 1 300px; margin-bottom: 1.5em;}
+    .beast-cat h3 { color: #154360; margin-bottom:0.4em; border-bottom:1px solid #eaf2f8; }
     .beast-card {
-      flex: 1 1 320px;
-      min-width: 290px;
-      max-width: 410px;
+      width: 100%;
       background: #f8fafc;
       border: 1px solid #ccd;
       border-radius: 10px;
@@ -141,6 +140,8 @@
     @media (max-width: 950px) {
       .character-group { flex-direction: column; gap: 1em;}
       .person-card { width: 100%; min-width: 0; }
+      .beastiary-cats { flex-direction: column; }
+      .beast-cat { max-width: 100%; }
     }
     @media (max-width: 700px) {
       main { padding: 0.5em 0.3em; }
@@ -228,20 +229,18 @@
 let conteudo_frostgrave_json = { escolas:[], magias:[], itens:[], personagens:[], soldados:[], bestiario:[] };
 let warband = [];
 
-// Carrega JSON automaticamente ao abrir a página
 async function loadJSON() {
   try {
     const resp = await fetch('conteudo_frostgrave.json');
     if (!resp.ok) throw new Error("Arquivo não encontrado!");
     conteudo_frostgrave_json = await resp.json();
-    warband = (conteudo_frostgrave_json.personagens || []).map(p => ({...p}));
+    warband = []; // começa vazio
     renderAll();
   } catch (err) {
     alert("Falha ao carregar conteudo_frostgrave.json: " + err.message);
   }
 }
 
-/* --- Troca de abas --- */
 document.getElementById('tabnav').addEventListener('click', function(e) {
   if (e.target.tagName === "BUTTON") {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -299,7 +298,7 @@ function renderBestiario() {
             <div class="beast-header">
               <span style="font-weight:bold">${b.nome}</span>
             </div>
-            <div class="beast-desc">${b.desc}</div>
+            <div class="beast-desc">${b.desc || ''}</div>
             ${b.explicacao ? `<div class="beast-expl">${b.explicacao}</div>` : ""}
             <div class="beast-stats">
               <span><b>Mov:</b> ${b.stats.move}</span>
@@ -322,8 +321,10 @@ function renderBancoMagias() {
   if (!ul) return;
   ul.innerHTML = '';
   (conteudo_frostgrave_json.magias || []).forEach(m => {
+    let desc = m.escola ? `Escola: ${m.escola}` : '';
     ul.innerHTML += `<li>
-      <b title="${m.descricao || ''}">${m.nome}</b> <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
+      <b title="${desc}">${m.nome}</b>
+      <span style="color:#888">${m.escola ? '('+m.escola+')' : ''}</span>
     </li>`;
   });
 }
@@ -331,7 +332,7 @@ function renderMagiaDropdown() {
   const sel = document.getElementById("magia-dropdown");
   if (!sel) return;
   sel.innerHTML = (conteudo_frostgrave_json.magias || []).map(m =>
-    `<option value="${m.nome}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
+    `<option value="${m.nome}" title="Escola: ${m.escola}">${m.nome}${m.escola ? ' ('+m.escola+')' : ''}</option>`
   ).join('');
 }
 
@@ -341,9 +342,11 @@ function renderBancoItens() {
   if (!ul) return;
   ul.innerHTML = '';
   (conteudo_frostgrave_json.itens || []).forEach(item => {
+    let desc = item.descricao ? item.descricao : '';
     ul.innerHTML += `<li>
-      <b>${item.nome}</b> <span style="color:#888">[${item.grupo}]</span>
-      <span style="color:#229954; margin-left:1em;">${item.descricao}</span>
+      <b title="${desc}">${item.nome}</b>
+      <span style="color:#888">[${item.grupo}]</span>
+      <span style="color:#229954; margin-left:1em;">${desc}</span>
     </li>`;
   });
 }
@@ -351,19 +354,22 @@ function renderItemDropdown() {
   const sel = document.getElementById("item-dropdown");
   if (!sel) return;
   sel.innerHTML = (conteudo_frostgrave_json.itens || []).map(item =>
-    `<option value="${item.nome}">${item.nome} [${item.grupo}]</option>`
+    `<option value="${item.nome}" title="${item.descricao || ''}">${item.nome} [${item.grupo}]</option>`
   ).join('');
 }
 
 /* --- Renderização de Personagens --- */
 function renderPersonagens() {
-  // Mago & Aprendiz
-  const magos = warband.filter(p => p.tipo === 'Mago' || p.tipo === 'Aprendiz');
-  const soldados = warband.filter(p => p.tipo !== 'Mago' && p.tipo !== 'Aprendiz');
   const magoDiv = document.getElementById('mago-aprendiz-lista');
   const soldDiv = document.getElementById('soldado-lista');
-  if (magoDiv) magoDiv.innerHTML = magos.map((p, idx) => renderPersonagemCard(p, idx, true)).join('');
-  if (soldDiv) soldDiv.innerHTML = soldados.map((p, idx) => renderPersonagemCard(p, idx, false)).join('');
+  if (magoDiv) magoDiv.innerHTML = '';
+  if (soldDiv) soldDiv.innerHTML = '';
+  // Um abaixo do outro
+  warband.forEach((p, idx) => {
+    let el = renderPersonagemCard(p, idx, (p.tipo === 'Mago' || p.tipo === 'Aprendiz'));
+    if (p.tipo === 'Mago' || p.tipo === 'Aprendiz') magoDiv.innerHTML += el;
+    else soldDiv.innerHTML += el;
+  });
 }
 function renderPersonagemCard(p, idx, isMago) {
   return `<div class="person-card">
@@ -383,7 +389,7 @@ function renderPersonagemCard(p, idx, isMago) {
   </div>`;
 }
 function removerPersonagem(idx) {
-  warband.splice(idx + 2, 1); // +2 porque mago e aprendiz são fixos no topo
+  warband.splice(idx, 1);
   renderPersonagens();
 }
 
@@ -425,10 +431,11 @@ function renderAddSoldadoForm() {
 document.getElementById('add-magia-form').onsubmit = function(e) {
   e.preventDefault();
   const nome = document.getElementById('magia-dropdown').value;
+  const escola = (conteudo_frostgrave_json.magias || []).find(m => m.nome === nome)?.escola || '';
   const comp = document.getElementById('magia-comp').value.trim();
   if (!nome) return;
   conteudo_frostgrave_json.magias.push({
-    nome, escola: 'Personalizada', descricao: comp
+    nome, escola, descricao: comp
   });
   renderBancoMagias();
   renderMagiaDropdown();
@@ -437,10 +444,11 @@ document.getElementById('add-magia-form').onsubmit = function(e) {
 document.getElementById('add-item-form').onsubmit = function(e) {
   e.preventDefault();
   const nome = document.getElementById('item-dropdown').value;
+  const item = (conteudo_frostgrave_json.itens || []).find(i => i.nome === nome);
   const efeito = document.getElementById('item-efeito').value.trim();
   if (!nome) return;
   conteudo_frostgrave_json.itens.push({
-    nome, grupo: 'Personalizado', descricao: efeito
+    nome, grupo: item?.grupo || 'Personalizado', descricao: efeito || item?.descricao || ''
   });
   renderBancoItens();
   renderItemDropdown();
